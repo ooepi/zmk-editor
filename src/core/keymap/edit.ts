@@ -35,6 +35,8 @@ function defaultParam(type: ParamType, model: KeymapModel): string[] {
     }
     case 'number':
       return [String(type.default ?? 0)];
+    case 'unicode':
+      return ['UC_SV_AE'];
     case 'raw':
       return ['0'];
   }

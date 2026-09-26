@@ -1,4 +1,5 @@
 import { behaviorKind, type Behavior, type KeymapModel } from '../keymap/model.ts';
+import { modulesIncludedBy } from './modules.ts';
 
 export interface EnumOption {
   value: string;
@@ -13,6 +14,8 @@ export type ParamType =
   | { kind: 'layer' }
   | { kind: 'enum'; options: EnumOption[]; default?: string }
   | { kind: 'number'; default?: number }
+  /** zmk-unicode: one alias (UC_SV_AE), two code points, or a mode switch. Uses all params. */
+  | { kind: 'unicode' }
   | { kind: 'raw' };
 
 export type BehaviorGroup =
@@ -23,6 +26,8 @@ export type BehaviorGroup =
   | 'lighting'
   | 'system'
   | 'custom'
+  /** From installed modules. */
+  | 'module'
   /** Only inside macros. */
   | 'macro'
   /** Only on encoders. */
@@ -36,6 +41,7 @@ export const BEHAVIOR_GROUPS: { id: BehaviorGroup; label: string }[] = [
   { id: 'lighting', label: 'Lighting' },
   { id: 'system', label: 'System' },
   { id: 'custom', label: 'Your behaviors' },
+  { id: 'module', label: 'From modules' },
   { id: 'macro', label: 'Macro controls' },
   { id: 'sensor', label: 'Encoder' },
 ];
@@ -283,10 +289,12 @@ function customDef(behavior: Behavior): BehaviorDef | undefined {
   return { ...base, description, params };
 }
 
-/** Built-in behaviors plus the ones the keymap defines. */
+/** Built-in behaviors, those of modules the keymap includes, and the keymap's own. */
 export function behaviorCatalog(model: KeymapModel): BehaviorDef[] {
+  const includes = model.topLevel.flatMap((i) => (i.kind === 'include' ? [i.path] : []));
+  const fromModules = modulesIncludedBy(includes).flatMap((m) => m.behaviors);
   const custom = model.behaviors.map(customDef).filter((d): d is BehaviorDef => d !== undefined);
-  return [...BUILTIN_BEHAVIORS, ...custom];
+  return [...BUILTIN_BEHAVIORS, ...fromModules, ...custom];
 }
 
 export function findBehavior(catalog: BehaviorDef[], ref: string): BehaviorDef | undefined {

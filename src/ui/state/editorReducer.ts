@@ -29,12 +29,15 @@ export type EditorAction =
   | { type: 'setSensorBinding'; binding: Binding }
   /** Any other keymap change (behaviors, combos, macros), recorded for undo. */
   | { type: 'edit'; keymap: KeymapModel; notice?: string }
+  /** Changes beyond the keymap (modules, ZMK version), recorded for undo. */
+  | { type: 'editConfig'; config: ZmkConfig; notice?: string }
   | { type: 'addLayer'; name: string }
   | { type: 'renameLayer'; index: number; name: string }
   | { type: 'moveLayer'; from: number; to: number }
   | { type: 'deleteLayer'; index: number }
   | { type: 'undo' }
   | { type: 'redo' }
+  | { type: 'notify'; notice: string }
   | { type: 'dismissNotice' };
 
 export function initialState(config: ZmkConfig, warnings: string[] = []): EditorState {
@@ -75,6 +78,15 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       return commit(state, setSensorBinding(keymap, state.layer, state.sensor, action.binding));
     case 'edit':
       return commit(state, action.keymap, { notice: action.notice ?? null });
+    case 'editConfig':
+      return {
+        ...state,
+        config: action.config,
+        past: [...state.past, state.config].slice(-HISTORY_LIMIT),
+        future: [],
+        notice: action.notice ?? null,
+        layer: clampLayer(state.layer, action.config),
+      };
     case 'addLayer': {
       const next = addLayer(keymap, action.name);
       return commit(state, next, { layer: next.layers.length - 1 });
@@ -112,6 +124,8 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       if (!next) return state;
       return { ...state, config: next, past: [...state.past, state.config], future, layer: clampLayer(state.layer, next) };
     }
+    case 'notify':
+      return { ...state, notice: action.notice };
     case 'dismissNotice':
       return { ...state, notice: null };
   }
