@@ -17,7 +17,6 @@ interface LayoutDesignerProps {
 const SNAP = 25;
 const MARGIN = 150;
 const snap = (v: number) => Math.round(v / SNAP) * SNAP;
-const units = (v: number) => Math.round(v) / 100;
 
 type Template = 'grid' | 'split' | 'catalog';
 
@@ -72,12 +71,12 @@ export function LayoutDesigner({ config, dispatch, onClose }: LayoutDesignerProp
           <fieldset className="fieldset">
             <legend>Key {selected} · {labels[selected] ?? ''}</legend>
             <div className="field-grid">
-              <UnitField key={`x-${selected}-${key.x}`} label="X" value={key.x} onChange={(x) => updateKey(selected, { x })} />
-              <UnitField key={`y-${selected}-${key.y}`} label="Y" value={key.y} onChange={(y) => updateKey(selected, { y })} />
-              <UnitField key={`w-${selected}-${key.w}`} label="Width" value={key.w} min={25} onChange={(w) => updateKey(selected, { w })} />
-              <UnitField key={`h-${selected}-${key.h}`} label="Height" value={key.h} min={25} onChange={(h) => updateKey(selected, { h })} />
+              <UnitField key={`x-${selected}`} label="X" value={key.x} onChange={(x) => updateKey(selected, { x })} />
+              <UnitField key={`y-${selected}`} label="Y" value={key.y} onChange={(y) => updateKey(selected, { y })} />
+              <UnitField key={`w-${selected}`} label="Width" value={key.w} min={25} onChange={(w) => updateKey(selected, { w })} />
+              <UnitField key={`h-${selected}`} label="Height" value={key.h} min={25} onChange={(h) => updateKey(selected, { h })} />
               <RotationField
-                key={`r-${selected}-${key.r}`}
+                key={`r-${selected}`}
                 value={key.r}
                 onChange={(r) => {
                   // Rotating an unrotated key turns it around its own centre.
@@ -86,8 +85,8 @@ export function LayoutDesigner({ config, dispatch, onClose }: LayoutDesignerProp
                 }}
               />
               <span />
-              <UnitField key={`rx-${selected}-${key.rx}`} label="Rotation origin X" value={key.rx} onChange={(rx) => updateKey(selected, { rx })} />
-              <UnitField key={`ry-${selected}-${key.ry}`} label="Rotation origin Y" value={key.ry} onChange={(ry) => updateKey(selected, { ry })} />
+              <UnitField key={`rx-${selected}`} label="Rotation origin X" value={key.rx} onChange={(rx) => updateKey(selected, { rx })} />
+              <UnitField key={`ry-${selected}`} label="Rotation origin Y" value={key.ry} onChange={(ry) => updateKey(selected, { ry })} />
             </div>
             <div className="row wrap">
               <button type="button" className="button" onClick={() => updateKey(selected, { rx: key.x + key.w / 2, ry: key.y + key.h / 2 })}>
@@ -149,57 +148,71 @@ export function LayoutDesigner({ config, dispatch, onClose }: LayoutDesignerProp
   );
 }
 
-/** A key-unit number field; applies on Enter or when leaving the field, so typing isn't reformatted. */
-function UnitField({ label, value, min, onChange }: { label: string; value: number; min?: number; onChange: (v: number) => void }) {
-  const [text, setText] = useState(String(units(value)));
-  const apply = () => {
-    const v = Math.round(Number(text) * 100);
-    if (text.trim() === '' || !Number.isFinite(v)) setText(String(units(value)));
-    else onChange(min === undefined ? v : Math.max(min, v));
-  };
+/**
+ * A number field that applies every valid value immediately (typing, the
+ * spinner arrows) without reformatting what's being typed: "1." or "-" wait
+ * until they're numbers. Out-of-range values are corrected on leaving.
+ */
+function LiveNumberField({
+  label,
+  value,
+  step,
+  scale,
+  min,
+  max,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  step: number;
+  /** Displayed value = value / scale (100 for key units, 1 for degrees). */
+  scale: number;
+  min?: number;
+  max?: number;
+  onChange: (v: number) => void;
+}) {
+  const format = (v: number) => String(Math.round((v / scale) * 100) / 100);
+  const parse = (t: string) => (t.trim() === '' || t.trim() === '-' ? NaN : Math.round(Number(t) * scale));
+  const [text, setText] = useState(format(value));
+  const [shown, setShown] = useState(value);
+  // Follow changes made elsewhere (dragging, arrow keys) unless the text already means the same.
+  if (value !== shown) {
+    setShown(value);
+    if (parse(text) !== value) setText(format(value));
+  }
+  const inRange = (v: number) => (min === undefined || v >= min) && (max === undefined || v <= max);
   return (
     <label className="field">
-      <span className="field-label">{label} (keys)</span>
+      <span className="field-label">{label}</span>
       <input
         className="input"
         type="number"
-        step={0.25}
-        min={min === undefined ? undefined : min / 100}
+        step={step}
+        min={min === undefined ? undefined : min / scale}
+        max={max === undefined ? undefined : max / scale}
         value={text}
-        onChange={(e) => setText(e.target.value)}
-        onBlur={apply}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') apply();
+        onChange={(e) => {
+          setText(e.target.value);
+          const v = parse(e.target.value);
+          if (Number.isFinite(v) && inRange(v)) onChange(v);
+        }}
+        onBlur={() => {
+          const v = parse(text);
+          if (!Number.isFinite(v)) setText(format(value));
+          else if (!inRange(v)) onChange(Math.min(max ?? v, Math.max(min ?? v, v)));
         }}
       />
     </label>
   );
 }
 
-/** Degrees, clockwise; applies on Enter or when leaving the field (so "-15" can be typed). */
+function UnitField({ label, value, min, onChange }: { label: string; value: number; min?: number; onChange: (v: number) => void }) {
+  return <LiveNumberField label={`${label} (keys)`} value={value} step={0.25} scale={100} min={min} onChange={onChange} />;
+}
+
+/** Degrees, clockwise. */
 function RotationField({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  const [text, setText] = useState(String(value));
-  const apply = () => {
-    const v = Number(text);
-    if (text.trim() === '' || !Number.isFinite(v)) setText(String(value));
-    else onChange(Math.max(-360, Math.min(360, v)));
-  };
-  return (
-    <label className="field">
-      <span className="field-label">Rotation (°)</span>
-      <input
-        className="input"
-        type="number"
-        step={1}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onBlur={apply}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') apply();
-        }}
-      />
-    </label>
-  );
+  return <LiveNumberField label="Rotation (°)" value={value} step={1} scale={1} min={-360} max={360} onChange={onChange} />;
 }
 
 function TemplatePanel({ keyCount, onApply }: { keyCount: number; onApply: (layout: PhysicalLayout) => void }) {

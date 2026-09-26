@@ -72,6 +72,9 @@ export function describeBinding(binding: Binding, modelOrContext: KeymapModel | 
       if (morphed) label.sub = morphed;
       return label;
     }
+    if (kind === 'tap-dance' && custom.bindings[0]) {
+      return { main: describeBinding(custom.bindings[0], ctx).main, sub: `×${custom.bindings.length} ${ref}`, kind: 'mod-morph' };
+    }
     return { main: def.name, sub: kind === 'other' ? ref : kind, kind: kind === 'macro' ? 'macro' : 'other' };
   }
 

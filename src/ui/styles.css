@@ -1331,3 +1331,18 @@ select {
     grid-template-columns: 1fr;
   }
 }
+
+/* Tap-dance and conditional layers */
+
+.tap,
+.conditional {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.conditional {
+  margin-bottom: 8px;
+}
