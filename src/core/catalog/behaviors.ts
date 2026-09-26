@@ -15,7 +15,18 @@ export type ParamType =
   | { kind: 'number'; default?: number }
   | { kind: 'raw' };
 
-export type BehaviorGroup = 'keys' | 'layers' | 'bluetooth' | 'mouse' | 'lighting' | 'system' | 'custom';
+export type BehaviorGroup =
+  | 'keys'
+  | 'layers'
+  | 'bluetooth'
+  | 'mouse'
+  | 'lighting'
+  | 'system'
+  | 'custom'
+  /** Only inside macros. */
+  | 'macro'
+  /** Only on encoders. */
+  | 'sensor';
 
 export const BEHAVIOR_GROUPS: { id: BehaviorGroup; label: string }[] = [
   { id: 'keys', label: 'Keys' },
@@ -25,6 +36,8 @@ export const BEHAVIOR_GROUPS: { id: BehaviorGroup; label: string }[] = [
   { id: 'lighting', label: 'Lighting' },
   { id: 'system', label: 'System' },
   { id: 'custom', label: 'Your behaviors' },
+  { id: 'macro', label: 'Macro controls' },
+  { id: 'sensor', label: 'Encoder' },
 ];
 
 export interface BehaviorDef {
@@ -197,20 +210,59 @@ export const BUILTIN_BEHAVIORS: BehaviorDef[] = [
   },
   { ref: 'bootloader', name: 'Bootloader', description: 'Restarts into the bootloader for flashing.', group: 'system', params: [], keycap: 'Boot' },
   { ref: 'sys_reset', name: 'Reset', description: 'Restarts the keyboard.', group: 'system', params: [], keycap: 'Reset' },
+  { ref: 'macro_tap', name: 'Tap mode', description: 'The following keys are tapped (the default).', group: 'macro', params: [], keycap: 'Tap mode' },
+  { ref: 'macro_press', name: 'Press mode', description: 'The following keys are pressed and held.', group: 'macro', params: [], keycap: 'Press mode' },
+  { ref: 'macro_release', name: 'Release mode', description: 'The following keys are released.', group: 'macro', params: [], keycap: 'Release mode' },
+  {
+    ref: 'macro_pause_for_release',
+    name: 'Pause for release',
+    description: 'Waits until the macro key is released, then continues.',
+    group: 'macro',
+    params: [],
+    keycap: 'Wait for release',
+  },
+  {
+    ref: 'macro_wait_time',
+    name: 'Set wait time',
+    description: 'Changes the pause after each following step (ms).',
+    group: 'macro',
+    params: [{ kind: 'number', default: 100 }],
+    tag: 'wait ms',
+  },
+  {
+    ref: 'macro_tap_time',
+    name: 'Set tap time',
+    description: 'Changes how long following taps are held (ms).',
+    group: 'macro',
+    params: [{ kind: 'number', default: 30 }],
+    tag: 'tap ms',
+  },
+  {
+    ref: 'inc_dec_kp',
+    name: 'Key per direction',
+    description: 'Sends one key when turned clockwise and another when turned counter-clockwise.',
+    group: 'sensor',
+    params: [{ kind: 'keycode', default: 'C_VOL_UP' }, { kind: 'keycode', default: 'C_VOL_DN' }],
+  },
 ];
 
 const BUILTIN_BY_REF = new Map(BUILTIN_BEHAVIORS.map((def) => [def.ref, def]));
 
-function firstCellCount(behavior: Behavior): number {
-  const cells = behavior.properties.find((p) => p.name === '#binding-cells')?.values[0];
+function cellCount(behavior: Behavior, name = '#binding-cells'): number {
+  const cells = behavior.properties.find((p) => p.name === name)?.values[0];
   const count = cells?.kind === 'cells' ? Number(cells.tokens[0]) : 0;
   return Number.isInteger(count) ? count : 0;
 }
 
 function customDef(behavior: Behavior): BehaviorDef | undefined {
   const kind = behaviorKind(behavior);
-  if (!behavior.label || kind === 'sensor-rotate') return undefined;
+  if (!behavior.label) return undefined;
   const base = { ref: behavior.label, name: behavior.label, group: 'custom' as const, behavior };
+  if (kind === 'sensor-rotate') {
+    const count = cellCount(behavior, '#sensor-binding-cells');
+    const params = Array.from({ length: count }, (): ParamType => ({ kind: 'raw' }));
+    return { ...base, group: 'sensor', description: 'Your encoder behavior: one binding per direction.', params };
+  }
   if (kind === 'hold-tap') {
     const params = [0, 1].map((i): ParamType => {
       const inner = behavior.bindings[i];
@@ -219,7 +271,7 @@ function customDef(behavior: Behavior): BehaviorDef | undefined {
     });
     return { ...base, description: 'Your hold-tap: hold and tap behaviors.', params, holdParam: 0 };
   }
-  const params = Array.from({ length: firstCellCount(behavior) }, (): ParamType => ({ kind: 'raw' }));
+  const params = Array.from({ length: cellCount(behavior) }, (): ParamType => ({ kind: 'raw' }));
   const description =
     kind === 'mod-morph'
       ? 'Your mod-morph: another binding while a modifier is held.'

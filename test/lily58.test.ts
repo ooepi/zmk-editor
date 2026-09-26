@@ -5,6 +5,12 @@ import { configPaths, generateConfig, importConfig } from '../src/core/config.ts
 import { formatBinding } from '../src/core/keymap/bindings.ts';
 import { behaviorKind } from '../src/core/keymap/model.ts';
 import { findVersionMismatches } from '../src/core/files/west.ts';
+import { createBehavior, renameBehavior } from '../src/core/keymap/behaviorEdit.ts';
+import { createCombo } from '../src/core/keymap/comboEdit.ts';
+import { generateKeymap } from '../src/core/keymap/generator.ts';
+import { importKeymap } from '../src/core/keymap/importer.ts';
+import { textToBindings } from '../src/core/keymap/macroText.ts';
+import { setSensorBinding } from '../src/core/keymap/sensorEdit.ts';
 
 const fixture = (name: string) => readFileSync(join(import.meta.dirname, 'fixtures/lily58', name), 'utf8');
 
@@ -97,5 +103,22 @@ describe('Lily58 fixture', () => {
   // Update them with `npx vitest run -u`.
   it.each(Object.entries(generateConfig(config)))('matches the committed %s', async (path, content) => {
     await expect(content).toMatchFileSnapshot(join('generated/lily58', path));
+  });
+});
+
+describe('Lily58 fixture after Milestone 4 edits', () => {
+  it('still round-trips with a new hold-tap, macro, combo, renamed behavior and encoder binding', () => {
+    let keymap = importConfig(repoFiles).config.keymap;
+    const holdTap = createBehavior(keymap, 'hold-tap');
+    keymap = { ...keymap, behaviors: [...keymap.behaviors, holdTap] };
+    const macro = { ...createBehavior(keymap, 'macro'), bindings: textToBindings('Hello!').bindings };
+    keymap = { ...keymap, behaviors: [...keymap.behaviors, macro] };
+    keymap = { ...keymap, combos: [createCombo(keymap, [13, 14], { behavior: macro.label ?? '', params: [] })] };
+    keymap = renameBehavior(keymap, 'scroll_up_down', 'scroll_v');
+    keymap = setSensorBinding(keymap, 2, 0, { behavior: 'inc_dec_kp', params: ['PG_UP', 'PG_DN'] });
+
+    expect(keymap.layers[1]?.sensorBindings?.map(formatBinding)).toEqual(['&scroll_v']);
+    const text = generateKeymap(keymap);
+    expect(importKeymap(text).model).toEqual(keymap);
   });
 });

@@ -45,4 +45,23 @@ describe('editorReducer', () => {
     for (let i = 0; i < 6; i++) state = run(state, { type: 'deleteLayer', index: 0 });
     expect(state.config.keymap.layers).toHaveLength(1);
   });
+
+  it('selects an encoder and sets its binding on the current layer', () => {
+    let state = run(start(), { type: 'selectKey', index: 3 }, { type: 'selectSensor', index: 0 });
+    expect(state.key).toBeNull();
+    state = run(state, { type: 'setSensorBinding', binding: { behavior: 'inc_dec_kp', params: ['PG_UP', 'PG_DN'] } });
+    expect(state.config.keymap.layers[0]?.sensorBindings?.map(formatBinding)).toEqual(['&inc_dec_kp PG_UP PG_DN']);
+    expect(run(state, { type: 'undo' }).config.keymap.layers[0]?.sensorBindings?.map(formatBinding)).toEqual([
+      '&inc_dec_kp C_VOL_UP C_VOL_DN',
+    ]);
+  });
+
+  it('records generic edits for undo', () => {
+    const state = start();
+    const keymap = { ...state.config.keymap, combos: [] };
+    const edited = run(state, { type: 'edit', keymap, notice: 'Done' });
+    expect(edited.config.keymap).toBe(keymap);
+    expect(edited.notice).toBe('Done');
+    expect(run(edited, { type: 'undo' }).config.keymap).toBe(state.config.keymap);
+  });
 });

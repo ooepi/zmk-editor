@@ -1,5 +1,6 @@
 import type { ZmkConfig } from '../../core/config.ts';
 import { addLayer, deleteLayer, moveLayer, renameLayer, setBinding } from '../../core/keymap/edit.ts';
+import { setSensorBinding } from '../../core/keymap/sensorEdit.ts';
 import type { Binding, KeymapModel } from '../../core/keymap/model.ts';
 
 const HISTORY_LIMIT = 200;
@@ -9,7 +10,10 @@ export interface EditorState {
   /** Notes from the last import (things kept as raw text, …). */
   warnings: string[];
   layer: number;
+  /** Selected key, or null. At most one of `key` and `sensor` is set. */
   key: number | null;
+  /** Selected encoder, or null. */
+  sensor: number | null;
   past: ZmkConfig[];
   future: ZmkConfig[];
   /** A one-off message, e.g. combos removed with a layer. */
@@ -20,7 +24,11 @@ export type EditorAction =
   | { type: 'load'; config: ZmkConfig; warnings: string[] }
   | { type: 'selectLayer'; index: number }
   | { type: 'selectKey'; index: number | null }
+  | { type: 'selectSensor'; index: number | null }
   | { type: 'setBinding'; binding: Binding }
+  | { type: 'setSensorBinding'; binding: Binding }
+  /** Any other keymap change (behaviors, combos, macros), recorded for undo. */
+  | { type: 'edit'; keymap: KeymapModel; notice?: string }
   | { type: 'addLayer'; name: string }
   | { type: 'renameLayer'; index: number; name: string }
   | { type: 'moveLayer'; from: number; to: number }
@@ -30,7 +38,7 @@ export type EditorAction =
   | { type: 'dismissNotice' };
 
 export function initialState(config: ZmkConfig, warnings: string[] = []): EditorState {
-  return { config, warnings, layer: 0, key: null, past: [], future: [], notice: null };
+  return { config, warnings, layer: 0, key: null, sensor: null, past: [], future: [], notice: null };
 }
 
 /** Records the current config in history and switches to a new keymap. */
@@ -56,10 +64,17 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     case 'selectLayer':
       return { ...state, layer: clampLayer(action.index, state.config) };
     case 'selectKey':
-      return { ...state, key: action.index };
+      return { ...state, key: action.index, sensor: null };
+    case 'selectSensor':
+      return { ...state, sensor: action.index, key: null };
     case 'setBinding':
       if (state.key === null) return state;
       return commit(state, setBinding(keymap, state.layer, state.key, action.binding));
+    case 'setSensorBinding':
+      if (state.sensor === null) return state;
+      return commit(state, setSensorBinding(keymap, state.layer, state.sensor, action.binding));
+    case 'edit':
+      return commit(state, action.keymap, { notice: action.notice ?? null });
     case 'addLayer': {
       const next = addLayer(keymap, action.name);
       return commit(state, next, { layer: next.layers.length - 1 });
