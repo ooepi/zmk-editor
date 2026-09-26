@@ -25,6 +25,11 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+        env:
+          # "Log in with GitHub" settings (public values); see docs/github-login-setup.md.
+          VITE_GITHUB_APP_CLIENT_ID: ${{ vars.GH_APP_CLIENT_ID }}
+          VITE_GITHUB_APP_SLUG: ${{ vars.GH_APP_SLUG }}
+          VITE_AUTH_HELPER_URL: ${{ vars.AUTH_HELPER_URL }}
       - uses: actions/upload-pages-artifact@v4
         with:
           path: dist

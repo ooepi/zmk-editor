@@ -7,12 +7,13 @@ import {
   waitForRun,
   type WorkflowRun,
 } from '../../core/github/builds.ts';
-import { GitHubClient, type RepoRef } from '../../core/github/client.ts';
 import { diffStats, lineDiff } from '../../core/github/diff.ts';
 import { extractUf2, type FirmwareFile } from '../../core/github/firmware.ts';
-import { commitFiles, loadRepoFiles } from '../../core/github/repo.ts';
+import { commitFiles } from '../../core/github/repo.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
-import { clearGitHubSettings, loadGitHubSettings, saveGitHubSettings, type GitHubSettings } from '../state/github.ts';
+import { clearGitHubSettings } from '../state/github.ts';
+import { clearTokens } from '../state/githubLogin.ts';
+import { ConnectSection, type Connection } from './ConnectSection.tsx';
 import { DiffView } from './DiffView.tsx';
 
 interface BuildViewProps {
@@ -20,14 +21,6 @@ interface BuildViewProps {
   dispatch: Dispatch<EditorAction>;
 }
 
-interface Connection {
-  client: GitHubClient;
-  ref: RepoRef;
-  repoUrl: string;
-  /** The branch's config files when last loaded. */
-  files: Record<string, string>;
-  headSha: string;
-}
 
 type BuildState =
   | { phase: 'idle' }
@@ -38,8 +31,6 @@ type BuildState =
   | { phase: 'failed'; message: string; run?: WorkflowRun }
   | { phase: 'blocked'; run: WorkflowRun; message: string };
 
-const isConfigFile = (path: string) =>
-  /^config\/[^/]+\.(keymap|conf)$/.test(path) || path === 'config/west.yml' || path === 'build.yaml' || path === '.github/workflows/build.yml';
 
 function save(data: Uint8Array | string, name: string, type = 'application/octet-stream') {
   const url = URL.createObjectURL(new Blob([typeof data === 'string' ? data : new Uint8Array(data)], { type }));
@@ -134,6 +125,7 @@ export function BuildView({ config, dispatch }: BuildViewProps) {
         }}
         onDisconnect={() => {
           clearGitHubSettings();
+          clearTokens();
           setConnection(null);
           setBuild({ phase: 'idle' });
         }}
@@ -188,123 +180,6 @@ export function BuildView({ config, dispatch }: BuildViewProps) {
 
       {build.phase !== 'idle' && <BuildStatus build={build} onFirmware={(run, firmware) => setBuild({ phase: 'done', run, firmware })} />}
     </div>
-  );
-}
-
-function ConnectSection({
-  connection,
-  onConnected,
-  onDisconnect,
-  onLoad,
-}: {
-  connection: Connection | null;
-  onConnected: (connection: Connection) => void;
-  onDisconnect: () => void;
-  onLoad: () => void;
-}) {
-  const stored = loadGitHubSettings();
-  const [token, setToken] = useState(stored?.token ?? '');
-  const [repoName, setRepoName] = useState(stored ? `${stored.owner}/${stored.repo}` : '');
-  const [branch, setBranch] = useState(stored?.branch ?? '');
-  const [remember, setRemember] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [working, setWorking] = useState(false);
-
-  const connect = async () => {
-    const [owner, repo] = repoName.trim().replace(/^https:\/\/github\.com\//, '').split('/');
-    if (!owner || !repo) {
-      setError('Enter the repository as owner/name, e.g. ooepi/zmk-lily.');
-      return;
-    }
-    setWorking(true);
-    setError(null);
-    try {
-      const client = new GitHubClient(token.trim());
-      const info = await client.getRepo({ owner, repo });
-      const ref = { owner, repo, branch: branch.trim() || info.default_branch };
-      const { files, headSha } = await loadRepoFiles(client, ref, isConfigFile);
-      const settings: GitHubSettings = { token: token.trim(), ...ref };
-      saveGitHubSettings(settings, remember);
-      setBranch(ref.branch);
-      onConnected({ client, ref, repoUrl: info.html_url, files, headSha });
-    } catch (e) {
-      setError(message(e));
-    } finally {
-      setWorking(false);
-    }
-  };
-
-  if (connection) {
-    return (
-      <section className="build-section" aria-label="Repository">
-        <h2 className="panel-title">Repository</h2>
-        <p>
-          Connected to{' '}
-          <a href={connection.repoUrl} target="_blank" rel="noreferrer" className="mono">
-            {connection.ref.owner}/{connection.ref.repo}
-          </a>{' '}
-          on <span className="mono">{connection.ref.branch}</span> at{' '}
-          <span className="mono">{connection.headSha.slice(0, 7)}</span>.
-        </p>
-        <div className="row wrap">
-          <button type="button" className="button" onClick={onLoad}>
-            Load config from repo
-          </button>
-          <button type="button" className="button" onClick={() => void connect()} disabled={working}>
-            Refresh
-          </button>
-          <button type="button" className="button danger" onClick={onDisconnect}>
-            Disconnect
-          </button>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="build-section" aria-label="Connect to GitHub">
-      <h2 className="panel-title">Connect to GitHub</h2>
-      <p className="muted small">
-        The editor commits to your zmk-config repository and GitHub Actions builds the firmware. Create a{' '}
-        <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer">
-          fine-grained token
-        </a>{' '}
-        for just that repository with <strong>Contents: read and write</strong>, <strong>Actions: read</strong> and{' '}
-        <strong>Workflows: read and write</strong>. The token is sent only to api.github.com.
-      </p>
-      <form
-        className="connect-form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void connect();
-        }}
-      >
-        <label className="field">
-          <span className="field-label">Token</span>
-          <input className="input mono" type="password" autoComplete="off" value={token} onChange={(e) => setToken(e.target.value)} />
-        </label>
-        <label className="field">
-          <span className="field-label">Repository</span>
-          <input className="input mono" placeholder="owner/zmk-config" value={repoName} onChange={(e) => setRepoName(e.target.value)} />
-        </label>
-        <label className="field">
-          <span className="field-label">Branch</span>
-          <input className="input mono" placeholder="default branch" value={branch} onChange={(e) => setBranch(e.target.value)} />
-        </label>
-        <label className="field checkbox">
-          <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
-          <span>Remember on this device</span>
-        </label>
-        <button type="submit" className="button primary" disabled={working || !token.trim() || !repoName.trim()}>
-          {working ? 'Connecting…' : 'Connect'}
-        </button>
-        {error && (
-          <p className="field-error" role="alert">
-            {error}
-          </p>
-        )}
-      </form>
-    </section>
   );
 }
 

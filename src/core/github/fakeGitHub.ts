@@ -56,6 +56,18 @@ export class FakeGitHub {
     const auth = new Headers(init?.headers).get('Authorization');
     if (auth !== `Bearer ${this.token}`) return this.json(401, { message: 'Bad credentials' });
     const repo = '/repos/me/zmk-config';
+    if (path === '/user') return this.json(200, { login: 'me', avatar_url: 'https://avatars.githubusercontent.com/u/1' });
+    if (path === '/user/installations') return this.json(200, { installations: [{ id: 5 }] });
+    if (path === '/user/installations/5/repositories') {
+      return this.json(200, {
+        total_count: 2,
+        repositories: [
+          { name: 'zmk-config', owner: { login: 'me' }, default_branch: 'main', private: false },
+          { name: 'another', owner: { login: 'me' }, default_branch: 'master', private: true },
+        ],
+      });
+    }
+    if (path === `${repo}/branches`) return this.json(200, [{ name: 'main' }, { name: 'editor-test' }]);
     if (!path.startsWith(repo)) return this.json(404, { message: 'Not Found' });
     const rest = path.slice(repo.length);
 

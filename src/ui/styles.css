@@ -1053,3 +1053,40 @@ select {
     grid-template-columns: 1fr;
   }
 }
+
+/* GitHub login */
+
+.login {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.login-button {
+  padding: 8px 16px;
+  font-size: 15px;
+}
+
+.repo-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.user-row {
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  border-radius: 50%;
+  border: 1px solid var(--border);
+}
+
+.token-details summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-bottom: 8px;
+}

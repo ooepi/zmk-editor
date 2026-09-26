@@ -1,0 +1,49 @@
+# Deploys the "Log in with GitHub" helper (worker/) to Cloudflare Workers.
+# Needs repository secrets CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID and
+# GH_APP_CLIENT_SECRET, and the repository variable GH_APP_CLIENT_ID.
+# See docs/github-login-setup.md.
+name: Deploy login helper
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'worker/**'
+      - '.github/workflows/auth-helper.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Check configuration
+        id: check
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "Cloudflare secrets not set; skipping (see docs/github-login-setup.md)."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v5
+        if: steps.check.outputs.configured == 'true'
+      - uses: actions/setup-node@v5
+        if: steps.check.outputs.configured == 'true'
+        with:
+          node-version: 22
+      - name: Deploy worker
+        if: steps.check.outputs.configured == 'true'
+        working-directory: worker
+        run: npx --yes wrangler@4 deploy
+      - name: Set worker secrets
+        if: steps.check.outputs.configured == 'true'
+        working-directory: worker
+        env:
+          GH_APP_CLIENT_ID: ${{ vars.GH_APP_CLIENT_ID }}
+          GH_APP_CLIENT_SECRET: ${{ secrets.GH_APP_CLIENT_SECRET }}
+        run: |
+          printf '%s' "$GH_APP_CLIENT_ID" | npx --yes wrangler@4 secret put GITHUB_CLIENT_ID
+          printf '%s' "$GH_APP_CLIENT_SECRET" | npx --yes wrangler@4 secret put GITHUB_CLIENT_SECRET
