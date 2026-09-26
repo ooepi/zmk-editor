@@ -30,7 +30,7 @@ export function validLabel(model: KeymapModel, label: string, current?: string):
   return null;
 }
 
-function uniqueLabel(model: KeymapModel, base: string): string {
+export function uniqueLabel(model: KeymapModel, base: string): string {
   let label = base;
   for (let n = 2; validLabel(model, label) !== null; n++) label = `${base}_${n}`;
   return label;

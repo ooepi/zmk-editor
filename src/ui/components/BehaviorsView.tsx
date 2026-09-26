@@ -1,7 +1,7 @@
-import { useMemo, type Dispatch } from 'react';
+import type { Dispatch } from 'react';
 import { BUILTIN_BEHAVIORS } from '../../core/catalog/behaviors.ts';
+import { MODULE_BEHAVIOR_NAMES } from '../../core/catalog/modules.ts';
 import { propertySchema } from '../../core/catalog/properties.ts';
-import { printNode } from '../../core/dts/printer.ts';
 import {
   createBehavior,
   deleteBehavior,
@@ -10,11 +10,13 @@ import {
   validLabel,
   type NewBehaviorKind,
 } from '../../core/keymap/behaviorEdit.ts';
+import { behaviorSource } from '../../core/keymap/behaviorSource.ts';
 import { behaviorKind, type Behavior, type Binding, type KeymapModel } from '../../core/keymap/model.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
 import { BindingEditor } from './BindingEditor.tsx';
 import { LabelField } from './LabelField.tsx';
 import { MacroSteps } from './MacroSteps.tsx';
+import { AdaptiveKeyEditor, LeaderKeyEditor, SourceEditor, TriStateBindings } from './ModuleBehaviorEditors.tsx';
 import { PropertyFields } from './PropertyFields.tsx';
 
 interface BehaviorsViewProps {
@@ -41,6 +43,10 @@ const NEW_BEHAVIORS: { kind: NewBehaviorKind; label: string }[] = [
   { kind: 'sensor-rotate', label: '+ Encoder behavior' },
   { kind: 'tap-dance', label: '+ Tap-dance' },
 ];
+
+function kindLabel(behavior: Behavior): string {
+  return MODULE_BEHAVIOR_NAMES[behavior.compatible] ?? KIND_LABELS[behaviorKind(behavior)] ?? 'Other';
+}
 
 /** Lists the keymap's behaviors (or macros) and edits the selected one. */
 export function BehaviorsView({ keymap, kind, selected, onSelect, dispatch }: BehaviorsViewProps) {
@@ -70,7 +76,7 @@ export function BehaviorsView({ keymap, kind, selected, onSelect, dispatch }: Be
                 onClick={() => onSelect(b.label ?? null)}
               >
                 <span className="mono">&amp;{b.label ?? b.name}</span>
-                <span className="badge">{KIND_LABELS[behaviorKind(b)]}</span>
+                <span className="badge">{kindLabel(b)}</span>
               </button>
             </li>
           ))}
@@ -138,7 +144,7 @@ function BehaviorEditor({ keymap, behavior, label, onChange, onRename, onDelete 
   return (
     <div className="behavior-editor">
       <div className="editor-header">
-        <span className="badge">{KIND_LABELS[kind]}</span>
+        <span className="badge">{kindLabel(behavior)}</span>
         <button
           type="button"
           className="button danger"
@@ -166,14 +172,17 @@ function BehaviorEditor({ keymap, behavior, label, onChange, onRename, onDelete 
       {kind === 'macro' && <MacroSteps keymap={keymap} behavior={behavior} onChange={onChange} />}
       {kind === 'tap-dance' && <TapDanceTaps keymap={keymap} behavior={behavior} onChange={onChange} />}
 
-      {schemas && kind !== 'other' ? (
+      {behavior.compatible === 'zmk,behavior-leader-key' && <LeaderKeyEditor keymap={keymap} behavior={behavior} onChange={onChange} />}
+      {behavior.compatible === 'zmk,behavior-adaptive-key' && <AdaptiveKeyEditor keymap={keymap} behavior={behavior} onChange={onChange} />}
+      {behavior.compatible === 'zmk,behavior-tri-state' && <TriStateBindings keymap={keymap} behavior={behavior} onChange={onChange} />}
+
+      {schemas && (
         <fieldset className="fieldset">
           <legend>Settings</legend>
           <PropertyFields schemas={schemas} properties={behavior.properties} onChange={(properties) => onChange({ ...behavior, properties })} />
         </fieldset>
-      ) : (
-        kind !== 'macro' && <SourcePreview behavior={behavior} />
       )}
+      {kind === 'other' && <SourceEditor key={behaviorSource(behavior)} behavior={behavior} onChange={onChange} />}
       {kind !== 'sensor-rotate' && (
         <p className="muted small">Use it on a key: select the key and choose &amp;{label} under “Your behaviors”.</p>
       )}
@@ -240,39 +249,6 @@ function HoldTapBindings({ behavior, onChange }: { behavior: Behavior; onChange:
           </select>
         </label>
       ))}
-    </div>
-  );
-}
-
-function SourcePreview({ behavior }: { behavior: Behavior }) {
-  const source = useMemo(
-    () =>
-      printNode(
-        {
-          name: behavior.name,
-          labels: behavior.label ? [behavior.label] : [],
-          properties: [
-            { name: 'compatible', values: [{ kind: 'string', value: behavior.compatible }] },
-            ...behavior.properties,
-            ...(behavior.bindings.length > 0
-              ? [
-                  {
-                    name: 'bindings',
-                    values: behavior.bindings.map((b) => ({ kind: 'cells' as const, tokens: [`&${b.behavior}`, ...b.params] })),
-                  },
-                ]
-              : []),
-          ],
-          children: [],
-        },
-        0,
-      ),
-    [behavior],
-  );
-  return (
-    <div className="field">
-      <span className="field-label">Source (not editable here yet)</span>
-      <pre className="source">{source}</pre>
     </div>
   );
 }

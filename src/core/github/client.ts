@@ -17,7 +17,7 @@ const API = 'https://api.github.com';
 
 type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
 
-/** A small GitHub REST client. `fetch` is injectable for tests. */
+/** A small GitHub REST client. `fetch` is injectable for tests; an empty token makes anonymous requests. */
 export class GitHubClient {
   private readonly token: string;
   private readonly fetchImpl: Fetch;
@@ -28,7 +28,8 @@ export class GitHubClient {
   }
 
   private headers(extra: Record<string, string> = {}): Record<string, string> {
-    return { Authorization: `Bearer ${this.token}`, Accept: 'application/vnd.github+json', ...extra };
+    const auth: Record<string, string> = this.token ? { Authorization: `Bearer ${this.token}` } : {};
+    return { ...auth, Accept: 'application/vnd.github+json', ...extra };
   }
 
   /** JSON request to an API path like `/repos/o/r`. */

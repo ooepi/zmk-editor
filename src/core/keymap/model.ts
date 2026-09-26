@@ -22,6 +22,8 @@ export interface Behavior {
   bindings: Binding[];
   /** Other properties in source order (`#binding-cells`, `tapping-term-ms`, …). */
   properties: DtProperty[];
+  /** Child nodes, such as leader-key sequences or adaptive-key triggers. */
+  children?: DtNode[];
 }
 
 export interface Combo {
