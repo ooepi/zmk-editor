@@ -1,0 +1,155 @@
+#include <behaviors.dtsi>
+#include <dt-bindings/zmk/bt.h>
+#include <dt-bindings/zmk/ext_power.h>
+#include <dt-bindings/zmk/keys.h>
+#include <dt-bindings/zmk/pointing.h>
+#include <zmk-helpers/helper.h>
+#include <zmk-helpers/key-labels/34.h>
+#include <behaviors/unicode.dtsi>
+
+#define ZMK_POINTING_DEFAULT_SCRL_VAL 100
+#define ZMK_POINTING_DEFAULT_MOVE_VAL 2400
+
+&mmv {
+    acceleration-exponent = <1>;
+    time-to-max-speed-ms = <500>;
+    delay-ms = <0>;
+};
+
+&msc {
+    time-to-max-speed-ms = <300>;
+    acceleration-exponent = <0>;
+    delay-ms = <0>;
+};
+
+/ {
+    behaviors {
+        scroll_up_down: Mouse_Scroller {
+            compatible = "zmk,behavior-sensor-rotate";
+            label = "Scroller As Mouse Wheel";
+            #sensor-binding-cells = <0>;
+            tap-ms = <20>;
+            bindings = <&msc SCRL_DOWN>, <&msc SCRL_UP>;
+        };
+
+        scroll_left_right: Mouse_Scroller_HZ {
+            compatible = "zmk,behavior-sensor-rotate";
+            label = "Scroller As Mouse Wheel Horizontal";
+            #sensor-binding-cells = <0>;
+            tap-ms = <20>;
+            bindings = <&msc SCRL_LEFT>, <&msc SCRL_RIGHT>;
+        };
+    };
+
+    keymap {
+        compatible = "zmk,keymap";
+
+        base {
+            display-name = "BASE";
+            // | ESC   | 1 | 2 | 3   | 4   | 5   |                    | 6    | 7         | 8         | 9 | 0 | BSPC        |
+            // | TAB   | Q | W | F   | P   | B   |                    | J    | L         | U         | Y | ; | UC UC_SV_OE |
+            // | SHIFT | A | R | S   | T   | G   |                    | M    | N         | E         | I | O | UC UC_SV_AE |
+            // | CTRL  | Z | X | C   | D   | V   | TOG MOUS | TOG NUM | K    | H         | ,         | . | / | ENTER       |
+            //                 | ALT | GUI | NAV | MOUS     | SPC     | PROG | LG(PG_UP) | LG(PG_DN) |
+            bindings = <
+                &kp ESC           &kp N1  &kp N2  &kp N3    &kp N4    &kp N5                     &kp N6  &kp N7         &kp N8         &kp N9      &kp N0         &kp BACKSPACE
+                &kp TAB           &kp Q   &kp W   &kp F     &kp P     &kp B                      &kp J   &kp L          &kp U          &kp Y       &kp SEMICOLON  &uc UC_SV_OE
+                &kp LEFT_SHIFT    &kp A   &kp R   &kp S     &kp T     &kp G                      &kp M   &kp N          &kp E          &kp I       &kp O          &uc UC_SV_AE
+                &kp LEFT_CONTROL  &kp Z   &kp X   &kp C     &kp D     &kp V   &tog 5  &tog 4     &kp K   &kp H          &kp COMMA      &kp PERIOD  &kp SLASH      &kp ENTER
+                                                  &kp LALT  &kp LGUI  &mo 1   &mo 5   &kp SPACE  &mo 2   &kp LG(PG_UP)  &kp LG(PG_DN)
+            >;
+
+            sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
+        };
+
+        navigation {
+            display-name = "NAV";
+            // | BTCLR       | BT1             | BT2              | BT3              | BT4  | BT5 |                 | PLAY          | PREV     | NEXT      | VOL-  | VOL+  | DEL        |
+            // | LA(LC(TAB)) |                 | GUI              | LC(G)            |      |     |                 | LC(BACKSPACE) | HOME     | UP        | END   | DEL   | LC(DELETE) |
+            // | SHIFT       |                 |                  | NUM              | MOUS |     |                 | LC(DELETE)    | LEFT     | DOWN      | RIGHT | ENTER | ENTER      |
+            // | CTRL        | EXT_POWER EP_ON | EXT_POWER EP_OFF | EXT_POWER EP_TOG |      |     |     |           |               | MKP MB4  | MKP MB5   |       |       | ENTER      |
+            //                                                    |                  |      |     | SPC | LA(SPACE) | BSPC          | LC(LEFT) | LC(RIGHT) |
+            bindings = <
+                &bt BT_CLR       &bt BT_SEL 0      &bt BT_SEL 1       &bt BT_SEL 2       &bt BT_SEL 3  &bt BT_SEL 4                            &kp C_PLAY_PAUSE   &kp C_PREV    &kp C_NEXT     &kp C_VOLUME_DOWN  &kp C_VOLUME_UP  &kp DELETE
+                &kp LA(LC(TAB))  &trans            &kp LEFT_WIN       &kp LC(G)          &trans        &trans                                  &kp LC(BACKSPACE)  &kp HOME      &kp UP_ARROW   &kp END            &kp DELETE       &kp LC(DELETE)
+                &kp LSHIFT       &trans            &trans             &mo 4              &mo 5         &trans                                  &kp LC(DELETE)     &kp LEFT      &kp DOWN       &kp RIGHT          &kp ENTER        &kp ENTER
+                &kp LCTRL        &ext_power EP_ON  &ext_power EP_OFF  &ext_power EP_TOG  &trans        &trans        &trans     &trans         &trans             &mkp MB4      &mkp MB5       &trans             &trans           &kp ENTER
+                                                                      &trans             &trans        &trans        &kp SPACE  &kp LA(SPACE)  &kp BACKSPACE      &kp LC(LEFT)  &kp LC(RIGHT)
+            >;
+
+            sensor-bindings = <&scroll_up_down>;
+        };
+
+        programming {
+            display-name = "PROG";
+            // | F1    | F1 | F2 | F3  | F4            | F5         |                | F6 | F7 | F8  | F9 | F10 | F11 |
+            // | TAB   | `  | ~  |     |               | LA(F4)     |                |    | /  | \   | |  | _   | -   |
+            // | SHIFT | :  | {  | [   | (             |            |                | =  | )  | ]   | }  | ;   | '   |
+            // | CTRL  |    |    |     |               |            | TOG QWER | F12 | +  | -  | =   | ?  |     | "   |
+            //                   | ALT | RC(BACKSPACE) | LC(DELETE) |          |     |    |    | DEL |
+            bindings = <
+                &kp F1          &kp F1     &kp F2          &kp F3            &kp F4                &kp F5                           &kp F6     &kp F7                 &kp F8             &kp F9           &kp F10        &kp F11
+                &kp TAB         &kp GRAVE  &kp TILDE       &trans            &trans                &kp LA(F4)                       &trans     &kp SLASH              &kp BACKSLASH      &kp PIPE         &kp UNDER      &kp MINUS
+                &kp LEFT_SHIFT  &kp COLON  &kp LEFT_BRACE  &kp LEFT_BRACKET  &kp LEFT_PARENTHESIS  &trans                           &kp EQUAL  &kp RIGHT_PARENTHESIS  &kp RIGHT_BRACKET  &kp RIGHT_BRACE  &kp SEMICOLON  &kp SQT
+                &kp LCTRL       &trans     &trans          &trans            &trans                &trans          &tog 3  &kp F12  &kp PLUS   &kp MINUS              &kp EQUAL          &kp QUESTION     &trans         &kp DOUBLE_QUOTES
+                                                           &kp LEFT_ALT      &kp RC(BACKSPACE)     &kp LC(DELETE)  &trans  &trans   &trans     &trans                 &kp DELETE
+            >;
+
+            sensor-bindings = <&scroll_left_right>;
+        };
+
+        qwerty {
+            display-name = "QWER";
+            // | ESC   | 1 | 2 | 3   | 4   | 5   |                    | 6    | 7     | 8   | 9 | 0 | BSPC  |
+            // | TAB   | Q | W | E   | R   | T   |                    | Y    | U     | I   | O | P | P     |
+            // | SHIFT | A | S | D   | F   | G   |                    | H    | J     | K   | L | P | P     |
+            // | CTRL  | Z | X | C   | V   | B   | TOG QWER | TOG NUM | N    | M     | ,   | . | - | ENTER |
+            //                 | ALT | GUI | NAV | SPC      | SPC     | PROG | ALTGR | GUI |
+            bindings = <
+                &kp ESC    &kp N1  &kp N2  &kp N3    &kp N4    &kp N5                        &kp N6  &kp N7    &kp N8     &kp N9   &kp N0     &kp BSPC
+                &kp TAB    &kp Q   &kp W   &kp E     &kp R     &kp T                         &kp Y   &kp U     &kp I      &kp O    &kp P      &kp P
+                &kp LSHFT  &kp A   &kp S   &kp D     &kp F     &kp G                         &kp H   &kp J     &kp K      &kp L    &kp P      &kp P
+                &kp LCTRL  &kp Z   &kp X   &kp C     &kp V     &kp B   &tog 3     &tog 4     &kp N   &kp M     &kp COMMA  &kp DOT  &kp MINUS  &kp ENTER
+                                           &kp LALT  &kp LGUI  &mo 1   &kp SPACE  &kp SPACE  &mo 2   &kp RALT  &kp RGUI
+            >;
+
+            sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
+        };
+
+        numpad {
+            display-name = "NUM";
+            // | ESC   |   |               |               |                |         |                   |   | / | * | - | +     | BSPC  |
+            // | TAB   |   | MKP MB4       | MMV MOVE_UP   | MKP MB5        |         |                   |   | 7 | 8 | 9 | +     | DEL   |
+            // | SHIFT |   | MMV MOVE_LEFT | MMV MOVE_DOWN | MMV MOVE_RIGHT |         |                   |   | 4 | 5 | 6 | ENTER | ENTER |
+            // | CTRL  |   |               |               |                |         | MOUS    | TOG NUM |   | 1 | 2 | 3 | ENTER | ENTER |
+            //                             |               | MKP MB3        | MKP MB2 | MKP MB1 | SPC     | 0 | . | . |
+            bindings = <
+                &kp ESC    &trans  &trans          &trans          &trans           &trans                         &trans  &kp SLASH  &kp ASTERISK  &kp MINUS  &kp PLUS   &kp BSPC
+                &kp TAB    &trans  &mkp MB4        &mmv MOVE_UP    &mkp MB5         &trans                         &trans  &kp N7     &kp N8        &kp N9     &kp PLUS   &kp DEL
+                &kp LSHFT  &trans  &mmv MOVE_LEFT  &mmv MOVE_DOWN  &mmv MOVE_RIGHT  &trans                         &trans  &kp N4     &kp N5        &kp N6     &kp ENTER  &kp ENTER
+                &kp LCTRL  &trans  &trans          &trans          &trans           &trans    &mo 5     &tog 4     &trans  &kp N1     &kp N2        &kp N3     &kp ENTER  &kp ENTER
+                                                   &trans          &mkp MB3         &mkp MB2  &mkp MB1  &kp SPACE  &kp N0  &kp DOT    &kp DOT
+            >;
+
+            sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
+        };
+
+        mousing {
+            display-name = "MOUS";
+            // |   |   |         |         |         |         |                    | MKP MB1 | MKP MB2       |               |                |   |   |
+            // |   |   |         |         |         |         |                    |         | MSC SCRL_UP   | MMV MOVE_UP   | MSC SCRL_DOWN  |   |   |
+            // |   |   | MKP MB3 | MKP MB2 | MKP MB1 |         |                    |         | MMV MOVE_LEFT | MMV MOVE_DOWN | MMV MOVE_RIGHT |   |   |
+            // |   |   |         |         |         |         | TOG MOUS |         |         | MKP MB4       |               | MKP MB5        |   |   |
+            //                   |         | MKP MB4 | MKP MB5 |          | MKP MB1 | MKP MB3 | MKP MB2       |               |
+            bindings = <
+                &trans  &trans  &trans    &trans    &trans    &trans                      &mkp MB1  &mkp MB2        &trans          &trans           &trans  &trans
+                &trans  &trans  &trans    &trans    &trans    &trans                      &trans    &msc SCRL_UP    &mmv MOVE_UP    &msc SCRL_DOWN   &trans  &trans
+                &trans  &trans  &mkp MB3  &mkp MB2  &mkp MB1  &trans                      &trans    &mmv MOVE_LEFT  &mmv MOVE_DOWN  &mmv MOVE_RIGHT  &trans  &trans
+                &trans  &trans  &trans    &trans    &trans    &trans    &tog 5  &trans    &trans    &mkp MB4        &trans          &mkp MB5         &trans  &trans
+                                          &trans    &mkp MB4  &mkp MB5  &trans  &mkp MB1  &mkp MB3  &mkp MB2        &trans
+            >;
+
+            sensor-bindings = <&scroll_up_down>;
+        };
+    };
+};
