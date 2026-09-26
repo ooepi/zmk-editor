@@ -18,12 +18,13 @@ interface KeyboardViewProps {
   config: ZmkConfig;
   dispatch: Dispatch<EditorAction>;
   onCreated: () => void;
+  onDesign?: () => void;
 }
 
 const FEATURE_LABELS: Record<string, string> = { encoder: 'encoder', display: 'display', underglow: 'RGB', studio: 'Studio', backlight: 'backlight' };
 
 /** The current keyboard's layout, and starting a new config for another keyboard. */
-export function KeyboardView({ config, dispatch, onCreated }: KeyboardViewProps) {
+export function KeyboardView({ config, dispatch, onCreated, onDesign }: KeyboardViewProps) {
   const keyCount = config.keymap.layers[0]?.bindings.length ?? 0;
   const current = findKeyboard(config.keyboard);
   const fitting = current ? layoutsFor(current, keyCount) : [];
@@ -45,12 +46,15 @@ export function KeyboardView({ config, dispatch, onCreated }: KeyboardViewProps)
             </>
           )}
         </p>
-        {!current && (
+        {config.layout && config.layout.keys.length === keyCount && (
+          <p className="small">Using your own layout (saved as config/info.json).</p>
+        )}
+        {!current && !config.layout && (
           <p className="muted small">
             “{config.keyboard}” isn’t in ZMK’s keyboard list (it may be defined in your own repo), so it’s drawn as a grid.
           </p>
         )}
-        {current && fitting.length === 0 && (
+        {current && fitting.length === 0 && !config.layout && (
           <p className="muted small">No {current.name} layout has {keyCount} keys, so the keymap is drawn as a grid.</p>
         )}
         {fitting.length > 1 && (
@@ -68,6 +72,13 @@ export function KeyboardView({ config, dispatch, onCreated }: KeyboardViewProps)
               ))}
             </select>
           </label>
+        )}
+        {onDesign && (
+          <div className="row">
+            <button type="button" className="button" onClick={onDesign}>
+              Open layout designer
+            </button>
+          </div>
         )}
       </section>
 

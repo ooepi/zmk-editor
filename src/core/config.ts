@@ -6,6 +6,8 @@ import { generateKeymap } from './keymap/generator.ts';
 import { importKeymap } from './keymap/importer.ts';
 import { emptyKeymap, type KeymapModel } from './keymap/model.ts';
 import { textLayoutFor } from './layouts/index.ts';
+import { generateInfoJson, parseInfoJson } from './layouts/qmkInfo.ts';
+import type { PhysicalLayout } from './layouts/types.ts';
 
 /** Everything the editor manages in a zmk-config repo. */
 export interface ZmkConfig {
@@ -15,6 +17,8 @@ export interface ZmkConfig {
   kconfig: KconfigModel;
   west: WestModel;
   build: BuildModel;
+  /** A layout drawn in the designer, saved as `config/info.json`; overrides the catalog layout. */
+  layout?: PhysicalLayout;
 }
 
 /** Repo path → file contents. */
@@ -27,6 +31,7 @@ export function configPaths(keyboard: string) {
     west: 'config/west.yml',
     build: 'build.yaml',
     workflow: '.github/workflows/build.yml',
+    info: 'config/info.json',
   };
 }
 
@@ -50,28 +55,41 @@ export function importConfig(files: ConfigFiles, keyboard?: string): { config: Z
   const west = parseWestManifest(westText);
   warnings.push(...west.warnings);
 
-  return {
-    config: {
-      keyboard: name,
-      keymap,
-      kconfig: parseKconfig(files[paths.kconfig] ?? ''),
-      west: west.model,
-      build: parseBuildMatrix(files[paths.build] ?? ''),
-    },
-    warnings,
+  const config: ZmkConfig = {
+    keyboard: name,
+    keymap,
+    kconfig: parseKconfig(files[paths.kconfig] ?? ''),
+    west: west.model,
+    build: parseBuildMatrix(files[paths.build] ?? ''),
   };
+  const infoText = files[paths.info];
+  if (infoText !== undefined) {
+    const layout = parseInfoJson(infoText);
+    const keyCount = keymap.layers[0]?.bindings.length ?? 0;
+    if (!layout) warnings.push(`Ignored ${paths.info}: it has no layout.`);
+    else {
+      config.layout = layout;
+      if (layout.keys.length !== keyCount) {
+        warnings.push(`${paths.info} has ${layout.keys.length} keys but the keymap has ${keyCount}; fix it in the layout designer.`);
+      }
+    }
+  }
+  return { config, warnings };
 }
 
 /** Writes every file the editor owns, including the build workflow. */
 export function generateConfig(config: ZmkConfig): ConfigFiles {
   const paths = configPaths(config.keyboard);
-  return {
-    [paths.keymap]: generateKeymap(config.keymap, textLayoutFor(config.keyboard, config.keymap.layers[0]?.bindings.length ?? 0)),
+  const keyCount = config.keymap.layers[0]?.bindings.length ?? 0;
+  const files: ConfigFiles = {
+    [paths.keymap]: generateKeymap(config.keymap, textLayoutFor(config.keyboard, keyCount, config.layout)),
     [paths.kconfig]: generateKconfig(config.kconfig),
     [paths.west]: generateWestManifest(config.west),
     [paths.build]: generateBuildMatrix(config.build),
     [paths.workflow]: generateWorkflow(config.west.zmkVersion),
   };
+  if (config.layout) files[paths.info] = generateInfoJson(config.layout);
+  return files;
 }
 
 function findKeyboard(files: ConfigFiles): string {
