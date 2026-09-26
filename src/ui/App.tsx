@@ -4,6 +4,7 @@ import { behaviorKind } from '../core/keymap/model.ts';
 import { getPhysicalLayout, gridLayout } from '../core/layouts/index.ts';
 import { BehaviorsView } from './components/BehaviorsView.tsx';
 import { BindingPanel } from './components/BindingPanel.tsx';
+import { BuildView } from './components/BuildView.tsx';
 import { CombosPanel } from './components/CombosPanel.tsx';
 import { EncoderPanel } from './components/EncoderPanel.tsx';
 import { EncoderStrip } from './components/EncoderStrip.tsx';
@@ -15,7 +16,7 @@ import { VersionSelect } from './components/VersionSelect.tsx';
 import { useEditor } from './state/useEditor.ts';
 import { useTheme } from './useTheme.ts';
 
-type View = 'keymap' | 'combos' | 'behaviors' | 'macros' | 'modules';
+type View = 'keymap' | 'combos' | 'behaviors' | 'macros' | 'modules' | 'build';
 
 function isTyping(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|SELECT|TEXTAREA)$/.test(target.tagName));
@@ -63,6 +64,7 @@ export function App() {
     { id: 'behaviors', label: `Behaviors (${keymap.behaviors.length - macroCount})` },
     { id: 'macros', label: `Macros (${macroCount})` },
     { id: 'modules', label: `Modules (${config.west.modules.length})` },
+    { id: 'build', label: 'Build' },
   ];
 
   const onKeyClick = (index: number) => {
@@ -116,7 +118,11 @@ export function App() {
           </button>
         </div>
       )}
-      {view === 'modules' ? (
+      {view === 'build' ? (
+        <main className="workspace single">
+          <BuildView config={config} dispatch={dispatch} />
+        </main>
+      ) : view === 'modules' ? (
         <main className="workspace single">
           <ModulesView config={config} dispatch={dispatch} />
         </main>

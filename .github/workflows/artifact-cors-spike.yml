@@ -1,13 +1,10 @@
 # Spike for Milestone 6: checks whether a browser page on another origin can
 # download an Actions artifact (the editor's .uf2 download). See
-# scripts/spikes/artifact-cors.mjs. Runs on demand.
+# scripts/spikes/artifact-cors.mjs. First run (2026-09-26): the download
+# works (200 from Azure blob storage). Re-run by hand if downloads break.
 name: Artifact CORS spike
 
 on:
-  push:
-    paths:
-      - 'scripts/spikes/artifact-cors.mjs'
-      - '.github/workflows/artifact-cors-spike.yml'
   workflow_dispatch:
 
 permissions:
