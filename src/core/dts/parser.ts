@@ -1,6 +1,7 @@
 import type { DtDocument, DtNode, DtProperty, DtValue, TopLevelItem } from './ast.ts';
 import { tokenizeCells } from './cells.ts';
 import { stripComments } from './comments.ts';
+import { resolveConditionals } from './conditionals.ts';
 
 class DtsSyntaxError extends Error {}
 
@@ -11,7 +12,9 @@ const NAME_CHAR = /[A-Za-z0-9,._+\-#@?]/;
  * supported subset becomes a `raw` item, so nothing is lost.
  */
 export function parseDts(text: string): DtDocument {
-  return new Parser(stripComments(text)).parseDocument();
+  const { text: resolvedText, resolved } = resolveConditionals(stripComments(text));
+  const doc = new Parser(resolvedText).parseDocument();
+  return resolved ? { ...doc, resolvedConditionals: true } : doc;
 }
 
 class Parser {

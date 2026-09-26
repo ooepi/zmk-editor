@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { toggleComboKey, replaceCombo } from '../core/keymap/comboEdit.ts';
 import { behaviorKind } from '../core/keymap/model.ts';
-import { getPhysicalLayout, gridLayout } from '../core/layouts/index.ts';
+import { findKeyboard } from '../core/catalog/keyboards.ts';
+import { physicalLayoutFor } from '../core/layouts/index.ts';
 import { BehaviorsView } from './components/BehaviorsView.tsx';
 import { BindingPanel } from './components/BindingPanel.tsx';
 import { BuildView } from './components/BuildView.tsx';
@@ -9,6 +10,7 @@ import { CombosPanel } from './components/CombosPanel.tsx';
 import { EncoderPanel } from './components/EncoderPanel.tsx';
 import { EncoderStrip } from './components/EncoderStrip.tsx';
 import { KeyboardCanvas } from './components/KeyboardCanvas.tsx';
+import { KeyboardView } from './components/KeyboardView.tsx';
 import { LayerBar } from './components/LayerBar.tsx';
 import { ModulesView } from './components/ModulesView.tsx';
 import { SettingsView } from './components/SettingsView.tsx';
@@ -16,9 +18,10 @@ import { Toolbar } from './components/Toolbar.tsx';
 import { VersionSelect } from './components/VersionSelect.tsx';
 import { useEditor } from './state/useEditor.ts';
 import { isLoginCallback } from './state/githubLogin.ts';
+import { usePreferences } from './state/preferences.ts';
 import { useTheme } from './useTheme.ts';
 
-type View = 'keymap' | 'combos' | 'behaviors' | 'macros' | 'modules' | 'settings' | 'build';
+type View = 'keymap' | 'combos' | 'behaviors' | 'macros' | 'modules' | 'settings' | 'build' | 'keyboard';
 
 function isTyping(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|SELECT|TEXTAREA)$/.test(target.tagName));
@@ -34,8 +37,8 @@ export function App() {
   const { config, layer, key, sensor } = state;
   const { keymap } = config;
   const keyCount = keymap.layers[0]?.bindings.length ?? 0;
-  const physical = getPhysicalLayout(config.keyboard);
-  const layout = physical && physical.keys.length === keyCount ? physical : gridLayout(keyCount);
+  const { layouts } = usePreferences();
+  const layout = physicalLayoutFor(config.keyboard, keyCount, layouts[config.keyboard]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -88,7 +91,14 @@ export function App() {
             ⌨
           </span>
           ZMK Editor
-          <span className="badge">{config.keyboard}</span>
+          <button
+            type="button"
+            className={`badge badge-button${view === 'keyboard' ? ' active' : ''}`}
+            onClick={() => setView('keyboard')}
+            title="Keyboard and layout"
+          >
+            {findKeyboard(config.keyboard)?.name ?? config.keyboard} ▾
+          </button>
           <VersionSelect config={config} dispatch={dispatch} />
         </div>
         <Toolbar
@@ -121,7 +131,11 @@ export function App() {
           </button>
         </div>
       )}
-      {view === 'settings' ? (
+      {view === 'keyboard' ? (
+        <main className="workspace single">
+          <KeyboardView config={config} dispatch={dispatch} onCreated={() => setView('keymap')} />
+        </main>
+      ) : view === 'settings' ? (
         <main className="workspace single">
           <SettingsView config={config} dispatch={dispatch} />
         </main>

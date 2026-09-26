@@ -5,7 +5,7 @@ import { generateWorkflow } from './files/workflow.ts';
 import { generateKeymap } from './keymap/generator.ts';
 import { importKeymap } from './keymap/importer.ts';
 import { emptyKeymap, type KeymapModel } from './keymap/model.ts';
-import { getTextLayout } from './layouts/index.ts';
+import { textLayoutFor } from './layouts/index.ts';
 
 /** Everything the editor manages in a zmk-config repo. */
 export interface ZmkConfig {
@@ -66,7 +66,7 @@ export function importConfig(files: ConfigFiles, keyboard?: string): { config: Z
 export function generateConfig(config: ZmkConfig): ConfigFiles {
   const paths = configPaths(config.keyboard);
   return {
-    [paths.keymap]: generateKeymap(config.keymap, getTextLayout(config.keyboard)),
+    [paths.keymap]: generateKeymap(config.keymap, textLayoutFor(config.keyboard, config.keymap.layers[0]?.bindings.length ?? 0)),
     [paths.kconfig]: generateKconfig(config.kconfig),
     [paths.west]: generateWestManifest(config.west),
     [paths.build]: generateBuildMatrix(config.build),
