@@ -65,7 +65,7 @@ In `ooepi/zmk-editor`: **Settings → Secrets and variables → Actions**.
 | Name | Value |
 | --- | --- |
 | `GH_APP_CLIENT_ID` | the Client ID |
-| `GH_APP_SLUG` | the app's URL name |
+| `GH_APP_SLUG` | the app's URL name only, e.g. `zmk-editor-ooepi` (the full `https://github.com/apps/…` URL also works) |
 | `AUTH_HELPER_URL` | set in step 4 |
 
 ## 4. Deploy

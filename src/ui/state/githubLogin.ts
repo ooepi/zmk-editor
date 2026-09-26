@@ -9,9 +9,17 @@ import {
 } from '../../core/github/oauth.ts';
 
 /** Login is available when the build was given the GitHub App and helper settings. */
+/** Accepts the app's name or its full `https://github.com/apps/<name>` URL. */
+export function normalizeAppSlug(value: string): string {
+  return value
+    .trim()
+    .replace(/^(https?:\/\/)?(www\.)?github\.com\/apps\//i, '')
+    .replace(/\/.*$/, '');
+}
+
 export function authConfig(): AuthConfig | null {
   const clientId = import.meta.env.VITE_GITHUB_APP_CLIENT_ID;
-  const appSlug = import.meta.env.VITE_GITHUB_APP_SLUG;
+  const appSlug = normalizeAppSlug(import.meta.env.VITE_GITHUB_APP_SLUG ?? '');
   const helperUrl = import.meta.env.VITE_AUTH_HELPER_URL;
   return clientId && appSlug && helperUrl ? { clientId, appSlug, helperUrl } : null;
 }

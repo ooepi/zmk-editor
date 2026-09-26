@@ -6,7 +6,7 @@ import { generateConfig } from '../core/config.ts';
 import { FakeGitHub } from '../core/github/fakeGitHub.ts';
 import { App } from './App.tsx';
 import { demoConfig } from './state/demo.ts';
-import { navigation } from './state/githubLogin.ts';
+import { navigation, normalizeAppSlug } from './state/githubLogin.ts';
 
 const HELPER = 'https://auth.example.workers.dev';
 let fake: FakeGitHub;
@@ -93,5 +93,13 @@ describe('Log in with GitHub', () => {
     await user.click(screen.getByRole('button', { name: 'Build' }));
     await user.click(screen.getByText('Use a token instead'));
     expect(screen.getByLabelText('Token')).toBeTruthy();
+  });
+});
+
+describe('normalizeAppSlug', () => {
+  it('accepts the app name or its full URL', () => {
+    expect(normalizeAppSlug('zmk-editor-ooepi')).toBe('zmk-editor-ooepi');
+    expect(normalizeAppSlug(' https://github.com/apps/zmk-editor-ooepi/ ')).toBe('zmk-editor-ooepi');
+    expect(normalizeAppSlug('github.com/apps/zmk-editor-ooepi/installations/new')).toBe('zmk-editor-ooepi');
   });
 });
