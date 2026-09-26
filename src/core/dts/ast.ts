@@ -30,4 +30,6 @@ export interface DtDocument {
   items: TopLevelItem[];
   /** All `/ { … }` blocks merged into one, or null if there were none. */
   root: DtNode | null;
+  /** True when `#if` blocks inside nodes were evaluated (only active branches kept). */
+  resolvedConditionals?: boolean;
 }

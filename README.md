@@ -22,6 +22,7 @@ npm run build      # production build in dist/
 - `src/core/` — framework-free logic: devicetree parser/printer (`dts/`), the keymap model with its importer and generator (`keymap/`), `.conf` / `west.yml` / `build.yaml` / workflow files (`files/`), keyboard layouts (`layouts/`) and the whole-repo API (`config.ts`). It must not import React.
 - `src/ui/` — the React app.
 - `worker/` — the "Log in with GitHub" helper (Cloudflare Worker).
+- `scripts/` — generators for the catalogs: keycodes (`gen-keycodes.mjs`), Unicode aliases (`gen-unicode.mjs`) and keyboards (`gen-keyboards.ts`, run on a ZMK checkout: `node scripts/gen-keyboards.ts /path/to/zmk v0.3`).
 - `test/fixtures/lily58/` — a real, working Lily58 config.
 - `test/generated/lily58/` — what the editor generates from that fixture. The tests fail if it goes stale (update with `npx vitest run -u`), and `.github/workflows/firmware.yml` builds it with ZMK to prove it compiles.
 

@@ -4,10 +4,12 @@ import { useSyncExternalStore } from 'react';
 export interface Preferences {
   /** zmk-unicode alias languages to show first (the Finnish/Swedish preset sets `swedish`). */
   unicodeLanguages: string[];
+  /** Chosen layout variant per keyboard, for keyboards with several (e.g. 60% ANSI/ISO). */
+  layouts: Record<string, string>;
 }
 
 const STORAGE_KEY = 'zmk-editor.preferences.v1';
-const DEFAULTS: Preferences = { unicodeLanguages: [] };
+const DEFAULTS: Preferences = { unicodeLanguages: [], layouts: {} };
 
 function load(): Preferences {
   try {

@@ -2,7 +2,7 @@ import { useRef, type Dispatch } from 'react';
 import { strToU8, zipSync } from 'fflate';
 import { configPaths, generateConfig, importConfig, type ZmkConfig } from '../../core/config.ts';
 import { generateKeymap } from '../../core/keymap/generator.ts';
-import { getTextLayout } from '../../core/layouts/index.ts';
+import { textLayoutFor } from '../../core/layouts/index.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
 import { demoConfig } from '../state/demo.ts';
 import type { Theme } from '../useTheme.ts';
@@ -61,7 +61,7 @@ export function Toolbar({ config, canUndo, canRedo, theme, onToggleTheme, dispat
   };
 
   const downloadKeymap = () => {
-    const text = generateKeymap(config.keymap, getTextLayout(config.keyboard));
+    const text = generateKeymap(config.keymap, textLayoutFor(config.keyboard, config.keymap.layers[0]?.bindings.length ?? 0));
     save(new Blob([text], { type: 'text/plain' }), `${config.keyboard}.keymap`);
   };
 
@@ -71,7 +71,7 @@ export function Toolbar({ config, canUndo, canRedo, theme, onToggleTheme, dispat
   };
 
   const resetDemo = () => {
-    if (window.confirm('Replace your changes with the Lily58 demo config?')) {
+    if (window.confirm('Replace the editor contents with the Lily58 demo config?')) {
       const demo = demoConfig();
       dispatch({ type: 'load', config: demo.config, warnings: demo.warnings });
     }

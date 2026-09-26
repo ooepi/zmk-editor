@@ -15,7 +15,7 @@ function contentSecurityPolicy(helperUrl: string | undefined): Plugin {
     "script-src 'self'",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: https://avatars.githubusercontent.com",
-    `connect-src 'self' https://api.github.com https://*.blob.core.windows.net https://*.actions.githubusercontent.com ${helperOrigin}`.trim(),
+    `connect-src 'self' https://api.github.com https://raw.githubusercontent.com https://*.blob.core.windows.net https://*.actions.githubusercontent.com ${helperOrigin}`.trim(),
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

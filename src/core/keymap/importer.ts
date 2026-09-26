@@ -1,6 +1,7 @@
-import type { DtNode, DtProperty } from '../dts/ast.ts';
+import type { DtNode, DtProperty, DtValue, TopLevelItem } from '../dts/ast.ts';
+import { tokenizeCells } from '../dts/cells.ts';
 import { parseDts } from '../dts/parser.ts';
-import { bindingsFromValues } from './bindings.ts';
+import { bindingsFromValues as bindingsFromCells } from './bindings.ts';
 import type { Behavior, Combo, KeymapModel, Layer } from './model.ts';
 import { emptyKeymap } from './model.ts';
 
@@ -20,6 +21,8 @@ export function importKeymap(text: string): ImportResult<KeymapModel> {
   for (const item of doc.items) {
     if (item.kind === 'raw') warnings.push(`Kept as raw text: ${firstLine(item.text)}`);
   }
+  const macros = macroExpander(doc.items);
+  bindingsFromValues = (values) => bindingsFromCells(values.map((v) => (v.kind === 'cells' ? { ...v, tokens: macros.expand(v.tokens) } : v)));
 
   if (doc.root) {
     model.rootProperties = doc.root.properties;
@@ -40,7 +43,66 @@ export function importKeymap(text: string): ImportResult<KeymapModel> {
       }
     }
   }
+  if (doc.resolvedConditionals) {
+    warnings.push('Evaluated #if/#ifdef blocks inside nodes; only the active branches are kept when saved.');
+  }
+  if (macros.used.size > 0) {
+    warnings.push(`Expanded macros ${[...macros.used].sort().join(', ')} in bindings; they are written out in full when saved.`);
+  }
   return { model, warnings };
+}
+
+/** Set per import: reads bindings with the file's binding macros expanded. */
+let bindingsFromValues: (values: DtValue[]) => ReturnType<typeof bindingsFromCells> = bindingsFromCells;
+
+/**
+ * Expands `#define`s that produce bindings (`HRML(A, S)`, `XXX` → `&none`).
+ * Value macros such as `NAV` in `&mo NAV` are not bindings and stay as written.
+ */
+function macroExpander(items: TopLevelItem[]): { expand: (tokens: string[]) => string[]; used: Set<string> } {
+  const defines = new Map<string, { params?: string[]; value: string }>();
+  for (const item of items) if (item.kind === 'define') defines.set(item.name, item);
+  const used = new Set<string>();
+
+  const splitArgs = (text: string) => {
+    const args: string[] = [];
+    let depth = 0;
+    let current = '';
+    for (const ch of text) {
+      if (ch === '(') depth++;
+      else if (ch === ')') depth--;
+      if (ch === ',' && depth === 0) {
+        args.push(current.trim());
+        current = '';
+      } else current += ch;
+    }
+    args.push(current.trim());
+    return args;
+  };
+
+  const expand = (tokens: string[], depth = 0): string[] => {
+    if (depth > 10) return tokens;
+    return tokens.flatMap((token) => {
+      const call = /^([A-Za-z_]\w*)\(([\s\S]*)\)$/.exec(token);
+      const fn = call?.[1] ? defines.get(call[1]) : undefined;
+      if (call?.[1] && fn?.params) {
+        const args = splitArgs(call[2] ?? '');
+        const params = fn.params;
+        const body = params.length
+          ? fn.value.replace(new RegExp(`\\b(${params.join('|')})\\b`, 'g'), (p) => args[params.indexOf(p)] ?? p)
+          : fn.value;
+        used.add(call[1]);
+        return expand(tokenizeCells(body), depth + 1);
+      }
+      const object = defines.get(token);
+      if (object && !object.params && object.value.includes('&')) {
+        used.add(token);
+        return expand(tokenizeCells(object.value), depth + 1);
+      }
+      return [token];
+    });
+  };
+  return { expand, used };
 }
 
 /**
