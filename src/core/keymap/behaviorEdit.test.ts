@@ -52,7 +52,7 @@ describe('createBehavior', () => {
     expect(createBehavior(model, 'sensor-rotate').properties).toEqual([
       { name: '#sensor-binding-cells', values: [{ kind: 'cells', tokens: ['0'] }] },
     ]);
-    expect(createBehavior(model, 'macro').bindings.map(formatBinding)).toEqual(['&macro_tap', '&kp H', '&kp I']);
+    expect(createBehavior(model, 'macro').bindings.map(formatBinding)).toEqual(['&macro_tap']);
   });
 });
 

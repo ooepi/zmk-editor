@@ -73,7 +73,7 @@ export function createBehavior(model: KeymapModel, kind: NewBehaviorKind): Behav
         'macro',
         'zmk,behavior-macro',
         [cells('#binding-cells', '0')],
-        [{ behavior: 'macro_tap', params: [] }, kp('H'), kp('I')],
+        [{ behavior: 'macro_tap', params: [] }],
       );
   }
 }

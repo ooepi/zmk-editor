@@ -5,6 +5,7 @@ interface KeycapProps {
   index: number;
   label: KeycapLabel;
   selected: boolean;
+  highlighted?: boolean;
   style: CSSProperties;
   onSelect: (index: number) => void;
 }
@@ -17,12 +18,12 @@ function sizeClass(text: string): string {
   return 'size-xs';
 }
 
-export function Keycap({ index, label, selected, style, onSelect }: KeycapProps) {
+export function Keycap({ index, label, selected, highlighted = false, style, onSelect }: KeycapProps) {
   const description = label.sub ? `${label.main} (${label.sub})` : label.main;
   return (
     <button
       type="button"
-      className={`keycap kind-${label.kind}${selected ? ' selected' : ''}`}
+      className={`keycap kind-${label.kind}${selected ? ' selected' : ''}${highlighted ? ' highlighted' : ''}`}
       style={style}
       aria-label={`Key ${index}: ${description}`}
       aria-pressed={selected}

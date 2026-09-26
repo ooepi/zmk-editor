@@ -10,12 +10,14 @@ interface KeyboardCanvasProps {
   layer: number;
   selectedKey: number | null;
   onSelectKey: (index: number) => void;
+  /** Keys to mark, e.g. the keys of the selected combo. */
+  highlighted?: ReadonlySet<number>;
 }
 
 /** Margin around the keys (in layout units) so rotated thumb keys aren't clipped. */
 const MARGIN = 40;
 
-export function KeyboardCanvas({ keymap, layout, layer, selectedKey, onSelectKey }: KeyboardCanvasProps) {
+export function KeyboardCanvas({ keymap, layout, layer, selectedKey, onSelectKey, highlighted }: KeyboardCanvasProps) {
   const labels = useMemo(() => {
     const ctx = displayContext(keymap);
     return (keymap.layers[layer]?.bindings ?? []).map((binding) => describeBinding(binding, ctx));
@@ -47,6 +49,7 @@ export function KeyboardCanvas({ keymap, layout, layer, selectedKey, onSelectKey
             index={index}
             label={label}
             selected={selectedKey === index}
+            highlighted={highlighted?.has(index) ?? false}
             style={keyStyle}
             onSelect={onSelectKey}
           />
