@@ -14,6 +14,7 @@ import { ModulesView } from './components/ModulesView.tsx';
 import { Toolbar } from './components/Toolbar.tsx';
 import { VersionSelect } from './components/VersionSelect.tsx';
 import { useEditor } from './state/useEditor.ts';
+import { isLoginCallback } from './state/githubLogin.ts';
 import { useTheme } from './useTheme.ts';
 
 type View = 'keymap' | 'combos' | 'behaviors' | 'macros' | 'modules' | 'build';
@@ -25,7 +26,7 @@ function isTyping(target: EventTarget | null): boolean {
 export function App() {
   const [theme, toggleTheme] = useTheme();
   const [state, dispatch] = useEditor();
-  const [view, setView] = useState<View>('keymap');
+  const [view, setView] = useState<View>(() => (isLoginCallback() ? 'build' : 'keymap'));
   const [combo, setCombo] = useState<string | null>(null);
   const [behavior, setBehavior] = useState<string | null>(null);
   const [macro, setMacro] = useState<string | null>(null);

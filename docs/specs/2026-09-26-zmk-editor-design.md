@@ -61,7 +61,7 @@ The first user is the repo owner:
   - Commit through the Git Data API (blobs → tree → commit → ref update).
   - Poll the workflow run for that commit, then download the artifact zip and unzip it in the browser (`fflate`).
   - Offer each `.uf2` for download. Offer "write to keyboard" through the File System Access API where supported.
-- **GitHub (v2):** a GitHub App with a small Cloudflare Worker for the OAuth code exchange.
+- **GitHub (v2):** a GitHub App with a small Cloudflare Worker for the OAuth code exchange. Built: PKCE + state, repo picker from the app's installations, token fallback kept, and a Content-Security-Policy on the site. Setup: [docs/github-login-setup.md](../github-login-setup.md).
 
 ## Known risks (spike early)
 

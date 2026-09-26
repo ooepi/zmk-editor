@@ -1,0 +1,9 @@
+# ZMK Editor login helper. Deployed by .github/workflows/auth-worker.yml,
+# or by hand with `npx wrangler deploy` from this folder.
+# GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET are Worker secrets, not set here.
+name = "zmk-editor-auth"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+[vars]
+ALLOWED_ORIGINS = "https://ooepi.github.io,http://localhost:5173,http://localhost:4173"
