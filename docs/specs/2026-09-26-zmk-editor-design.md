@@ -66,6 +66,7 @@ The first user is the repo owner:
 ## Known risks (spike early)
 
 1. **Artifact download CORS.** The artifact URL redirects to blob storage, which may block cross-origin reads from the browser. Fallbacks: link to the run's artifact page, or proxy through a Worker.
+   - **Resolved (2026-09-26):** the spike workflow (`.github/workflows/artifact-cors-spike.yml`) downloaded an artifact from a browser page on another origin with a token, and got a 200 from Azure blob storage. The editor still falls back to the run page plus a drop-in zip if a download is ever blocked.
 2. **Importer coverage** for arbitrary user keymaps. The raw block keeps this safe.
 
 ## Milestones
