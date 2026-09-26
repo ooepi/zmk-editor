@@ -17,10 +17,12 @@ export function getPhysicalLayout(keyboard: string): PhysicalLayout | undefined 
 }
 
 /**
- * The layout to draw: a hand-made one, else the catalog layout with the
+ * The layout to draw: the config's own (designer) layout, else a hand-made
+ * one, else the catalog layout with the
  * keymap's key count (`preferred` picks among variants), else a grid.
  */
-export function physicalLayoutFor(keyboard: string, keyCount: number, preferred?: string): PhysicalLayout {
+export function physicalLayoutFor(keyboard: string, keyCount: number, preferred?: string, custom?: PhysicalLayout): PhysicalLayout {
+  if (custom && custom.keys.length === keyCount) return custom;
   const builtin = PHYSICAL_LAYOUTS[keyboard];
   if (builtin && builtin.keys.length === keyCount) return builtin;
   const def = findKeyboard(keyboard);
@@ -29,7 +31,8 @@ export function physicalLayoutFor(keyboard: string, keyCount: number, preferred?
 }
 
 /** The text grid for the generated `.keymap`, when one is known or can be derived. */
-export function textLayoutFor(keyboard: string, keyCount: number): TextLayout | undefined {
+export function textLayoutFor(keyboard: string, keyCount: number, custom?: PhysicalLayout): TextLayout | undefined {
+  if (custom && custom.keys.length === keyCount) return textLayoutFromPhysical(custom);
   const builtin = TEXT_LAYOUTS[keyboard];
   if (builtin) return builtin;
   const layout = physicalLayoutFor(keyboard, keyCount);

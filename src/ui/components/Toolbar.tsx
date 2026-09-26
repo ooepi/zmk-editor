@@ -43,6 +43,7 @@ async function filesToConfig(files: File[], current: ZmkConfig): Promise<{ confi
     else if (file.name.endsWith('.conf')) repo[paths.kconfig] = text;
     else if (/^west\.ya?ml$/.test(file.name)) repo[paths.west] = text;
     else if (/^build\.ya?ml$/.test(file.name)) repo[paths.build] = text;
+    else if (file.name === 'info.json') repo[paths.info] = text;
   }
   return importConfig(repo, keyboard);
 }
@@ -61,7 +62,7 @@ export function Toolbar({ config, canUndo, canRedo, theme, onToggleTheme, dispat
   };
 
   const downloadKeymap = () => {
-    const text = generateKeymap(config.keymap, textLayoutFor(config.keyboard, config.keymap.layers[0]?.bindings.length ?? 0));
+    const text = generateKeymap(config.keymap, textLayoutFor(config.keyboard, config.keymap.layers[0]?.bindings.length ?? 0, config.layout));
     save(new Blob([text], { type: 'text/plain' }), `${config.keyboard}.keymap`);
   };
 
@@ -98,7 +99,7 @@ export function Toolbar({ config, canUndo, canRedo, theme, onToggleTheme, dispat
         ref={fileInput}
         type="file"
         multiple
-        accept=".keymap,.conf,.yml,.yaml"
+        accept=".keymap,.conf,.yml,.yaml,.json"
         hidden
         data-testid="config-files"
         onChange={(e) => {

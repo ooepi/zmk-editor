@@ -92,7 +92,9 @@ describe('Lily58 fixture', () => {
 
   it('writes every repo file, with the workflow pinned to the ZMK version', () => {
     const generated = generateConfig(config);
-    expect(Object.keys(generated).sort()).toEqual(Object.values(configPaths('lily58')).sort());
+    // config/info.json is only written for a designer layout.
+    const { info: _info, ...paths } = configPaths('lily58');
+    expect(Object.keys(generated).sort()).toEqual(Object.values(paths).sort());
     expect(generated['.github/workflows/build.yml']).toContain('build-user-config.yml@v0.3');
     expect(generated['config/west.yml']).toContain('revision: v0.3');
     expect(generated['config/west.yml']).not.toMatch(/revision: (?!v0\.3)/);
