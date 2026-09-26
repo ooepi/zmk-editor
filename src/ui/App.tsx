@@ -11,13 +11,14 @@ import { EncoderStrip } from './components/EncoderStrip.tsx';
 import { KeyboardCanvas } from './components/KeyboardCanvas.tsx';
 import { LayerBar } from './components/LayerBar.tsx';
 import { ModulesView } from './components/ModulesView.tsx';
+import { SettingsView } from './components/SettingsView.tsx';
 import { Toolbar } from './components/Toolbar.tsx';
 import { VersionSelect } from './components/VersionSelect.tsx';
 import { useEditor } from './state/useEditor.ts';
 import { isLoginCallback } from './state/githubLogin.ts';
 import { useTheme } from './useTheme.ts';
 
-type View = 'keymap' | 'combos' | 'behaviors' | 'macros' | 'modules' | 'build';
+type View = 'keymap' | 'combos' | 'behaviors' | 'macros' | 'modules' | 'settings' | 'build';
 
 function isTyping(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|SELECT|TEXTAREA)$/.test(target.tagName));
@@ -65,6 +66,7 @@ export function App() {
     { id: 'behaviors', label: `Behaviors (${keymap.behaviors.length - macroCount})` },
     { id: 'macros', label: `Macros (${macroCount})` },
     { id: 'modules', label: `Modules (${config.west.modules.length})` },
+    { id: 'settings', label: 'Settings' },
     { id: 'build', label: 'Build' },
   ];
 
@@ -119,7 +121,11 @@ export function App() {
           </button>
         </div>
       )}
-      {view === 'build' ? (
+      {view === 'settings' ? (
+        <main className="workspace single">
+          <SettingsView config={config} dispatch={dispatch} />
+        </main>
+      ) : view === 'build' ? (
         <main className="workspace single">
           <BuildView config={config} dispatch={dispatch} />
         </main>

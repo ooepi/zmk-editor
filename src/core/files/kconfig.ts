@@ -38,3 +38,23 @@ export function generateKconfig(model: KconfigModel): string {
     .join('\n');
   return text ? `${text}\n` : '';
 }
+
+/** The last value set for `CONFIG_…` `name`, as written in the file. */
+export function readKconfigValue(model: KconfigModel, name: string): string | undefined {
+  const line = model.lines.findLast((l): l is Extract<KconfigLine, { kind: 'set' }> => l.kind === 'set' && l.name === name);
+  return line?.value;
+}
+
+/**
+ * Sets `name` in place (the last occurrence; duplicates are dropped) or
+ * appends it; `undefined` removes it so the default applies.
+ */
+export function writeKconfigValue(model: KconfigModel, name: string, value: string | undefined): KconfigModel {
+  const last = model.lines.findLastIndex((l) => l.kind === 'set' && l.name === name);
+  const lines = model.lines.flatMap((line, i): KconfigLine[] => {
+    if (line.kind !== 'set' || line.name !== name) return [line];
+    return i === last && value !== undefined ? [{ kind: 'set', name, value }] : [];
+  });
+  if (last === -1 && value !== undefined) lines.push({ kind: 'set', name, value });
+  return { lines };
+}
