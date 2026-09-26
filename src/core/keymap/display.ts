@@ -88,3 +88,34 @@ export function describeBinding(binding: Binding, modelOrContext: KeymapModel | 
 function withTag(label: KeycapLabel, def: BehaviorDef): KeycapLabel {
   return def.tag ? { ...label, sub: def.tag } : label;
 }
+
+/** What an encoder does each way. `name` is set for the keymap's own sensor behaviors. */
+export interface SensorLabel {
+  cw: string;
+  ccw: string;
+  name?: string;
+}
+
+export function describeSensorBinding(binding: Binding, modelOrContext: KeymapModel | DisplayContext): SensorLabel {
+  const ctx = 'catalog' in modelOrContext ? modelOrContext : displayContext(modelOrContext);
+  const { behavior: ref, params } = binding;
+  if (ref === 'trans') return { cw: '▽', ccw: '▽' };
+  if (ref === 'none') return { cw: '✕', ccw: '✕' };
+  const def = findBehavior(ctx.catalog, ref);
+  if (ref === 'inc_dec_kp') {
+    return { cw: describeParam(params[0], def?.params[0], ctx), ccw: describeParam(params[1], def?.params[1], ctx) };
+  }
+  const custom = def?.behavior;
+  if (custom && behaviorKind(custom) === 'sensor-rotate') {
+    // sensor-rotate-var passes one param to each direction's binding.
+    const [cw, ccw] = [0, 1].map((i) => {
+      const inner = custom.bindings[i];
+      if (!inner) return '?';
+      const param = params[i];
+      return describeBinding(param !== undefined && inner.params.length === 0 ? { ...inner, params: [param] } : inner, ctx).main;
+    });
+    return { cw: cw ?? '?', ccw: ccw ?? '?', name: ref };
+  }
+  const text = [ref, ...params].join(' ');
+  return { cw: text, ccw: text };
+}

@@ -74,9 +74,10 @@ function paramOrder(def: BehaviorDef): number[] {
   return def.holdParam === undefined ? indices : [...indices.filter((i) => i !== def.holdParam), def.holdParam];
 }
 
-function nodeName(displayName: string, taken: Set<string>): string {
-  const base = displayName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'layer';
-  const start = /^[a-z]/.test(base) ? base : `layer_${base}`;
+/** A devicetree node name from a display name, unique among `taken`. */
+export function nodeName(displayName: string, taken: Set<string>, fallback = 'layer'): string {
+  const base = displayName.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || fallback;
+  const start = /^[a-z]/.test(base) ? base : `${fallback}_${base}`;
   let name = start;
   for (let n = 2; taken.has(name); n++) name = `${start}_${n}`;
   return name;

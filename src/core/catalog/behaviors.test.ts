@@ -62,8 +62,13 @@ describe('behaviorCatalog', () => {
     expect(findBehavior(catalog, 'm2')?.params).toEqual([{ kind: 'raw' }, { kind: 'raw' }]);
   });
 
-  it('leaves out sensor-only behaviors and unknown refs', () => {
-    expect(findBehavior(catalog, 'scroll')).toBeUndefined();
+  it('puts encoder behaviors in the sensor group', () => {
+    expect(findBehavior(catalog, 'scroll')).toMatchObject({ group: 'sensor', params: [] });
+    expect(findBehavior(catalog, 'inc_dec_kp')?.group).toBe('sensor');
     expect(findBehavior(catalog, 'nope')).toBeUndefined();
+  });
+
+  it('has the macro controls', () => {
+    expect(findBehavior(catalog, 'macro_wait_time')).toMatchObject({ group: 'macro', params: [{ kind: 'number' }] });
   });
 });
