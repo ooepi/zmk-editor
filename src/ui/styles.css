@@ -1090,3 +1090,73 @@ select {
   font-size: 13px;
   margin-bottom: 8px;
 }
+
+/* Settings */
+
+.settings {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px 24px 48px;
+}
+
+.settings-grid {
+  columns: 320px;
+  column-gap: 12px;
+  margin: 12px 0 24px;
+}
+
+.settings-card {
+  break-inside: avoid;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.settings-card h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.settings-card > p {
+  margin: -6px 0 0;
+}
+
+.setting {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-left: 8px;
+  border-left: 2px solid transparent;
+}
+
+.setting.is-set {
+  border-left-color: var(--accent);
+}
+
+.setting-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.setting-bool,
+.setting-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.raw-conf summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.raw-conf textarea {
+  resize: vertical;
+  margin-bottom: 8px;
+}
