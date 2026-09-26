@@ -134,6 +134,13 @@ for (const keycode of KEYCODES) {
   }
 }
 
+const CATEGORY_ORDER = new Map(KEYCODE_CATEGORIES.map((c, i) => [c.id, i]));
+
+/** All keycodes, most common categories first (letters, numbers, symbols, …). */
+const BY_CATEGORY = [...KEYCODES].sort(
+  (a, b) => (CATEGORY_ORDER.get(a.category) ?? 0) - (CATEGORY_ORDER.get(b.category) ?? 0),
+);
+
 export function findKeycode(token: string): Keycode | undefined {
   return BY_TOKEN.get(token);
 }
@@ -146,7 +153,7 @@ export function preferredName(keycode: Keycode): string {
 /** Ranked search over names, aliases, labels and descriptions. */
 export function searchKeycodes(query: string, category?: KeycodeCategory): Keycode[] {
   const q = query.trim().toUpperCase();
-  const pool = category ? KEYCODES.filter((k) => k.category === category) : KEYCODES;
+  const pool = category ? KEYCODES.filter((k) => k.category === category) : BY_CATEGORY;
   if (!q) return pool;
   const scored: [number, number, Keycode][] = [];
   pool.forEach((keycode, index) => {

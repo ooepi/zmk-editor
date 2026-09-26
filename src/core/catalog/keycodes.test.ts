@@ -54,6 +54,10 @@ describe('searchKeycodes', () => {
     expect(searchKeycodes('volume').map((k) => k.name)).toContain('C_VOLUME_UP');
   });
 
+  it('lists common keys first when there is no query', () => {
+    expect(searchKeycodes('').slice(0, 3).map((k) => k.name)).toEqual(['A', 'B', 'C']);
+  });
+
   it('filters by category', () => {
     const results = searchKeycodes('', 'function');
     expect(results.length).toBeGreaterThanOrEqual(24);
