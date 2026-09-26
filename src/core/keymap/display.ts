@@ -1,5 +1,6 @@
 import { behaviorCatalog, findBehavior, type BehaviorDef, type ParamType } from '../catalog/behaviors.ts';
 import { keyExpressionLabel } from '../catalog/keycodes.ts';
+import { unicodeLabel } from '../catalog/unicode.ts';
 import { layerDisplayName, numericDefines } from './layers.ts';
 import { behaviorKind, type Binding, type KeymapModel } from './model.ts';
 
@@ -48,7 +49,10 @@ export function describeBinding(binding: Binding, modelOrContext: KeymapModel | 
   }
   if (ref === 'trans') return { main: '▽', kind: 'trans' };
   if (ref === 'none') return { main: '✕', kind: 'none' };
-  if (LAYER_REFS.has(ref)) return { main: describeParam(params[0], def.params[0], ctx), sub: ref, kind: 'layer' };
+  if (LAYER_REFS.has(ref) || ref === 'num_word') {
+    return { main: describeParam(params[0], def.params[0], ctx), sub: ref, kind: 'layer' };
+  }
+  if (def.params[0]?.kind === 'unicode') return { ...unicodeLabel(params), kind: 'key' };
 
   if (def.holdParam !== undefined) {
     const tapIndex = def.holdParam === 0 ? 1 : 0;

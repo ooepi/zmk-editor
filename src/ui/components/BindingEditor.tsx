@@ -13,6 +13,7 @@ import { formatBinding, parseBindings } from '../../core/keymap/bindings.ts';
 import { changeBehavior } from '../../core/keymap/edit.ts';
 import type { Binding, KeymapModel } from '../../core/keymap/model.ts';
 import { KeycodePicker } from './KeycodePicker.tsx';
+import { UnicodePicker } from './UnicodePicker.tsx';
 
 /** Where a binding is used; decides which behaviors are offered. */
 export type BindingContext = 'key' | 'macro' | 'sensor';
@@ -84,7 +85,14 @@ export function BindingEditor({ binding, keymap, context, onChange, label, short
       </label>
       {def && <p className="muted small">{def.description}</p>}
 
-      {def?.params.map((type, index) => (
+      {def?.params.map((type, index) =>
+        type.kind === 'unicode' ? (
+          <UnicodePicker
+            key={`${binding.behavior}-${index}`}
+            params={binding.params.slice(index)}
+            onChange={(tokens) => onChange({ ...binding, params: [...binding.params.slice(0, index), ...tokens] })}
+          />
+        ) : (
         <ParamField
           key={`${binding.behavior}-${index}`}
           name={prefix + paramName(def, index)}
@@ -96,7 +104,8 @@ export function BindingEditor({ binding, keymap, context, onChange, label, short
           onChange={(token) => setParam(index, token)}
           onEnumChange={(tokens) => onChange({ ...binding, params: [...binding.params.slice(0, index), ...tokens] })}
         />
-      ))}
+        ),
+      )}
 
       <RawBindingField key={formatBinding(binding)} binding={binding} label={`${prefix}Source`} onChange={onChange} />
 
@@ -194,6 +203,7 @@ function ParamField({ name, type, value, extra, keymap, pickerOpen, onChange, on
       );
     }
     case 'number':
+    case 'unicode':
     case 'raw':
       return (
         <label className="field">

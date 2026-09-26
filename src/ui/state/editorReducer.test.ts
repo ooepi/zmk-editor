@@ -64,4 +64,12 @@ describe('editorReducer', () => {
     expect(edited.notice).toBe('Done');
     expect(run(edited, { type: 'undo' }).config.keymap).toBe(state.config.keymap);
   });
+
+  it('records whole-config edits for undo', () => {
+    const state = start();
+    const config = { ...state.config, west: { ...state.config.west, zmkVersion: 'v0.2' } };
+    const edited = run(state, { type: 'editConfig', config });
+    expect(edited.config.west.zmkVersion).toBe('v0.2');
+    expect(run(edited, { type: 'undo' }).config.west.zmkVersion).toBe('v0.3');
+  });
 });

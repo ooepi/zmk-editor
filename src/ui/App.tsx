@@ -9,11 +9,13 @@ import { EncoderPanel } from './components/EncoderPanel.tsx';
 import { EncoderStrip } from './components/EncoderStrip.tsx';
 import { KeyboardCanvas } from './components/KeyboardCanvas.tsx';
 import { LayerBar } from './components/LayerBar.tsx';
+import { ModulesView } from './components/ModulesView.tsx';
 import { Toolbar } from './components/Toolbar.tsx';
+import { VersionSelect } from './components/VersionSelect.tsx';
 import { useEditor } from './state/useEditor.ts';
 import { useTheme } from './useTheme.ts';
 
-type View = 'keymap' | 'combos' | 'behaviors' | 'macros';
+type View = 'keymap' | 'combos' | 'behaviors' | 'macros' | 'modules';
 
 function isTyping(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|SELECT|TEXTAREA)$/.test(target.tagName));
@@ -60,6 +62,7 @@ export function App() {
     { id: 'combos', label: `Combos (${keymap.combos.length})` },
     { id: 'behaviors', label: `Behaviors (${keymap.behaviors.length - macroCount})` },
     { id: 'macros', label: `Macros (${macroCount})` },
+    { id: 'modules', label: `Modules (${config.west.modules.length})` },
   ];
 
   const onKeyClick = (index: number) => {
@@ -81,7 +84,7 @@ export function App() {
           </span>
           ZMK Editor
           <span className="badge">{config.keyboard}</span>
-          <span className="badge">ZMK {config.west.zmkVersion}</span>
+          <VersionSelect config={config} dispatch={dispatch} />
         </div>
         <Toolbar
           config={config}
@@ -113,7 +116,11 @@ export function App() {
           </button>
         </div>
       )}
-      {view === 'behaviors' || view === 'macros' ? (
+      {view === 'modules' ? (
+        <main className="workspace single">
+          <ModulesView config={config} dispatch={dispatch} />
+        </main>
+      ) : view === 'behaviors' || view === 'macros' ? (
         <main className="workspace single">
           <BehaviorsView
             keymap={keymap}
