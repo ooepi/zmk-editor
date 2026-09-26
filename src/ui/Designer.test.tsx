@@ -37,8 +37,16 @@ describe('Layout designer', () => {
     await user.click(within(screen.getByRole('group', { name: 'Layout canvas' })).getByRole('button', { name: /^Key 0:/ }));
     const width = screen.getByRole('spinbutton', { name: 'Width (keys)' });
     await user.clear(width);
-    await user.type(width, '1.5{Enter}');
+    await user.type(width, '1.5');
+    // Applied while typing, without Enter.
     expect(rect(0)?.getAttribute('width')).toBe('142');
+    const rotation = screen.getByRole('spinbutton', { name: 'Rotation (°)' });
+    await user.clear(rotation);
+    await user.type(rotation, '-15');
+    const key = within(screen.getByRole('group', { name: 'Layout canvas' })).getByRole('button', { name: /^Key 0:/ });
+    expect(key.getAttribute('transform')).toBe('rotate(-15 75 100)');
+    await user.clear(rotation);
+    await user.type(rotation, '0');
 
     const key0 = within(screen.getByRole('group', { name: 'Layout canvas' })).getByRole('button', { name: /^Key 0:/ });
     key0.focus();

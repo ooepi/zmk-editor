@@ -39,6 +39,7 @@ const NEW_BEHAVIORS: { kind: NewBehaviorKind; label: string }[] = [
   { kind: 'hold-tap', label: '+ Hold-tap' },
   { kind: 'mod-morph', label: '+ Mod-morph' },
   { kind: 'sensor-rotate', label: '+ Encoder behavior' },
+  { kind: 'tap-dance', label: '+ Tap-dance' },
 ];
 
 /** Lists the keymap's behaviors (or macros) and edits the selected one. */
@@ -111,7 +112,7 @@ export function BehaviorsView({ keymap, kind, selected, onSelect, dispatch }: Be
           <p className="muted">
             {isMacros
               ? 'Macros send a sequence of keys. Select one, or create a new one.'
-              : 'Hold-taps do one thing when tapped and another when held; mod-morphs change with a modifier; encoder behaviors turn knobs into keys. Select one, or create a new one.'}
+              : 'Hold-taps do one thing when tapped and another when held; mod-morphs change with a modifier; encoder behaviors turn knobs into keys; tap-dances send something different for 1, 2, 3… taps. Select one, or create a new one.'}
           </p>
         )}
       </div>
@@ -163,8 +164,9 @@ function BehaviorEditor({ keymap, behavior, label, onChange, onRename, onDelete 
           );
         })}
       {kind === 'macro' && <MacroSteps keymap={keymap} behavior={behavior} onChange={onChange} />}
+      {kind === 'tap-dance' && <TapDanceTaps keymap={keymap} behavior={behavior} onChange={onChange} />}
 
-      {schemas && kind !== 'other' && kind !== 'tap-dance' ? (
+      {schemas && kind !== 'other' ? (
         <fieldset className="fieldset">
           <legend>Settings</legend>
           <PropertyFields schemas={schemas} properties={behavior.properties} onChange={(properties) => onChange({ ...behavior, properties })} />
@@ -176,6 +178,40 @@ function BehaviorEditor({ keymap, behavior, label, onChange, onRename, onDelete 
         <p className="muted small">Use it on a key: select the key and choose &amp;{label} under “Your behaviors”.</p>
       )}
     </div>
+  );
+}
+
+/** What each number of taps sends: 1 tap, 2 taps, … */
+function TapDanceTaps({ keymap, behavior, onChange }: { keymap: KeymapModel; behavior: Behavior; onChange: (b: Behavior) => void }) {
+  const taps = behavior.bindings;
+  const set = (bindings: Binding[]) => onChange({ ...behavior, bindings });
+  return (
+    <fieldset className="fieldset">
+      <legend>Taps</legend>
+      {taps.map((binding, i) => {
+        const name = `${i + 1} tap${i === 0 ? '' : 's'}`;
+        return (
+          <div key={i} className="tap">
+            <div className="row">
+              <strong className="grow">{name}</strong>
+              <button
+                type="button"
+                className="icon-button danger"
+                aria-label={`Remove ${name}`}
+                disabled={taps.length <= 1}
+                onClick={() => set(taps.filter((_, j) => j !== i))}
+              >
+                ✕
+              </button>
+            </div>
+            <BindingEditor binding={binding} keymap={keymap} context="key" label={name} onChange={(b) => set(taps.with(i, b))} />
+          </div>
+        );
+      })}
+      <button type="button" className="button" onClick={() => set([...taps, { behavior: 'kp', params: ['A'] }])}>
+        + Add tap
+      </button>
+    </fieldset>
   );
 }
 

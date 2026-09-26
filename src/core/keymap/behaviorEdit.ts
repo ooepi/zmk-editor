@@ -39,7 +39,7 @@ function uniqueLabel(model: KeymapModel, base: string): string {
 const cells = (name: string, ...tokens: string[]): DtProperty => ({ name, values: [{ kind: 'cells', tokens }] });
 const kp = (...params: string[]): Binding => ({ behavior: 'kp', params });
 
-export type NewBehaviorKind = Extract<BehaviorKind, 'hold-tap' | 'mod-morph' | 'sensor-rotate' | 'macro'>;
+export type NewBehaviorKind = Extract<BehaviorKind, 'hold-tap' | 'mod-morph' | 'sensor-rotate' | 'macro' | 'tap-dance'>;
 
 /** A new behavior of the given kind with sensible defaults. Add it to `model.behaviors` yourself. */
 export function createBehavior(model: KeymapModel, kind: NewBehaviorKind): Behavior {
@@ -68,6 +68,13 @@ export function createBehavior(model: KeymapModel, kind: NewBehaviorKind): Behav
       );
     case 'sensor-rotate':
       return make('rot', 'zmk,behavior-sensor-rotate', [cells('#sensor-binding-cells', '0')], [kp('C_VOL_UP'), kp('C_VOL_DN')]);
+    case 'tap-dance':
+      return make(
+        'td',
+        'zmk,behavior-tap-dance',
+        [cells('#binding-cells', '0'), cells('tapping-term-ms', '200')],
+        [kp('A'), kp('B')],
+      );
     case 'macro':
       return make(
         'macro',

@@ -7,6 +7,7 @@ import { BehaviorsView } from './components/BehaviorsView.tsx';
 import { BindingPanel } from './components/BindingPanel.tsx';
 import { BuildView } from './components/BuildView.tsx';
 import { CombosPanel } from './components/CombosPanel.tsx';
+import { ConditionalLayersPanel } from './components/ConditionalLayersPanel.tsx';
 import { EncoderPanel } from './components/EncoderPanel.tsx';
 import { EncoderStrip } from './components/EncoderStrip.tsx';
 import { KeyboardCanvas } from './components/KeyboardCanvas.tsx';
@@ -193,7 +194,10 @@ export function App() {
             ) : sensor !== null ? (
               <EncoderPanel key={`${layer}-s${sensor}`} keymap={keymap} layer={layer} sensor={sensor} dispatch={dispatch} />
             ) : (
-              <Overview warnings={state.warnings} />
+              <>
+                <Overview warnings={state.warnings} />
+                <ConditionalLayersPanel keymap={keymap} dispatch={dispatch} />
+              </>
             )}
           </aside>
         </main>
