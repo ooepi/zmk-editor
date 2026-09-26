@@ -5,8 +5,14 @@ import { importConfig } from './config.ts';
 import { formatBinding } from './keymap/bindings.ts';
 import { describeBinding } from './keymap/display.ts';
 import {
+  addCustomModule,
   addModule,
+  addTemplateBehavior,
   followZmkVersion,
+  hasModuleShield,
+  moduleVersionMismatches,
+  parseModuleRepo,
+  setModuleShield,
   getUnicodeMode,
   installedModules,
   removeModule,
@@ -16,6 +22,9 @@ import {
 import { generateKeymap } from './keymap/generator.ts';
 import { importKeymap } from './keymap/importer.ts';
 import { behaviorCatalog, findBehavior } from './catalog/behaviors.ts';
+import { findModule } from './catalog/modules.ts';
+import { readKconfigValue } from './files/kconfig.ts';
+import { behaviorSource, parseBehaviorSource } from './keymap/behaviorSource.ts';
 
 const fixture = (name: string) => readFileSync(join(import.meta.dirname, '../../test/fixtures/lily58', name), 'utf8');
 const load = () =>
@@ -31,7 +40,7 @@ const includes = (config: ReturnType<typeof load>) =>
 
 describe('modules', () => {
   it('detects the fixture modules', () => {
-    expect(installedModules(load()).map((m) => m.id)).toEqual(['zmk-helpers', 'zmk-unicode']);
+    expect(installedModules(load()).map((m) => m.id)).toEqual(['zmk-unicode', 'zmk-helpers']);
   });
 
   it('adds a module to west.yml and the keymap includes', () => {
@@ -116,5 +125,104 @@ describe('fixture bindings after removal', () => {
   it('replaces &uc on both keys', () => {
     const { config } = removeModule(load(), 'zmk-unicode');
     expect(config.keymap.layers[0]?.bindings.filter((b) => formatBinding(b) === '&none')).toHaveLength(2);
+  });
+});
+
+describe('catalog modules with their own revisions', () => {
+  const shields = (config: ReturnType<typeof load>) => config.build.include.map((t) => t.shield);
+
+  it('pins nice-view-gem to its release, swaps the nice!view shield and turns on the status screen', () => {
+    const config = addModule(load(), 'nice-view-gem');
+    expect(config.west.modules.at(-1)).toEqual({
+      name: 'nice-view-gem',
+      remote: 'm165437',
+      urlBase: 'https://github.com/M165437',
+      revision: 'v0.3.0',
+    });
+    expect(shields(config)).toEqual(['lily58_left nice_view_adapter nice_view_gem', 'lily58_right nice_view_adapter nice_view_gem']);
+    expect(readKconfigValue(config.kconfig, 'CONFIG_ZMK_DISPLAY_STATUS_SCREEN_CUSTOM')).toBe('y');
+    expect(moduleVersionMismatches(config)).toEqual([]);
+    expect(followZmkVersion(config, 'nice-view-gem')).toEqual(config);
+
+    const removed = removeModule(config, 'nice-view-gem').config;
+    expect(shields(removed)).toEqual(shields(load()));
+  });
+
+  it('still warns about a catalog module pinned somewhere else', () => {
+    const config = addModule(load(), 'nice-view-gem');
+    const moved = { ...config, west: { ...config.west, modules: config.west.modules.map((m) => (m.name === 'nice-view-gem' ? { ...m, revision: 'main' } : m)) } };
+    expect(moduleVersionMismatches(moved).map((m) => m.module)).toEqual(['nice-view-gem']);
+    expect(followZmkVersion(moved, 'nice-view-gem').west.modules.at(-1)?.revision).toBe('v0.3.0');
+  });
+
+  it('keeps an untagged module on its branch across ZMK versions', () => {
+    const base = removeModule(load(), 'zmk-unicode').config;
+    const config = addModule(base, 'zmk-tri-state');
+    expect(config.west.modules.at(-1)?.revision).toBe('main');
+    const result = setZmkVersion(config, 'v0.2');
+    if (!result.ok) throw new Error('should switch');
+    expect(result.config.west.modules.map((m) => m.revision)).toEqual([undefined, 'main']);
+    expect(setZmkVersion(addModule(base, 'nice-view-gem'), 'v0.2')).toEqual({ ok: false, blockedBy: ['nice-view-gem'] });
+  });
+
+  it('adds and removes a shield per build target', () => {
+    const config = addModule(load(), 'zmk-rgbled-widget');
+    expect(hasModuleShield(config.build, 'zmk-rgbled-widget', 0)).toBe(false);
+    const on = setModuleShield(config, 'zmk-rgbled-widget', 0, true);
+    expect(shields(on)[0]).toBe('lily58_left nice_view_adapter nice_view rgbled_adapter');
+    expect(hasModuleShield(on.build, 'zmk-rgbled-widget', 0)).toBe(true);
+    expect(setModuleShield(on, 'zmk-rgbled-widget', 0, false).build).toEqual(config.build);
+    expect(findBehavior(behaviorCatalog(config.keymap), 'ind_bat')?.group).toBe('module');
+  });
+});
+
+describe('behavior templates', () => {
+  it('adds a leader key whose sequences survive a round trip', () => {
+    const module = findModule('zmk-leader-key');
+    const template = module?.templates?.[0];
+    if (!template) throw new Error('missing template');
+    const { keymap, label } = addTemplateBehavior(load().keymap, template);
+    expect(label).toBe('leader');
+    const leader = keymap.behaviors.find((b) => b.label === 'leader');
+    expect(leader?.children?.map((c) => c.name)).toEqual(['usb', 'ble', 'boot', 'reset']);
+    expect(importKeymap(generateKeymap(keymap)).model).toEqual(keymap);
+    expect(findBehavior(behaviorCatalog(keymap), 'leader')?.group).toBe('custom');
+
+    const again = addTemplateBehavior(keymap, template);
+    expect(again.label).toBe('leader_2');
+  });
+
+  it('reads a behavior from source and explains mistakes', () => {
+    const parsed = parseBehaviorSource('sw: swapper {\n compatible = "zmk,behavior-tri-state";\n #binding-cells = <0>;\n bindings = <&kt LALT>, <&kp TAB>, <&kt LALT>;\n};');
+    if (!parsed.ok) throw new Error(parsed.error);
+    expect(parsed.behavior.bindings.map((b) => b.behavior)).toEqual(['kt', 'kp', 'kt']);
+    expect(parseBehaviorSource(behaviorSource(parsed.behavior))).toEqual(parsed);
+    expect(parseBehaviorSource('swapper { compatible = "x"; };')).toEqual({ ok: false, error: expect.stringMatching(/label/) });
+    expect(parseBehaviorSource('a: a { compatible = "x"; }; b: b { compatible = "x"; };').ok).toBe(false);
+  });
+});
+
+describe('modules from GitHub', () => {
+  it('reads owner/repo from URLs and text', () => {
+    expect(parseModuleRepo('https://github.com/badjeff/zmk-behavior-insomnia/')).toEqual({ owner: 'badjeff', repo: 'zmk-behavior-insomnia' });
+    expect(parseModuleRepo('github.com/urob/zmk-leader-key.git')).toEqual({ owner: 'urob', repo: 'zmk-leader-key' });
+    expect(parseModuleRepo(' urob/zmk-leader-key ')).toEqual({ owner: 'urob', repo: 'zmk-leader-key' });
+    expect(parseModuleRepo('https://github.com/urob/zmk-leader-key/tree/main')).toEqual({ owner: 'urob', repo: 'zmk-leader-key' });
+    expect(parseModuleRepo('not a repo')).toBeNull();
+  });
+
+  it('adds any module to west.yml with its headers', () => {
+    const config = addCustomModule(load(), { owner: 'badjeff', repo: 'zmk-behavior-insomnia', revision: 'main', includes: ['behaviors/insomnia.dtsi'] });
+    expect(config.west.modules.at(-1)).toEqual({
+      name: 'zmk-behavior-insomnia',
+      remote: 'badjeff',
+      urlBase: 'https://github.com/badjeff',
+      revision: 'main',
+    });
+    expect(includes(config)).toContain('behaviors/insomnia.dtsi');
+    const follows = addCustomModule(load(), { owner: 'someone', repo: 'zmk-thing', revision: 'v0.3', includes: [] });
+    expect(follows.west.modules.at(-1)?.revision).toBeUndefined();
+    expect(() => addCustomModule(config, { owner: 'x', repo: 'zmk-behavior-insomnia', includes: [] })).toThrow(/already/);
+    expect(removeModule(config, 'zmk-behavior-insomnia').config.west).toEqual(load().west);
   });
 });

@@ -141,10 +141,11 @@ function toBehavior(node: DtNode): Behavior | null {
   if (extraLabels.length > 0) return null;
   const compatible = node.properties.find((p) => p.name === 'compatible');
   const compatibleValue = compatible && stringValue(compatible);
-  if (!compatibleValue || node.children.length > 0) return null;
+  if (!compatibleValue) return null;
 
   const behavior: Behavior = { name: node.name, compatible: compatibleValue, bindings: [], properties: [] };
   if (label) behavior.label = label;
+  if (node.children.length > 0) behavior.children = node.children;
   for (const property of node.properties) {
     if (property === compatible) continue;
     const bindings = property.name === 'bindings' ? bindingsFromValues(property.values) : null;

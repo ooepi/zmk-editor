@@ -90,6 +90,7 @@ function printBehavior(behavior: Behavior): string {
   lines.push(`${inner}compatible = "${behavior.compatible}";`);
   for (const property of behavior.properties) lines.push(inner + printProperty(property));
   if (behavior.bindings.length > 0) lines.push(`${inner}bindings = ${bindingGroups(behavior.bindings)};`);
+  for (const child of behavior.children ?? []) lines.push('', printNode(child, 3));
   lines.push(`${pad}};`);
   return lines.join('\n');
 }

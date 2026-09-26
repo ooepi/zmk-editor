@@ -72,6 +72,29 @@ export const COMBO_PROPERTIES: PropertySchema[] = [
   { name: 'slow-release', label: 'Slow release', help: 'Release the combo when all its keys are released, not the first.', type: { kind: 'bool' }, default: false },
 ];
 
+export const TRI_STATE_PROPERTIES: PropertySchema[] = [
+  {
+    name: 'ignored-key-positions',
+    label: 'Keys that don’t interrupt',
+    help: 'Pressing these keys keeps it active (e.g. a Shift-Tab key for going back).',
+    type: { kind: 'positions' },
+  },
+  { name: 'timeout-ms', label: 'Timeout', help: 'Interrupts by itself this long after the last press.', type: ms, default: -1 },
+  { name: 'tap-ms', label: 'Tap duration', help: 'How long tapped keys are held.', type: ms, default: 5 },
+];
+
+export const ADAPTIVE_TRIGGER_PROPERTIES: PropertySchema[] = [
+  { name: 'max-prior-idle-ms', label: 'Within', help: 'Only when the previous key was pressed at most this long ago.', type: ms, default: -1 },
+  { name: 'min-prior-idle-ms', label: 'Not within', help: 'Only when the previous key was pressed at least this long ago.', type: ms, default: -1 },
+  {
+    name: 'strict-modifiers',
+    label: 'Exact modifiers',
+    help: 'Modifiers must match exactly (otherwise Shift+A also counts as A).',
+    type: { kind: 'bool' },
+    default: false,
+  },
+];
+
 const BY_COMPATIBLE: Record<string, PropertySchema[]> = {
   'zmk,behavior-hold-tap': HOLD_TAP_PROPERTIES,
   'zmk,behavior-mod-morph': MOD_MORPH_PROPERTIES,
@@ -81,6 +104,7 @@ const BY_COMPATIBLE: Record<string, PropertySchema[]> = {
   'zmk,behavior-sensor-rotate': SENSOR_ROTATE_PROPERTIES,
   'zmk,behavior-sensor-rotate-var': SENSOR_ROTATE_PROPERTIES,
   'zmk,behavior-tap-dance': TAP_DANCE_PROPERTIES,
+  'zmk,behavior-tri-state': TRI_STATE_PROPERTIES,
 };
 
 export function propertySchema(compatible: string): PropertySchema[] | undefined {
