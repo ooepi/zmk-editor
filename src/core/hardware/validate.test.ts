@@ -29,6 +29,19 @@ describe('validateHardware', () => {
     ]);
   });
 
+  it('rejects a display name with non-ASCII characters or $, since it becomes the Bluetooth name', () => {
+    const message = 'The name can only use plain letters, digits, spaces and punctuation (no accents or $), because it becomes the Bluetooth name.';
+    expect(messages({ ...wired(), displayName: 'Këyböard' })).toEqual([message]);
+    expect(messages({ ...wired(), displayName: 'K$(id)' })).toEqual([message]);
+    expect(messages({ ...wired(), displayName: 'Test Split 2!' })).toEqual([]);
+  });
+
+  it('reserves ZMK and module shield ids, in addition to catalog keyboards', () => {
+    for (const id of ['nice_view', 'nice_view_adapter', 'settings_reset', 'studio_rpc_usb_uart', 'nice_view_gem']) {
+      expect(messages({ ...wired(), name: id })).toEqual([`“${id}” is already used by ZMK or a module; pick another id.`]);
+    }
+  });
+
   it('finds missing, invalid and repeated pins', () => {
     const hw = wired();
     expect(messages({ ...hw, wiring: { kind: 'matrix', diodeDirection: 'col2row', rows: [4, null], cols: [6, 11, 4] } })).toEqual([

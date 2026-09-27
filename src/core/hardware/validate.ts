@@ -1,8 +1,18 @@
 import { findKeyboard } from '../catalog/keyboards.ts';
+import { MODULES } from '../catalog/modules.ts';
 import { HARDWARE_CONTROLLERS, PRO_MICRO_PINS } from './controllers.ts';
 import type { HardwareBasics } from './grid.ts';
 import type { KeyboardHardware, Pin } from './types.ts';
 import { directPins, halfSize, halves, matrixPins } from './wiring.ts';
+
+/** Ids ZMK reserves itself, in addition to catalog keyboards and every module shield id. */
+const RESERVED_IDS = new Set([
+  'nice_view',
+  'nice_view_adapter',
+  'settings_reset',
+  'studio_rpc_usb_uart',
+  ...MODULES.map((m) => m.shield?.name).filter((name): name is string => name !== undefined),
+]);
 
 export interface HardwareIssue {
   level: 'error' | 'warning';
@@ -21,9 +31,13 @@ function identityIssues(name: string, displayName: string, controller: string): 
   const messages: string[] = [];
   if (!/^[a-z][a-z0-9_]*$/.test(name)) messages.push(`The id “${name}” must start with a letter and use only a–z, 0–9 and _.`);
   else if (findKeyboard(name)) messages.push(`“${name}” is already a keyboard in ZMK; pick another id.`);
+  else if (RESERVED_IDS.has(name)) messages.push(`“${name}” is already used by ZMK or a module; pick another id.`);
   if (!displayName.trim()) messages.push('Give the keyboard a name.');
   else if (displayName.length > MAX_NAME) messages.push(`The name “${displayName}” is longer than ${MAX_NAME} characters, the Bluetooth limit.`);
   if (/["\\]/.test(displayName)) messages.push('The name can’t contain " or \\.');
+  else if (/[^\x20-\x7e]|\$/.test(displayName)) {
+    messages.push('The name can only use plain letters, digits, spaces and punctuation (no accents or $), because it becomes the Bluetooth name.');
+  }
   if (!HARDWARE_CONTROLLERS.some((c) => c.id === controller)) messages.push(`${controller} isn’t a supported controller.`);
   return messages.map((message) => ({ level: 'error', area: 'basics', message }));
 }
