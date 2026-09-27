@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { HARDWARE_CONTROLLERS } from '../../core/hardware/controllers.ts';
 import { hardwareName, type HardwareBasics } from '../../core/hardware/grid.ts';
 import type { HardwareIssue } from '../../core/hardware/validate.ts';
@@ -14,8 +13,8 @@ interface Props {
 
 export function HardwareBasicsStep({ basics, editing, issues, onChange }: Props) {
   const set = (patch: Partial<HardwareBasics>) => onChange({ ...basics, ...patch });
-  // The id follows the name until it's edited by hand.
-  const [idEdited, setIdEdited] = useState(editing);
+  // The id follows the name until it no longer matches what the name would derive (edited by hand, or fixed while editing).
+  const idEdited = editing || basics.name !== hardwareName(basics.displayName);
   const sizeFixed = editing && basics.wiring === 'direct';
   return (
     <div className="stack">
@@ -38,10 +37,7 @@ export function HardwareBasicsStep({ basics, editing, issues, onChange }: Props)
           aria-describedby="hw-id-help"
           value={basics.name}
           disabled={editing}
-          onChange={(e) => {
-            setIdEdited(true);
-            set({ name: e.target.value });
-          }}
+          onChange={(e) => set({ name: e.target.value })}
         />
         <p id="hw-id-help" className="muted small">
           Names the files: config/boards/shields/{basics.name}/ and config/{basics.name}.keymap.
@@ -71,19 +67,27 @@ export function HardwareBasicsStep({ basics, editing, issues, onChange }: Props)
           <span>Direct (one pin per key)</span>
         </label>
       </fieldset>
-      <div className="field-grid">
-        <div className="field">
-          <label className="field-label" htmlFor="hw-rows">Rows</label>
-          <input id="hw-rows" className="input" type="number" min={1} max={18} value={basics.rows} disabled={sizeFixed} onChange={(e) => set({ rows: Number(e.target.value) })} />
-        </div>
-        <div className="field">
-          <label className="field-label" htmlFor="hw-cols">Columns</label>
-          <input id="hw-cols" className="input" type="number" min={1} max={18} value={basics.cols} disabled={sizeFixed} aria-describedby="hw-size-help" onChange={(e) => set({ cols: Number(e.target.value) })} />
-        </div>
-      </div>
-      <p id="hw-size-help" className="muted small">
-        {basics.split ? 'Per half. ' : ''}You can move, add and remove keys on the Layout step.
-      </p>
+      {sizeFixed ? (
+        <p className="muted small">
+          {basics.cols} inputs{basics.split ? ' per half' : ''}. Add or remove keys on the Layout step.
+        </p>
+      ) : (
+        <>
+          <div className="field-grid">
+            <div className="field">
+              <label className="field-label" htmlFor="hw-rows">Rows</label>
+              <input id="hw-rows" className="input" type="number" min={1} max={18} value={basics.rows} aria-describedby="hw-size-help" onChange={(e) => set({ rows: Number(e.target.value) })} />
+            </div>
+            <div className="field">
+              <label className="field-label" htmlFor="hw-cols">Columns</label>
+              <input id="hw-cols" className="input" type="number" min={1} max={18} value={basics.cols} aria-describedby="hw-size-help" onChange={(e) => set({ cols: Number(e.target.value) })} />
+            </div>
+          </div>
+          <p id="hw-size-help" className="muted small">
+            {basics.split ? 'Per half. ' : ''}You can move, add and remove keys on the Layout step.
+          </p>
+        </>
+      )}
       {basics.wiring === 'matrix' && (
         <div className="field">
           <label className="field-label" htmlFor="hw-diodes">Diode direction</label>

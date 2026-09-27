@@ -1438,6 +1438,11 @@ select {
   gap: 8px;
 }
 
+.pin-grid select.active-pin {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .pinout-board {
   display: flex;
   gap: 8px;

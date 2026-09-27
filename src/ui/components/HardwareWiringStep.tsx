@@ -19,6 +19,8 @@ interface Slot {
   side?: Side;
   list: PinList;
   index: number;
+  /** What the field is called, e.g. "Left row 0", shown while it's picking a pin. */
+  label: string;
 }
 
 interface Props {
@@ -41,7 +43,15 @@ export function HardwareWiringStep({ hw, issues, onChange }: Props) {
         </p>
         {hw.split && (
           <label className="field checkbox">
-            <input type="checkbox" checked={differently} onChange={(e) => onChange(setRightWiredDifferently(hw, e.target.checked))} />
+            <input
+              type="checkbox"
+              checked={differently}
+              onChange={(e) => {
+                onChange(setRightWiredDifferently(hw, e.target.checked));
+                // The active field may no longer make sense (e.g. it was a right-half field that just went away).
+                setActive(null);
+              }}
+            />
             <span>The right half is wired differently</span>
           </label>
         )}
@@ -52,16 +62,38 @@ export function HardwareWiringStep({ hw, issues, onChange }: Props) {
           </p>
         )}
         {shown.map((side) => (
-          <PinTables key={side ?? 'one'} hw={hw} side={side} onChange={onChange} onFocusSlot={setActive} />
+          <PinTables key={side ?? 'one'} hw={hw} side={side} active={active} onChange={onChange} onActivate={setActive} />
         ))}
         <HardwareIssueList issues={issues} />
       </div>
-      <ProMicroPinout hw={hw} side={active?.side} onPick={(pin) => active && onChange(setPin(hw, active.side, active.list, active.index, pin))} />
+      <ProMicroPinout
+        hw={hw}
+        side={active?.side}
+        label={active?.label}
+        onPick={(pin) => {
+          if (!active) return;
+          // Stale after "wired differently" was just unticked: don't quietly bring the right half's own pins back.
+          if (active.side === 'right' && hw.wiring.right === undefined) return;
+          onChange(setPin(hw, active.side, active.list, active.index, pin));
+        }}
+      />
     </div>
   );
 }
 
-function PinTables({ hw, side, onChange, onFocusSlot }: { hw: KeyboardHardware; side?: Side; onChange: (hw: KeyboardHardware) => void; onFocusSlot: (slot: Slot) => void }) {
+function PinTables({
+  hw,
+  side,
+  active,
+  onChange,
+  onActivate,
+}: {
+  hw: KeyboardHardware;
+  side?: Side;
+  active: Slot | null;
+  onChange: (hw: KeyboardHardware) => void;
+  onActivate: (slot: Slot) => void;
+}) {
   const prefix = side === 'left' ? 'Left ' : side === 'right' ? 'Right ' : '';
   const lists: { list: PinList; title: string; item: string; pins: Pin[] }[] =
     hw.wiring.kind === 'direct'
@@ -81,14 +113,15 @@ function PinTables({ hw, side, onChange, onFocusSlot }: { hw: KeyboardHardware; 
               const id = `pin-${side ?? 'one'}-${list}-${index}`;
               const name = `${item} ${index}`;
               const label = prefix ? `${prefix}${name.toLowerCase()}` : name;
+              const isActive = active !== null && active.side === side && active.list === list && active.index === index;
               return (
                 <div key={index} className="field">
                   <label className="field-label" htmlFor={id}>{label}</label>
                   <select
                     id={id}
-                    className="input"
+                    className={`input${isActive ? ' active-pin' : ''}`}
                     value={pin ?? ''}
-                    onFocus={() => onFocusSlot({ side, list, index })}
+                    onMouseDown={() => onActivate({ side, list, index, label })}
                     onChange={(e) => onChange(setPin(hw, side, list, index, e.target.value === '' ? null : Number(e.target.value)))}
                   >
                     <option value="">No pin</option>

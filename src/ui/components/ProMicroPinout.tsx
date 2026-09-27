@@ -5,11 +5,13 @@ import { pinUses } from '../../core/hardware/wiring.ts';
 interface Props {
   hw: KeyboardHardware;
   side?: Side;
+  /** The field a pin click will fill in, e.g. "Input 1"; none picked when undefined. */
+  label?: string;
   onPick: (pin: number) => void;
 }
 
 /** The Pro Micro seen from above; each pin shows what it's used for. Clicking one fills the selected field. */
-export function ProMicroPinout({ hw, side, onPick }: Props) {
+export function ProMicroPinout({ hw, side, label, onPick }: Props) {
   const uses = pinUses(hw, side);
   const nice = isNiceNano(hw.controller);
   const column = (pads: HeaderPad[], edge: 'left' | 'right') => (
@@ -39,7 +41,8 @@ export function ProMicroPinout({ hw, side, onPick }: Props) {
   return (
     <figure className="pinout" aria-label="Pro Micro pinout">
       <figcaption className="muted small">
-        Pins seen from above, USB at the top{side ? ` (${side} half)` : ''}. Select a field, then click a pin.
+        Pins seen from above, USB at the top{side ? ` (${side} half)` : ''}.{' '}
+        {label ? `Picking a pin for ${label}.` : 'Click a pin field, then a pin.'}
       </figcaption>
       <div className="pinout-board">
         {column(PRO_MICRO_HEADER.left, 'left')}

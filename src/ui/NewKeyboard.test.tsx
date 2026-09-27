@@ -2,6 +2,11 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { PRO_MICRO_PINS } from '../core/hardware/controllers.ts';
+import { newHardwareConfig } from '../core/hardware/config.ts';
+import { DEFAULT_BASICS, gridHardware } from '../core/hardware/grid.ts';
+import { testPad } from '../core/hardware/testFixtures.ts';
+import type { KeyboardHardware } from '../core/hardware/types.ts';
 import { App } from './App.tsx';
 
 beforeEach(() => localStorage.clear());
@@ -85,5 +90,71 @@ describe('Design your own keyboard', () => {
     await type(user, 'Columns', '16');
     expect(screen.getByText('A 3 × 16 matrix needs 19 pins per half, but the controller has 18.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Next' })).toHaveProperty('disabled', true);
+  });
+
+  it('doesn’t get stuck on Basics editing a direct-wired keyboard with a staggered key', async () => {
+    const hw: KeyboardHardware = {
+      ...gridHardware({ ...DEFAULT_BASICS, name: 'direct18', displayName: 'Direct18', split: false, wiring: 'direct', rows: 3, cols: 6 }),
+      wiring: { kind: 'direct', pins: [...PRO_MICRO_PINS] },
+    };
+    // One key nudged off its grid position: basicsOf must not guess a bogus rows/cols from this.
+    const staggered: KeyboardHardware = { ...hw, keys: hw.keys.map((k, i) => (i === 0 ? { ...k, y: k.y + 25 } : k)) };
+    localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config: newHardwareConfig(staggered, 'v0.3') }));
+
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Direct18 ▾' }));
+    await user.click(screen.getByRole('button', { name: 'Edit hardware' }));
+    expect(screen.getByText('18 inputs. Add or remove keys on the Layout step.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveProperty('disabled', false);
+  });
+
+  it('ignores Ctrl+Z while the wizard is open, so undo can’t change the config behind its draft', async () => {
+    localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config: newHardwareConfig(testPad, 'v0.3') }));
+    const user = userEvent.setup();
+    render(<App />);
+
+    // Build some undo history before opening the wizard.
+    await user.click(within(screen.getByRole('group', { name: 'Keyboard layout' })).getByRole('button', { name: /^Key 0:/ }));
+    await user.keyboard('{Delete}');
+
+    await user.click(screen.getByRole('button', { name: 'Test Pad ▾' }));
+    await user.click(screen.getByRole('button', { name: 'Edit hardware' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+
+    const before = stored();
+    await user.keyboard('{Control>}z{/Control}');
+    expect(stored()).toEqual(before);
+    expect(screen.getByText('Edit hardware · Test Pad')).toBeTruthy();
+  });
+
+  it('doesn’t silently re-enable “wired differently” after unticking it', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await openWizard(user);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+
+    await user.click(screen.getByLabelText('The right half is wired differently'));
+    await user.click(screen.getByLabelText('Right row 0'));
+    await user.click(screen.getByLabelText('The right half is wired differently'));
+    await user.click(screen.getByRole('button', { name: 'D5' }));
+
+    expect(screen.getByLabelText('The right half is wired differently')).toHaveProperty('checked', false);
+  });
+
+  it('needs a field clicked before a pin does anything, and names which field it’ll fill', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await openWizard(user);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+
+    expect(screen.getByText(/Click a pin field, then a pin\./)).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'D4' }));
+    expect(screen.getByLabelText('Left row 0')).toHaveProperty('value', '');
+
+    await user.click(screen.getByLabelText('Left row 0'));
+    expect(screen.getByText(/Picking a pin for Left row 0\./)).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'D4' }));
+    expect(screen.getByLabelText('Left row 0')).toHaveProperty('value', '4');
   });
 });

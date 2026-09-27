@@ -41,4 +41,10 @@ describe('gridHardware', () => {
     const basics = { ...DEFAULT_BASICS, rows: 4, cols: 5 };
     expect(basicsOf(gridHardware(basics))).toEqual(basics);
   });
+
+  it('reports direct wiring as one row of inputs, even with a staggered key', () => {
+    const hw = gridHardware({ ...DEFAULT_BASICS, wiring: 'direct', split: false, rows: 3, cols: 6 });
+    const staggered = { ...hw, keys: hw.keys.map((k, i) => (i === 0 ? { ...k, y: k.y + 25 } : k)) };
+    expect(basicsOf(staggered)).toEqual({ ...DEFAULT_BASICS, wiring: 'direct', split: false, rows: 1, cols: 18 });
+  });
 });

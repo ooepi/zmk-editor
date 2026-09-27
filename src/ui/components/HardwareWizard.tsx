@@ -42,7 +42,9 @@ interface Props {
 }
 
 export function HardwareWizard({ config, dispatch, mode, onDone, onCancel }: Props) {
-  const existing = mode === 'edit' ? config.hardware : undefined;
+  // Frozen at mount: the wizard edits its own draft, so a config change behind it
+  // (e.g. an undo/redo that slips through) must not retarget which keyboard this is.
+  const [existing] = useState(() => (mode === 'edit' ? config.hardware : undefined));
   const [step, setStep] = useState(0);
   const [basics, setBasics] = useState<HardwareBasics>(() => (existing ? basicsOf(existing) : DEFAULT_BASICS));
   const [draft, setDraft] = useState<HardwareDraft>(() =>

@@ -59,20 +59,20 @@ export function gridHardware(b: HardwareBasics): KeyboardHardware {
   return { name: b.name, displayName: b.displayName, controller: b.controller, split: b.split, wiring, keys };
 }
 
-/** The basics of an existing keyboard, for editing it. Direct wiring reports one row of inputs. */
+/**
+ * The basics of an existing keyboard, for editing it. Direct wiring reports
+ * one row of inputs (the left half's, or the only half's) — never guessed
+ * from the keys' positions, which a staggered key would throw off.
+ */
 export function basicsOf(hw: KeyboardHardware): HardwareBasics {
   const size = halfSize(hw, hw.split ? 'left' : undefined);
-  const direct = hw.wiring.kind === 'direct';
-  // A direct grid made by gridHardware has rows × cols inputs; report the grid it came from when it fits.
-  const rows = direct ? Math.max(1, new Set(hw.keys.map((k) => k.y)).size) : size.rows;
-  const cols = direct ? Math.max(1, Math.round(size.cols / rows)) : size.cols;
   return {
     displayName: hw.displayName,
     name: hw.name,
     controller: hw.controller,
     split: hw.split,
-    rows,
-    cols,
+    rows: hw.wiring.kind === 'direct' ? 1 : size.rows,
+    cols: size.cols,
     wiring: hw.wiring.kind,
     diodeDirection: hw.wiring.kind === 'matrix' ? hw.wiring.diodeDirection : 'col2row',
   };

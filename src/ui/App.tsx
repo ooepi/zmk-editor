@@ -48,10 +48,14 @@ export function App() {
     const onKeyDown = (event: KeyboardEvent) => {
       if (isTyping(event.target)) return;
       const mod = event.ctrlKey || event.metaKey;
-      if (mod && event.key.toLowerCase() === 'z') {
+      // The wizard keeps its own draft on top of the live config; a global undo/redo
+      // here would change that config behind its back (e.g. undoing the load that
+      // created the keyboard being edited).
+      const wizardOpen = view === 'newKeyboard' || view === 'editHardware';
+      if (mod && !wizardOpen && event.key.toLowerCase() === 'z') {
         event.preventDefault();
         dispatch({ type: event.shiftKey ? 'redo' : 'undo' });
-      } else if (mod && event.key.toLowerCase() === 'y') {
+      } else if (mod && !wizardOpen && event.key.toLowerCase() === 'y') {
         event.preventDefault();
         dispatch({ type: 'redo' });
       } else if (event.key === 'Escape') {
