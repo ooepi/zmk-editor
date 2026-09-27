@@ -1,0 +1,4 @@
+---
+include:
+  - board: puchi_ble_v1
+    shield: editor_numpad

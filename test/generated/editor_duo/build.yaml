@@ -1,0 +1,6 @@
+---
+include:
+  - board: bluemicro840_v1
+    shield: editor_duo_left
+  - board: bluemicro840_v1
+    shield: editor_duo_right
