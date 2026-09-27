@@ -121,7 +121,7 @@ function PinTables({
                     id={id}
                     className={`input${isActive ? ' active-pin' : ''}`}
                     value={pin ?? ''}
-                    onMouseDown={() => onActivate({ side, list, index, label })}
+                    onPointerDown={() => onActivate({ side, list, index, label })}
                     onChange={(e) => onChange(setPin(hw, side, list, index, e.target.value === '' ? null : Number(e.target.value)))}
                   >
                     <option value="">No pin</option>

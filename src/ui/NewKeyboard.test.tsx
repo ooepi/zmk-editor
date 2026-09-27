@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PRO_MICRO_PINS } from '../core/hardware/controllers.ts';
@@ -183,6 +183,17 @@ describe('Design your own keyboard', () => {
     expect(screen.getByText(/Picking a pin for Left row 0\./)).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'D4' }));
     expect(screen.getByLabelText('Left row 0')).toHaveProperty('value', '4');
+  });
+
+  it('arms a pin field on pointer-down, so touch and pen work', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await openWizard(user);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+
+    // A touch/pen tap only fires a pointerdown, not a mousedown.
+    fireEvent.pointerDown(screen.getByLabelText('Left row 1'), { pointerType: 'touch' });
+    expect(screen.getByText(/Picking a pin for Left row 1\./)).toBeTruthy();
   });
 });
 
