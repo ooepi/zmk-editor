@@ -127,6 +127,10 @@ describe('Design your own keyboard', () => {
     await user.keyboard('{Control>}z{/Control}');
     expect(stored()).toEqual(before);
     expect(screen.getByText('Edit hardware · Test Pad')).toBeTruthy();
+
+    for (const name of ['Undo', 'Redo', 'Open files', 'Reset to demo']) {
+      expect(screen.getByRole('button', { name })).toHaveProperty('disabled', true);
+    }
   });
 
   it('doesn’t silently re-enable “wired differently” after unticking it', async () => {

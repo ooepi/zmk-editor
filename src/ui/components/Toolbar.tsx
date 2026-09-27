@@ -12,6 +12,8 @@ interface ToolbarProps {
   config: ZmkConfig;
   canUndo: boolean;
   canRedo: boolean;
+  /** True while the keyboard wizard has a draft of `config` open; undo, redo, opening files and resetting to the demo would change it behind the wizard's back. */
+  locked?: boolean;
   theme: Theme;
   onToggleTheme: () => void;
   dispatch: Dispatch<EditorAction>;
@@ -50,8 +52,9 @@ async function filesToConfig(files: File[], current: ZmkConfig): Promise<{ confi
   return importConfig(repo, keyboard);
 }
 
-export function Toolbar({ config, canUndo, canRedo, theme, onToggleTheme, dispatch }: ToolbarProps) {
+export function Toolbar({ config, canUndo, canRedo, locked, theme, onToggleTheme, dispatch }: ToolbarProps) {
   const fileInput = useRef<HTMLInputElement>(null);
+  const lockedTitle = 'Finish or cancel the keyboard wizard first.';
 
   const openFiles = async (files: File[]) => {
     try {
@@ -82,18 +85,31 @@ export function Toolbar({ config, canUndo, canRedo, theme, onToggleTheme, dispat
 
   return (
     <div className="toolbar">
-      <button type="button" className="button" disabled={!canUndo} onClick={() => dispatch({ type: 'undo' })} title="Undo (Ctrl+Z)">
+      <button
+        type="button"
+        className="button"
+        disabled={!canUndo || locked}
+        onClick={() => dispatch({ type: 'undo' })}
+        title={locked ? lockedTitle : 'Undo (Ctrl+Z)'}
+      >
         Undo
       </button>
-      <button type="button" className="button" disabled={!canRedo} onClick={() => dispatch({ type: 'redo' })} title="Redo (Ctrl+Shift+Z)">
+      <button
+        type="button"
+        className="button"
+        disabled={!canRedo || locked}
+        onClick={() => dispatch({ type: 'redo' })}
+        title={locked ? lockedTitle : 'Redo (Ctrl+Shift+Z)'}
+      >
         Redo
       </button>
       <span className="toolbar-sep" />
       <button
         type="button"
         className="button"
+        disabled={locked}
         onClick={() => fileInput.current?.click()}
-        title="Pick your .keymap, and optionally its .conf, west.yml, build.yaml and .editor.json"
+        title={locked ? lockedTitle : 'Pick your .keymap, and optionally its .conf, west.yml, build.yaml and .editor.json'}
       >
         Open files
       </button>
@@ -116,7 +132,7 @@ export function Toolbar({ config, canUndo, canRedo, theme, onToggleTheme, dispat
       <button type="button" className="button" onClick={downloadZip} title="Keymap, .conf, west.yml, build.yaml and the build workflow">
         Download config (.zip)
       </button>
-      <button type="button" className="button" onClick={resetDemo}>
+      <button type="button" className="button" disabled={locked} onClick={resetDemo} title={locked ? lockedTitle : undefined}>
         Reset to demo
       </button>
       <span className="toolbar-sep" />

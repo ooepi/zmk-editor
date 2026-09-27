@@ -73,6 +73,11 @@ export function HardwareWizard({ config, dispatch, mode, onDone, onCancel }: Pro
 
   const finish = () => {
     if (existing) {
+      if (config.hardware !== existing) {
+        dispatch({ type: 'notify', notice: 'The config changed while the wizard was open, so the hardware wasn’t saved. Open Edit hardware again.' });
+        onCancel();
+        return;
+      }
       const { config: next, notes } = applyHardware(config, draft.hw, draft.origins);
       dispatch({ type: 'editConfig', config: next, notice: ['Saved the keyboard’s hardware.', ...notes].join(' ') });
     } else {

@@ -113,6 +113,7 @@ export function App() {
           config={config}
           canUndo={state.past.length > 0}
           canRedo={state.future.length > 0}
+          locked={view === 'newKeyboard' || view === 'editHardware'}
           theme={theme}
           onToggleTheme={toggleTheme}
           dispatch={dispatch}
