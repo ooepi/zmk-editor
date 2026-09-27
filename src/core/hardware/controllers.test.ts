@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { HARDWARE_CONTROLLERS, PRO_MICRO_HEADER, PRO_MICRO_PINS, pinLabel } from './controllers.ts';
+import { HARDWARE_CONTROLLERS, PRO_MICRO_HEADER, PRO_MICRO_PINS, pinLabel, isNiceNano } from './controllers.ts';
 
 describe('Pro Micro pins', () => {
   it('lists the 18 &pro_micro pins ZMK maps', () => {
@@ -16,5 +16,11 @@ describe('Pro Micro pins', () => {
     expect(ids).not.toContain('sparkfun_pro_micro_rp2040');
     expect(ids).not.toContain('nrfmicro_13_52833');
     expect(ids).not.toContain('seeeduino_xiao_ble');
+  });
+
+  it('identifies nice!nano controllers by id', () => {
+    expect(isNiceNano('nice_nano')).toBe(true);
+    expect(isNiceNano('nice_nano_v2')).toBe(true);
+    expect(isNiceNano('puchi_ble_v1')).toBe(false);
   });
 });
