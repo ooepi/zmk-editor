@@ -1361,6 +1361,11 @@ select {
   stroke-width: 6;
 }
 
+.designer-key.flagged rect {
+  stroke: var(--danger);
+  stroke-width: 6;
+}
+
 .designer-label {
   fill: var(--text);
   font-size: 26px;
