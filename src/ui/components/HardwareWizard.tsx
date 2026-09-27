@@ -33,6 +33,12 @@ function freshDraft(basics: HardwareBasics): HardwareDraft {
   return { hw, origins: hw.keys.map(() => undefined) };
 }
 
+/** Whether the keys still match a freshly generated grid of `hw`'s own shape, i.e. untouched. */
+function keysMatchFreshGrid(hw: KeyboardHardware): boolean {
+  const fresh = gridHardware(basicsOf(hw)).keys;
+  return JSON.stringify(hw.keys) === JSON.stringify(fresh);
+}
+
 interface Props {
   config: ZmkConfig;
   dispatch: Dispatch<EditorAction>;
@@ -57,7 +63,7 @@ export function HardwareWizard({ config, dispatch, mode, onDone, onCancel }: Pro
   const leaveBasics = () => {
     const { hw } = draft;
     if (!existing && shapeOf(basics) !== shape) {
-      if (anyPin(hw) && !window.confirm('Changing the size or wiring starts the keys and pins over. Continue?')) return;
+      if ((anyPin(hw) || !keysMatchFreshGrid(hw)) && !window.confirm('Changing the size or wiring starts the keys and pins over. Continue?')) return;
       setDraft(freshDraft(basics));
       setShape(shapeOf(basics));
     } else {

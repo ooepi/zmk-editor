@@ -133,6 +133,28 @@ describe('Design your own keyboard', () => {
     }
   });
 
+  it('confirms before rebuilding the grid when keys were rearranged, even with no pins picked', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const user = userEvent.setup();
+    render(<App />);
+    await openWizard(user);
+    await type(user, 'Columns', '3');
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+
+    await user.click(canvasKey(0));
+    await user.click(screen.getByRole('button', { name: 'Delete key' }));
+
+    await user.click(screen.getByRole('button', { name: 'Back' }));
+    await user.click(screen.getByRole('button', { name: 'Back' }));
+    await type(user, 'Columns', '4');
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+
+    expect(confirm).toHaveBeenCalledWith('Changing the size or wiring starts the keys and pins over. Continue?');
+    // Declined: leaveBasics returned early, so we're still on the Basics step.
+    expect(screen.getByLabelText('Columns')).toBeTruthy();
+  });
+
   it('doesn’t silently re-enable “wired differently” after unticking it', async () => {
     const user = userEvent.setup();
     render(<App />);
