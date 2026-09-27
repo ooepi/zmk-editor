@@ -175,11 +175,13 @@ RC(0,0) RC(0,1) RC(0,2) RC(0,3)
   });
 
   it('normalizes negative and fractional layout values so dtc accepts them', () => {
+    const [key0, key1] = testPad.keys;
+    if (!key0 || !key1) throw new Error('testPad needs at least two keys');
     const hw: KeyboardHardware = {
       ...testPad,
       keys: [
-        { ...testPad.keys[0]!, x: -25, y: 0 },
-        { ...testPad.keys[1]!, x: 100, y: 0, w: 125, r: 15, rx: 100 + 125 / 2, ry: 50 },
+        { ...key0, x: -25, y: 0 },
+        { ...key1, x: 100, y: 0, w: 125, r: 15, rx: 100 + 125 / 2, ry: 50 },
       ],
     };
     const overlay = generateShield(hw)[`${dir('test_pad')}/test_pad.overlay`] ?? '';
