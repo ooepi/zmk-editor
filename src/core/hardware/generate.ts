@@ -1,7 +1,7 @@
 import { yamlScalar } from '../files/yaml-util.ts';
 import { textLayoutFromPhysical } from '../layouts/derive.ts';
 import { layoutLabel, physicalLayoutNode } from '../layouts/dtsi.ts';
-import { definitionPath, serializeHardware, shieldDir } from './definition.ts';
+import { definitionPath, parseHardware, serializeHardware, shieldDir } from './definition.ts';
 import { hardwareLayout, type KeyboardHardware, type Pin, type Side } from './types.ts';
 import { directPins, halfSize, matrixPins } from './wiring.ts';
 
@@ -147,4 +147,25 @@ export function generateShield(hw: KeyboardHardware): Record<string, string> {
     files[`${dir}/${hw.name}.overlay`] = rootFile(hw, true);
   }
   return files;
+}
+
+/**
+ * Shield files in a repo that differ from what the repo's own definition
+ * generates, i.e. edited by hand. Missing files don't count.
+ */
+export function handEditedShieldFiles(files: Record<string, string>, keyboard: string): string[] {
+  const text = files[definitionPath(keyboard)];
+  if (text === undefined) return [];
+  let hw: KeyboardHardware;
+  try {
+    hw = parseHardware(text);
+  } catch {
+    return [];
+  }
+  return Object.entries(generateShield(hw))
+    .filter(([path, generated]) => {
+      const existing = files[path];
+      return existing !== undefined && existing.replace(/\r\n/g, '\n') !== generated;
+    })
+    .map(([path]) => path);
 }

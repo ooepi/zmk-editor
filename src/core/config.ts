@@ -2,6 +2,9 @@ import { generateBuildMatrix, parseBuildMatrix, type BuildModel } from './files/
 import { generateKconfig, parseKconfig, type KconfigModel } from './files/kconfig.ts';
 import { generateWestManifest, parseWestManifest, type WestModel } from './files/west.ts';
 import { generateWorkflow } from './files/workflow.ts';
+import { definitionPath, parseHardware } from './hardware/definition.ts';
+import { generateShield, handEditedShieldFiles } from './hardware/generate.ts';
+import { hardwareLayout, type KeyboardHardware } from './hardware/types.ts';
 import { generateKeymap } from './keymap/generator.ts';
 import { importKeymap } from './keymap/importer.ts';
 import { emptyKeymap, type KeymapModel } from './keymap/model.ts';
@@ -19,6 +22,8 @@ export interface ZmkConfig {
   build: BuildModel;
   /** A layout drawn in the designer, saved as `config/info.json`; overrides the catalog layout. */
   layout?: PhysicalLayout;
+  /** A keyboard designed in the editor; its shield files are generated from it and it supplies the layout. */
+  hardware?: KeyboardHardware;
 }
 
 /** Repo path → file contents. */
@@ -35,6 +40,11 @@ export function configPaths(keyboard: string) {
   };
 }
 
+/** The layout the config draws for itself: a designed keyboard's, else the designer layout (info.json). */
+export function customLayout(config: Pick<ZmkConfig, 'hardware' | 'layout'>): PhysicalLayout | undefined {
+  return config.hardware ? hardwareLayout(config.hardware) : config.layout;
+}
+
 /** Reads a zmk-config repo. `keyboard` defaults to the only `config/*.keymap`. */
 export function importConfig(files: ConfigFiles, keyboard?: string): { config: ZmkConfig; warnings: string[] } {
   const name = keyboard ?? findKeyboard(files);
@@ -49,6 +59,7 @@ export function importConfig(files: ConfigFiles, keyboard?: string): { config: Z
     keymap = result.model;
     warnings.push(...result.warnings);
   }
+  const keyCount = keymap.layers[0]?.bindings.length ?? 0;
 
   const westText = files[paths.west];
   if (westText === undefined) throw new Error(`Missing ${paths.west}`);
@@ -62,10 +73,24 @@ export function importConfig(files: ConfigFiles, keyboard?: string): { config: Z
     west: west.model,
     build: parseBuildMatrix(files[paths.build] ?? ''),
   };
-  const infoText = files[paths.info];
+
+  const definitionText = files[definitionPath(name)];
+  if (definitionText !== undefined) {
+    try {
+      const hardware = parseHardware(definitionText);
+      config.hardware = hardware;
+      if (hardware.keys.length !== keyCount) warnings.push(`The keyboard has ${hardware.keys.length} keys but the keymap has ${keyCount}.`);
+      for (const path of handEditedShieldFiles(files, name)) {
+        warnings.push(`${path} was changed outside the editor; committing replaces it with the editor’s version.`);
+      }
+    } catch (error) {
+      warnings.push(`Ignored ${definitionPath(name)}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  const infoText = config.hardware ? undefined : files[paths.info];
   if (infoText !== undefined) {
     const layout = parseInfoJson(infoText);
-    const keyCount = keymap.layers[0]?.bindings.length ?? 0;
     if (!layout) warnings.push(`Ignored ${paths.info}: it has no layout.`);
     else {
       config.layout = layout;
@@ -82,13 +107,14 @@ export function generateConfig(config: ZmkConfig): ConfigFiles {
   const paths = configPaths(config.keyboard);
   const keyCount = config.keymap.layers[0]?.bindings.length ?? 0;
   const files: ConfigFiles = {
-    [paths.keymap]: generateKeymap(config.keymap, textLayoutFor(config.keyboard, keyCount, config.layout)),
+    [paths.keymap]: generateKeymap(config.keymap, textLayoutFor(config.keyboard, keyCount, customLayout(config))),
     [paths.kconfig]: generateKconfig(config.kconfig),
     [paths.west]: generateWestManifest(config.west),
     [paths.build]: generateBuildMatrix(config.build),
     [paths.workflow]: generateWorkflow(config.west.zmkVersion),
   };
-  if (config.layout) files[paths.info] = generateInfoJson(config.layout);
+  if (config.hardware) Object.assign(files, generateShield(config.hardware));
+  else if (config.layout) files[paths.info] = generateInfoJson(config.layout);
   return files;
 }
 
