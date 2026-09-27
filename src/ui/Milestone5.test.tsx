@@ -112,4 +112,28 @@ describe('modules and unicode', () => {
     await user.upload(screen.getByTestId('config-files'), [keymap, definition]);
     expect(await screen.findByRole('button', { name: 'Test Pad ▾' })).toBeTruthy();
   });
+
+  it('carries over the designed keyboard’s definition when only its keymap is re-opened', async () => {
+    const config = newHardwareConfig(testPad, 'v0.3');
+    localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config }));
+    const user = userEvent.setup();
+    render(<App />);
+    const files = generateConfig(config);
+    const keymap = new File([files['config/test_pad.keymap'] ?? ''], 'test_pad.keymap');
+    await user.upload(screen.getByTestId('config-files'), [keymap]);
+    expect(await screen.findByRole('button', { name: 'Test Pad ▾' })).toBeTruthy();
+  });
+
+  it('lets an explicitly picked .editor.json win over the carried-over definition', async () => {
+    const config = newHardwareConfig(testPad, 'v0.3');
+    localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config }));
+    const other = newHardwareConfig({ ...testPad, name: 'test_pad', displayName: 'Other Pad' }, 'v0.3');
+    const otherFiles = generateConfig(other);
+    const user = userEvent.setup();
+    render(<App />);
+    const keymap = new File([otherFiles['config/test_pad.keymap'] ?? ''], 'test_pad.keymap');
+    const definition = new File([otherFiles['config/boards/shields/test_pad/test_pad.editor.json'] ?? ''], 'test_pad.editor.json');
+    await user.upload(screen.getByTestId('config-files'), [keymap, definition]);
+    expect(await screen.findByRole('button', { name: 'Other Pad ▾' })).toBeTruthy();
+  });
 });

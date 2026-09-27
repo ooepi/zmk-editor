@@ -36,7 +36,7 @@ async function filesToConfig(files: File[], current: ZmkConfig): Promise<{ confi
   const paths = configPaths(keyboard);
   const repo: Record<string, string> = {};
   const existing = generateConfig({ ...current, keyboard });
-  for (const path of [paths.kconfig, paths.west, paths.build]) {
+  for (const path of [paths.kconfig, paths.west, paths.build, definitionPath(keyboard)]) {
     const text = existing[path];
     if (text !== undefined) repo[path] = text;
   }
