@@ -174,6 +174,23 @@ RC(0,0) RC(0,1) RC(0,2) RC(0,3)
 `);
   });
 
+  it('normalizes negative and fractional layout values so dtc accepts them', () => {
+    const hw: KeyboardHardware = {
+      ...testPad,
+      keys: [
+        { ...testPad.keys[0]!, x: -25, y: 0 },
+        { ...testPad.keys[1]!, x: 100, y: 0, w: 125, r: 15, rx: 100 + 125 / 2, ry: 50 },
+      ],
+    };
+    const overlay = generateShield(hw)[`${dir('test_pad')}/test_pad.overlay`] ?? '';
+    const attrLines = overlay.split('\n').filter((line) => line.includes('key_physical_attrs'));
+    expect(attrLines.length).toBeGreaterThan(0);
+    for (const line of attrLines) {
+      expect(line.replace(/\([^)]*\)/g, '')).not.toContain('-');
+      expect(line).not.toContain('.');
+    }
+  });
+
   it('puts the pull-down on the columns for row2col diodes', () => {
     const rowToCol: KeyboardHardware = { ...testSplit, wiring: { kind: 'matrix', diodeDirection: 'row2col', rows: [4], cols: [6, 7] } };
     const left = generateShield(rowToCol)[`${dir('test_split')}/test_split_left.overlay`];

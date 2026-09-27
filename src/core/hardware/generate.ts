@@ -1,6 +1,7 @@
 import { yamlScalar } from '../files/yaml-util.ts';
 import { textLayoutFromPhysical } from '../layouts/derive.ts';
 import { layoutLabel, physicalLayoutNode } from '../layouts/dtsi.ts';
+import { normalizedLayout } from '../layouts/normalize.ts';
 import { definitionPath, parseHardware, serializeHardware, shieldDir } from './definition.ts';
 import { hardwareLayout, type KeyboardHardware, type Pin, type Side } from './types.ts';
 import { directPins, halfSize, matrixPins } from './wiring.ts';
@@ -118,7 +119,7 @@ ${kscanNode(hw, withPins)}
 
 ${transformNode(hw)}
 
-${physicalLayoutNode(hardwareLayout(hw), hw.name, hw.displayName, ['transform = <&default_transform>;'])}
+${physicalLayoutNode(normalizedLayout(hardwareLayout(hw)), hw.name, hw.displayName, ['transform = <&default_transform>;'])}
 };
 `;
 }

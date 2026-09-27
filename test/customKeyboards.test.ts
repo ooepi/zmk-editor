@@ -6,14 +6,27 @@ import { DEFAULT_BASICS, gridHardware } from '../src/core/hardware/grid.ts';
 import type { KeyboardHardware } from '../src/core/hardware/types.ts';
 import { validateHardware } from '../src/core/hardware/validate.ts';
 
-/** A 3×6+3 split (Corne-like), COL2ROW, right half mirrored; the Corne's pins. */
+/**
+ * A 3×6+3 split (Corne-like), COL2ROW, right half mirrored; the Corne's pins.
+ * The innermost thumb key on each half is 1.25u wide and rotated around its
+ * own centre (toward the other half), and one left-half key sits left of the
+ * origin: this proves the generated devicetree survives negative offsets and
+ * rotated, non-1u keys (see F1 of the final review).
+ */
 const split: KeyboardHardware = (() => {
   const hw = gridHardware({ ...DEFAULT_BASICS, name: 'editor_split', displayName: 'Editor Split', rows: 4, cols: 6 });
+  const keys = hw.keys
+    .filter((k) => k.row !== 3 || (k.side === 'left' ? k.col >= 3 : k.col <= 2))
+    .map((k) => {
+      if (k.row === 3 && k.side === 'left' && k.col === 5) return { ...k, w: 125, r: 15, rx: k.x + 125 / 2, ry: k.y + k.h / 2 };
+      if (k.row === 3 && k.side === 'right' && k.col === 0) return { ...k, w: 125, r: -15, rx: k.x + 125 / 2, ry: k.y + k.h / 2 };
+      if (k.row === 0 && k.col === 0 && k.side === 'left') return { ...k, x: -25 };
+      return k;
+    });
   return {
     ...hw,
     wiring: { kind: 'matrix', diodeDirection: 'col2row', rows: [4, 5, 6, 7], cols: [21, 20, 19, 18, 15, 14] },
-    // Row 3 keeps the three inner thumb keys per half.
-    keys: hw.keys.filter((k) => k.row !== 3 || (k.side === 'left' ? k.col >= 3 : k.col <= 2)),
+    keys,
   };
 })();
 
