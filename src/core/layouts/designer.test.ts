@@ -56,6 +56,23 @@ describe('ZMK physical layout snippet', () => {
     const rotated = { ...layout, keys: [{ ...second, r: -30 }] };
     expect(layoutDtsi(rotated, 'x')).toContain('(-3000)');
   });
+
+  it('prints the whole node exactly (guards the refactor for custom keyboards)', () => {
+    expect(layoutDtsi(layout, 'my_board')).toBe(`#include <physical_layouts.dtsi>
+
+/ {
+    my_board_layout: my_board_layout {
+        compatible = "zmk,physical-layout";
+        display-name = "my_board";
+
+        keys  //                     w   h    x    y     rot   rx   ry
+            = <&key_physical_attrs 100 100    0    0      0    0    0>
+            , <&key_physical_attrs 150 100  125   25   1500  200   75>
+            ;
+    };
+};
+`);
+  });
 });
 
 describe('templates', () => {
