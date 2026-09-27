@@ -47,6 +47,9 @@ const message = (error: unknown) => (error instanceof Error ? error.message : St
 /** Connect to the zmk-config repo, commit, follow the build and get the firmware. */
 export function BuildView({ config, dispatch }: BuildViewProps) {
   const [connection, setConnection] = useState<Connection | null>(null);
+  // Bumped on every explicit connect, so a hand-edit confirmation never carries over from a
+  // previous connection to the same repo (e.g. Disconnect then reconnect, with nothing changed).
+  const [connectionSeq, setConnectionSeq] = useState(0);
   const [build, setBuild] = useState<BuildState>({ phase: 'idle' });
   const [commitMessage, setCommitMessage] = useState('Update keymap with ZMK Editor');
 
@@ -58,11 +61,15 @@ export function BuildView({ config, dispatch }: BuildViewProps) {
         : [],
     [generated, connection],
   );
-  const [replaceHandEdits, setReplaceHandEdits] = useState(false);
   const handEdited = useMemo(
     () => (connection ? handEditedShieldFiles(connection.files, config.keyboard).filter((path) => changes.some(([p]) => p === path)) : []),
     [connection, config.keyboard, changes],
   );
+  const handEditKey = connection
+    ? `${connectionSeq}:${connection.ref.owner}/${connection.ref.repo}@${connection.headSha}:${handEdited.join('|')}`
+    : '';
+  const [confirmedHandEdits, setConfirmedHandEdits] = useState<string | null>(null);
+  const replaceHandEdits = handEdited.length > 0 && confirmedHandEdits === handEditKey;
   const busy = build.phase === 'committing' || build.phase === 'waiting' || build.phase === 'downloading';
 
   const follow = async (conn: Connection, sha: string) => {
@@ -127,6 +134,7 @@ export function BuildView({ config, dispatch }: BuildViewProps) {
         connection={connection}
         onConnected={(conn) => {
           setConnection(conn);
+          setConnectionSeq((n) => n + 1);
           setBuild({ phase: 'idle' });
         }}
         onDisconnect={() => {
@@ -169,7 +177,11 @@ export function BuildView({ config, dispatch }: BuildViewProps) {
                 {handEdited.length === 1 ? 'it' : 'them'} with the editor’s version.
               </p>
               <label className="field checkbox">
-                <input type="checkbox" checked={replaceHandEdits} onChange={(e) => setReplaceHandEdits(e.target.checked)} />
+                <input
+                  type="checkbox"
+                  checked={replaceHandEdits}
+                  onChange={(e) => setConfirmedHandEdits(e.target.checked ? handEditKey : null)}
+                />
                 <span>Replace my changes to the shield files</span>
               </label>
             </div>

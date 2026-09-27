@@ -93,7 +93,7 @@ export function Toolbar({ config, canUndo, canRedo, theme, onToggleTheme, dispat
         type="button"
         className="button"
         onClick={() => fileInput.current?.click()}
-        title="Pick your .keymap, and optionally its .conf, west.yml and build.yaml"
+        title="Pick your .keymap, and optionally its .conf, west.yml, build.yaml and .editor.json"
       >
         Open files
       </button>

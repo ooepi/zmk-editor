@@ -118,4 +118,27 @@ describe('Build tab with a designed keyboard', () => {
     await user.click(screen.getByLabelText('Replace my changes to the shield files'));
     expect(commit).toHaveProperty('disabled', false);
   });
+
+  it('forgets the confirmation when reconnecting to a repo', async () => {
+    const config = newHardwareConfig(testPad, 'v0.3');
+    const files = generateConfig(config);
+    const overlay = 'config/boards/shields/test_pad/test_pad.overlay';
+    files[overlay] = `${files[overlay]}/* my tweak */\n`;
+    fake = new FakeGitHub(files);
+    vi.stubGlobal('fetch', fake.fetch);
+    localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config }));
+
+    const user = userEvent.setup();
+    render(<App />);
+    await connect(user);
+    await screen.findByText(/test_pad\.overlay was changed outside the editor/);
+    await user.click(screen.getByLabelText('Replace my changes to the shield files'));
+    expect(screen.getByRole('button', { name: 'Commit & build' })).toHaveProperty('disabled', false);
+
+    await user.click(screen.getByRole('button', { name: 'Disconnect' }));
+    await connect(user);
+    expect(await screen.findByText(/test_pad\.overlay was changed outside the editor/)).toBeTruthy();
+    expect(screen.getByLabelText('Replace my changes to the shield files')).toHaveProperty('checked', false);
+    expect(screen.getByRole('button', { name: 'Commit & build' })).toHaveProperty('disabled', true);
+  });
 });
