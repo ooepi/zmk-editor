@@ -7,6 +7,7 @@ import { newHardwareConfig } from '../core/hardware/config.ts';
 import { DEFAULT_BASICS, gridHardware } from '../core/hardware/grid.ts';
 import { testPad } from '../core/hardware/testFixtures.ts';
 import type { KeyboardHardware } from '../core/hardware/types.ts';
+import { createCombo } from '../core/keymap/comboEdit.ts';
 import { App } from './App.tsx';
 
 beforeEach(() => localStorage.clear());
@@ -156,5 +157,37 @@ describe('Design your own keyboard', () => {
     expect(screen.getByText(/Picking a pin for Left row 0\./)).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'D4' }));
     expect(screen.getByLabelText('Left row 0')).toHaveProperty('value', '4');
+  });
+});
+
+describe('Edit hardware', () => {
+  it('deletes a key later, keeps the keymap and combos in step, and can be undone', async () => {
+    const hw = {
+      ...gridHardware({ ...DEFAULT_BASICS, name: 'test_pad', displayName: 'Test Pad', split: false, wiring: 'direct', rows: 1, cols: 3 }),
+      wiring: { kind: 'direct' as const, pins: [4, 5, 6] },
+    };
+    const config = newHardwareConfig(hw, 'v0.3');
+    config.keymap = { ...config.keymap, combos: [createCombo(config.keymap, [1, 2])] };
+    localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config }));
+
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Test Pad ▾' }));
+    await user.click(screen.getByRole('button', { name: 'Edit hardware' }));
+    expect(screen.getByLabelText('Id')).toHaveProperty('disabled', true);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(canvasKey(0));
+    await user.click(screen.getByRole('button', { name: 'Delete key' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Save hardware' }));
+
+    expect(screen.getByRole('status').textContent).toMatch(/Saved the keyboard’s hardware/);
+    const saved = stored();
+    expect(saved.keymap.layers[0].bindings.map((b: { params: string[] }) => b.params[0])).toEqual(['W', 'E']);
+    expect(saved.keymap.combos[0].keyPositions).toEqual(['0', '1']);
+
+    await user.keyboard('{Control>}z{/Control}');
+    expect(stored().hardware.keys).toHaveLength(3);
   });
 });
