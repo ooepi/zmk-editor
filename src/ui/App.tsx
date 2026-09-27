@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { customLayout } from '../core/config.ts';
 import { toggleComboKey, replaceCombo } from '../core/keymap/comboEdit.ts';
 import { behaviorKind } from '../core/keymap/model.ts';
 import { findKeyboard } from '../core/catalog/keyboards.ts';
@@ -40,7 +41,7 @@ export function App() {
   const { keymap } = config;
   const keyCount = keymap.layers[0]?.bindings.length ?? 0;
   const { layouts } = usePreferences();
-  const layout = physicalLayoutFor(config.keyboard, keyCount, layouts[config.keyboard], config.layout);
+  const layout = physicalLayoutFor(config.keyboard, keyCount, layouts[config.keyboard], customLayout(config));
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -99,7 +100,7 @@ export function App() {
             onClick={() => setView('keyboard')}
             title="Keyboard and layout"
           >
-            {findKeyboard(config.keyboard)?.name ?? config.keyboard} ▾
+            {config.hardware?.displayName ?? findKeyboard(config.keyboard)?.name ?? config.keyboard} ▾
           </button>
           <VersionSelect config={config} dispatch={dispatch} />
         </div>

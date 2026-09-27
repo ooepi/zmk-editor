@@ -2,6 +2,9 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { generateConfig } from '../core/config.ts';
+import { newHardwareConfig } from '../core/hardware/config.ts';
+import { testPad } from '../core/hardware/testFixtures.ts';
 import { App } from './App.tsx';
 import { reloadPreferences } from './state/preferences.ts';
 
@@ -98,5 +101,15 @@ describe('modules and unicode', () => {
     expect(await screen.findByRole('button', { name: 'Key 1: B' })).toBeTruthy();
     expect((screen.getByRole('combobox', { name: 'ZMK version' }) as HTMLSelectElement).value).toBe('v0.2');
     expect(screen.getByRole('button', { name: 'Modules (0)' })).toBeTruthy();
+  });
+
+  it('opens a designed keyboard with its definition file', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const files = generateConfig(newHardwareConfig(testPad, 'v0.3'));
+    const keymap = new File([files['config/test_pad.keymap'] ?? ''], 'test_pad.keymap');
+    const definition = new File([files['config/boards/shields/test_pad/test_pad.editor.json'] ?? ''], 'test_pad.editor.json');
+    await user.upload(screen.getByTestId('config-files'), [keymap, definition]);
+    expect(await screen.findByRole('button', { name: 'Test Pad ▾' })).toBeTruthy();
   });
 });

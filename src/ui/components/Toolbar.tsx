@@ -1,6 +1,7 @@
 import { useRef, type Dispatch } from 'react';
 import { strToU8, zipSync } from 'fflate';
-import { configPaths, generateConfig, importConfig, type ZmkConfig } from '../../core/config.ts';
+import { configPaths, customLayout, generateConfig, importConfig, type ZmkConfig } from '../../core/config.ts';
+import { definitionPath } from '../../core/hardware/definition.ts';
 import { generateKeymap } from '../../core/keymap/generator.ts';
 import { textLayoutFor } from '../../core/layouts/index.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
@@ -28,7 +29,7 @@ function save(blob: Blob, name: string) {
 /** Maps picked files to repo paths; files not given keep the current config's contents. */
 async function filesToConfig(files: File[], current: ZmkConfig): Promise<{ config: ZmkConfig; warnings: string[] }> {
   const keymapFile = files.find((f) => f.name.endsWith('.keymap'));
-  if (!keymapFile) throw new Error('Pick a .keymap file (and optionally its .conf, west.yml and build.yaml).');
+  if (!keymapFile) throw new Error('Pick a .keymap file (and optionally its .conf, west.yml, build.yaml and .editor.json).');
   const keyboard = keymapFile.name.replace(/\.keymap$/i, '');
   const paths = configPaths(keyboard);
   const repo: Record<string, string> = {};
@@ -43,6 +44,7 @@ async function filesToConfig(files: File[], current: ZmkConfig): Promise<{ confi
     else if (file.name.endsWith('.conf')) repo[paths.kconfig] = text;
     else if (/^west\.ya?ml$/.test(file.name)) repo[paths.west] = text;
     else if (/^build\.ya?ml$/.test(file.name)) repo[paths.build] = text;
+    else if (file.name.endsWith('.editor.json')) repo[definitionPath(keyboard)] = text;
     else if (file.name === 'info.json') repo[paths.info] = text;
   }
   return importConfig(repo, keyboard);
@@ -62,7 +64,7 @@ export function Toolbar({ config, canUndo, canRedo, theme, onToggleTheme, dispat
   };
 
   const downloadKeymap = () => {
-    const text = generateKeymap(config.keymap, textLayoutFor(config.keyboard, config.keymap.layers[0]?.bindings.length ?? 0, config.layout));
+    const text = generateKeymap(config.keymap, textLayoutFor(config.keyboard, config.keymap.layers[0]?.bindings.length ?? 0, customLayout(config)));
     save(new Blob([text], { type: 'text/plain' }), `${config.keyboard}.keymap`);
   };
 

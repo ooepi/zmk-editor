@@ -10,6 +10,7 @@ import {
 import { diffStats, lineDiff } from '../../core/github/diff.ts';
 import { extractUf2, type FirmwareFile } from '../../core/github/firmware.ts';
 import { commitFiles } from '../../core/github/repo.ts';
+import { handEditedShieldFiles } from '../../core/hardware/generate.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
 import { clearGitHubSettings } from '../state/github.ts';
 import { clearTokens } from '../state/githubLogin.ts';
@@ -56,6 +57,11 @@ export function BuildView({ config, dispatch }: BuildViewProps) {
         ? Object.entries(generated).filter(([path, text]) => connection.files[path] !== text)
         : [],
     [generated, connection],
+  );
+  const [replaceHandEdits, setReplaceHandEdits] = useState(false);
+  const handEdited = useMemo(
+    () => (connection ? handEditedShieldFiles(connection.files, config.keyboard).filter((path) => changes.some(([p]) => p === path)) : []),
+    [connection, config.keyboard, changes],
   );
   const busy = build.phase === 'committing' || build.phase === 'waiting' || build.phase === 'downloading';
 
@@ -156,6 +162,18 @@ export function BuildView({ config, dispatch }: BuildViewProps) {
               </ul>
             </>
           )}
+          {handEdited.length > 0 && (
+            <div className="field">
+              <p className="field-error">
+                {handEdited.join(', ')} {handEdited.length === 1 ? 'was' : 'were'} changed outside the editor. Committing replaces{' '}
+                {handEdited.length === 1 ? 'it' : 'them'} with the editor’s version.
+              </p>
+              <label className="field checkbox">
+                <input type="checkbox" checked={replaceHandEdits} onChange={(e) => setReplaceHandEdits(e.target.checked)} />
+                <span>Replace my changes to the shield files</span>
+              </label>
+            </div>
+          )}
           <div className="row wrap">
             <input
               className="input grow"
@@ -166,7 +184,7 @@ export function BuildView({ config, dispatch }: BuildViewProps) {
             <button
               type="button"
               className="button primary"
-              disabled={busy || changes.length === 0 || !commitMessage.trim()}
+              disabled={busy || changes.length === 0 || !commitMessage.trim() || (handEdited.length > 0 && !replaceHandEdits)}
               onClick={() => void commitAndBuild()}
             >
               Commit &amp; build
