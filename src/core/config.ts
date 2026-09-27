@@ -5,6 +5,7 @@ import { generateWorkflow } from './files/workflow.ts';
 import { definitionPath, parseHardware } from './hardware/definition.ts';
 import { generateShield, handEditedShieldFiles } from './hardware/generate.ts';
 import { hardwareLayout, type KeyboardHardware } from './hardware/types.ts';
+import { validateHardware } from './hardware/validate.ts';
 import { generateKeymap } from './keymap/generator.ts';
 import { importKeymap } from './keymap/importer.ts';
 import { emptyKeymap, type KeymapModel } from './keymap/model.ts';
@@ -78,10 +79,17 @@ export function importConfig(files: ConfigFiles, keyboard?: string): { config: Z
   if (definitionText !== undefined) {
     try {
       const hardware = parseHardware(definitionText);
-      config.hardware = hardware;
-      if (hardware.keys.length !== keyCount) warnings.push(`The keyboard has ${hardware.keys.length} keys but the keymap has ${keyCount}.`);
-      for (const path of handEditedShieldFiles(files, name)) {
-        warnings.push(`${path} was changed outside the editor; committing replaces it with the editor’s version.`);
+      if (hardware.name !== name) {
+        warnings.push(`Ignored ${definitionPath(name)}: it describes “${hardware.name}”, but the keymap is config/${name}.keymap.`);
+      } else {
+        config.hardware = hardware;
+        if (hardware.keys.length !== keyCount) warnings.push(`The keyboard has ${hardware.keys.length} keys but the keymap has ${keyCount}.`);
+        for (const issue of validateHardware(hardware)) {
+          if (issue.level === 'error') warnings.push(`Keyboard hardware: ${issue.message}`);
+        }
+        for (const path of handEditedShieldFiles(files, name)) {
+          warnings.push(`${path} was changed outside the editor; committing replaces it with the editor’s version.`);
+        }
       }
     } catch (error) {
       warnings.push(`Ignored ${definitionPath(name)}: ${error instanceof Error ? error.message : String(error)}`);

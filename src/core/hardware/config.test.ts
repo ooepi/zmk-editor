@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { configPaths, generateConfig, importConfig } from '../config.ts';
 import { formatBinding } from '../keymap/bindings.ts';
 import { applyHardware, newHardwareConfig } from './config.ts';
-import { definitionPath } from './definition.ts';
+import { definitionPath, serializeHardware } from './definition.ts';
 import { handEditedShieldFiles } from './generate.ts';
 import { testSplit } from './testFixtures.ts';
 
@@ -53,6 +53,23 @@ describe('configs with a designed keyboard', () => {
     const { config: imported, warnings } = importConfig(files);
     expect(imported.hardware).toBeUndefined();
     expect(warnings[0]).toMatch(/^Ignored config\/boards\/shields\/test_split\/test_split\.editor\.json: /);
+  });
+
+  it('ignores a definition that describes a different keyboard', () => {
+    const mismatched = { ...testSplit, name: 'other_name' };
+    const files = { ...generateConfig(config), [definitionPath('test_split')]: serializeHardware(mismatched) };
+    const { config: imported, warnings } = importConfig(files, 'test_split');
+    expect(imported.hardware).toBeUndefined();
+    expect(warnings).toContain(
+      `Ignored ${definitionPath('test_split')}: it describes “other_name”, but the keymap is config/test_split.keymap.`,
+    );
+  });
+
+  it('adds validateHardware errors to the import warnings', () => {
+    const broken = { ...testSplit, wiring: { ...testSplit.wiring, rows: [null] } } as typeof testSplit;
+    const files = { ...generateConfig(config), [definitionPath('test_split')]: serializeHardware(broken) };
+    const { warnings } = importConfig(files);
+    expect(warnings).toContain('Keyboard hardware: Row 0 on the left half has no pin.');
   });
 
   it('applies a hardware edit: remaps the keymap and moves the build to the new controller', () => {

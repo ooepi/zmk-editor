@@ -119,6 +119,21 @@ describe('Build tab with a designed keyboard', () => {
     expect(commit).toHaveProperty('disabled', false);
   });
 
+  it('blocks the commit while the hardware has validation errors', async () => {
+    const broken = { ...testPad, wiring: { ...testPad.wiring, pins: [null, 5] } } as typeof testPad;
+    const config = newHardwareConfig(broken, 'v0.3');
+    fake = new FakeGitHub(generateConfig(config));
+    vi.stubGlobal('fetch', fake.fetch);
+    localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config }));
+
+    const user = userEvent.setup();
+    render(<App />);
+    await connect(user);
+    expect(await screen.findByText(/Fix the keyboard’s hardware \(Keyboard ▸ Edit hardware\) before committing:/)).toBeTruthy();
+    expect(screen.getByText('Input 0 has no pin.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Commit & build' })).toHaveProperty('disabled', true);
+  });
+
   it('forgets the confirmation when reconnecting to a repo', async () => {
     const config = newHardwareConfig(testPad, 'v0.3');
     const files = generateConfig(config);

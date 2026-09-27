@@ -11,11 +11,13 @@ import { diffStats, lineDiff } from '../../core/github/diff.ts';
 import { extractUf2, type FirmwareFile } from '../../core/github/firmware.ts';
 import { commitFiles } from '../../core/github/repo.ts';
 import { handEditedShieldFiles } from '../../core/hardware/generate.ts';
+import { validateHardware } from '../../core/hardware/validate.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
 import { clearGitHubSettings } from '../state/github.ts';
 import { clearTokens } from '../state/githubLogin.ts';
 import { ConnectSection, type Connection } from './ConnectSection.tsx';
 import { DiffView } from './DiffView.tsx';
+import { HardwareIssueList } from './HardwareIssueList.tsx';
 
 interface BuildViewProps {
   config: ZmkConfig;
@@ -65,6 +67,7 @@ export function BuildView({ config, dispatch }: BuildViewProps) {
     () => (connection ? handEditedShieldFiles(connection.files, config.keyboard).filter((path) => changes.some(([p]) => p === path)) : []),
     [connection, config.keyboard, changes],
   );
+  const hardwareErrors = useMemo(() => (config.hardware ? validateHardware(config.hardware).filter((i) => i.level === 'error') : []), [config.hardware]);
   const handEditKey = connection
     ? `${connectionSeq}:${connection.ref.owner}/${connection.ref.repo}@${connection.headSha}:${handEdited.join('|')}`
     : '';
@@ -186,6 +189,12 @@ export function BuildView({ config, dispatch }: BuildViewProps) {
               </label>
             </div>
           )}
+          {hardwareErrors.length > 0 && (
+            <div className="field">
+              <p className="field-error">Fix the keyboard’s hardware (Keyboard ▸ Edit hardware) before committing:</p>
+              <HardwareIssueList issues={hardwareErrors} />
+            </div>
+          )}
           <div className="row wrap">
             <input
               className="input grow"
@@ -196,7 +205,9 @@ export function BuildView({ config, dispatch }: BuildViewProps) {
             <button
               type="button"
               className="button primary"
-              disabled={busy || changes.length === 0 || !commitMessage.trim() || (handEdited.length > 0 && !replaceHandEdits)}
+              disabled={
+                busy || changes.length === 0 || !commitMessage.trim() || (handEdited.length > 0 && !replaceHandEdits) || hardwareErrors.length > 0
+              }
               onClick={() => void commitAndBuild()}
             >
               Commit &amp; build
