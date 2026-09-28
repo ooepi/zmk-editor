@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { definitionPath, parseHardware, serializeHardware } from './definition.ts';
 import { DEFAULT_BASICS, gridHardware } from './grid.ts';
+import { setRightWiredDifferently } from './wiring.ts';
 
 const hw = { ...gridHardware({ ...DEFAULT_BASICS, name: 'test_split', displayName: 'Test Split', rows: 1, cols: 2 }), wiring: { kind: 'matrix' as const, diodeDirection: 'col2row' as const, rows: [4], cols: [6, 7] } };
 
@@ -33,3 +34,10 @@ describe('hardware definition with encoders', () => {
     expect(serializeHardware(hw)).not.toContain('ncoders');
   });
 });
+
+describe('hardware definition without encoders', () => {
+  it('stays free of encoder keys when the right half gets its own pins', () => {
+    expect(serializeHardware(setRightWiredDifferently(hw, true))).not.toContain('ncoders');
+  });
+});
+

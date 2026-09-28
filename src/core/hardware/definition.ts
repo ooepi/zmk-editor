@@ -22,7 +22,10 @@ export function serializeHardware(hw: KeyboardHardware): string {
       split: hw.split,
       wiring,
       ...(hw.encoders && hw.encoders.length > 0 ? { encoders: hw.encoders.map(({ a, b }) => ({ a, b })) } : {}),
-      ...(hw.rightEncoders ? { rightEncoders: hw.rightEncoders.map(({ a, b }) => ({ a, b })) } : {}),
+      // Only when there are encoders at all: keyboards without them keep their files unchanged.
+      ...(hw.rightEncoders && (hw.rightEncoders.length > 0 || (hw.encoders?.length ?? 0) > 0)
+        ? { rightEncoders: hw.rightEncoders.map(({ a, b }) => ({ a, b })) }
+        : {}),
       keys: [],
     },
     null,

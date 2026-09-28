@@ -62,3 +62,21 @@ describe('encoders', () => {
     expect(carryEncoderOrigins(own, setRightWiredDifferently(own, false), [5])).toEqual([5, undefined]);
   });
 });
+
+describe('a right half with its own pins but no encoder list (made before encoders existed)', () => {
+  const stage1 = { ...testSplit, wiring: { kind: 'matrix', diodeDirection: 'col2row', rows: [4], cols: [6, 7], right: { rows: [4], cols: [7, 6] } } } as KeyboardHardware;
+
+  it('has no right-half encoders, and an encoder added on the left stays on the left', () => {
+    expect(halfEncoders(stage1, 'right')).toEqual([]);
+    const added = addEncoder({ hw: stage1, origins: [] }, 'left');
+    expect(halfEncoders(added.hw, 'right')).toEqual([]);
+    expect(added.origins).toEqual([undefined]);
+  });
+
+  it('adds an encoder on the right half to the right half', () => {
+    const added = addEncoder({ hw: stage1, origins: [] }, 'right');
+    expect(added.hw.rightEncoders).toEqual([{ a: null, b: null }]);
+    expect(added.hw.encoders ?? []).toEqual([]);
+  });
+});
+

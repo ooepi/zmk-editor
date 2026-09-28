@@ -1,9 +1,9 @@
 import { useState, type Dispatch } from 'react';
 import type { ZmkConfig } from '../../core/config.ts';
 import { applyHardware, newHardwareConfig } from '../../core/hardware/config.ts';
-import { addEncoder, carryEncoderOrigins, removeEncoder, sensorOrder, type EncoderDraft } from '../../core/hardware/encoders.ts';
+import { addEncoder, carryEncoderOrigins, removeEncoder, sensorOrder } from '../../core/hardware/encoders.ts';
 import { basicsOf, DEFAULT_BASICS, gridHardware, type HardwareBasics } from '../../core/hardware/grid.ts';
-import type { KeyboardHardware, Side } from '../../core/hardware/types.ts';
+import type { KeyboardHardware } from '../../core/hardware/types.ts';
 import { hasErrors, validateBasics, validateHardware } from '../../core/hardware/validate.ts';
 import { halfEncoders, resizeMatrix } from '../../core/hardware/wiring.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
@@ -28,18 +28,9 @@ const shapeOf = (b: HardwareBasics) => `${b.split}|${b.rows}|${b.cols}|${b.wirin
 function anyPin(hw: KeyboardHardware): boolean {
   const w = hw.wiring;
   const pins = w.kind === 'direct' ? [...w.pins, ...(w.right ?? [])] : [...w.rows, ...w.cols, ...(w.right ? [...w.right.rows, ...w.right.cols] : [])];
+  const encoderPins = [...halfEncoders(hw, 'left'), ...halfEncoders(hw, 'right')].flatMap((e) => [e.a, e.b]);
+  if (encoderPins.some((p) => p !== null)) return true;
   return pins.some((p) => p !== null);
-}
-
-/**
- * A right half with its own pins but no encoder list yet (made before encoders
- * existed) still mirrors the left's encoders; give it its own list before
- * adding or removing one there, so the change stays on the right half.
- */
-function ownRightEncoders(draft: EncoderDraft, side: Side | undefined): EncoderDraft {
-  if (side !== 'right' || draft.hw.rightEncoders) return draft;
-  const hw = { ...draft.hw, rightEncoders: halfEncoders(draft.hw, 'right').map((e) => ({ ...e })) };
-  return { hw, origins: carryEncoderOrigins(draft.hw, hw, draft.origins) };
 }
 
 function freshDraft(basics: HardwareBasics): HardwareDraft {
@@ -135,11 +126,11 @@ export function HardwareWizard({ config, dispatch, mode, onDone, onCancel }: Pro
             issues={issues.filter((i) => i.area === 'wiring')}
             onChange={(hw) => setDraft({ ...draft, hw, encoderOrigins: carryEncoderOrigins(draft.hw, hw, draft.encoderOrigins) })}
             onAddEncoder={(side) => {
-              const next = addEncoder(ownRightEncoders({ hw: draft.hw, origins: draft.encoderOrigins }, side), side);
+              const next = addEncoder({ hw: draft.hw, origins: draft.encoderOrigins }, side);
               setDraft({ ...draft, hw: next.hw, encoderOrigins: next.origins });
             }}
             onRemoveEncoder={(side, index) => {
-              const next = removeEncoder(ownRightEncoders({ hw: draft.hw, origins: draft.encoderOrigins }, side), side, index);
+              const next = removeEncoder({ hw: draft.hw, origins: draft.encoderOrigins }, side, index);
               setDraft({ ...draft, hw: next.hw, encoderOrigins: next.origins });
             }}
           />

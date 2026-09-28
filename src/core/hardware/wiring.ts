@@ -36,13 +36,16 @@ function withoutRight<T extends { right?: unknown }>(wiring: T): T {
 }
 
 /**
- * One half's encoders. Without `rightEncoders` the right half mirrors the left:
- * the same pins with A and B swapped, because a mirrored encoder turns the other way.
+ * One half's encoders. A mirrored right half (no pins of its own) mirrors the
+ * left's encoders: the same pins with A and B swapped, because a mirrored
+ * encoder turns the other way. A right half with its own pins has its own
+ * encoders: `rightEncoders`, or none (keyboards made before encoders existed).
  */
 export function halfEncoders(hw: KeyboardHardware, side?: Side): Encoder[] {
   const left = hw.encoders ?? [];
   if (side !== 'right') return left;
-  return hw.rightEncoders ?? left.map((e) => ({ a: e.b, b: e.a }));
+  if (hw.rightEncoders) return hw.rightEncoders;
+  return hw.wiring.right ? [] : left.map((e) => ({ a: e.b, b: e.a }));
 }
 
 /** Sets an encoder pin. Setting one on a mirrored right half gives the right half its own pins first. */
@@ -77,7 +80,9 @@ export function setRightWiredDifferently(hw: KeyboardHardware, on: boolean): Key
       ? on ? { ...wiring, right: [...directPins(wiring, 'right')] } : withoutRight(wiring)
       : on ? { ...wiring, right: matrixPins(wiring, 'right') } : withoutRight(wiring);
   const next: KeyboardHardware = { ...hw, wiring: nextWiring };
-  if (on) next.rightEncoders = halfEncoders(hw, 'right').map((e) => ({ ...e }));
+  const own = on ? halfEncoders(hw, 'right').map((e) => ({ ...e })) : [];
+  // An empty list is the same as none once the right half has its own pins; leave it out.
+  if (own.length > 0) next.rightEncoders = own;
   else delete next.rightEncoders;
   return next;
 }

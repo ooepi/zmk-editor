@@ -23,7 +23,7 @@ export interface EncoderDraft {
 }
 
 /** Which list holds a half's encoders: the right half's own, or the left's (also the mirror's source). */
-const owner = (hw: KeyboardHardware, side: Side | undefined) => (side === 'right' && hw.rightEncoders ? 'right' : 'left');
+const owner = (hw: KeyboardHardware, side: Side | undefined) => (side === 'right' && (hw.rightEncoders || hw.wiring.right) ? 'right' : 'left');
 
 /** Maps origins from `before` to `after`; `map` gives the old index on the same half for a new (side, index). */
 export function carryEncoderOrigins(

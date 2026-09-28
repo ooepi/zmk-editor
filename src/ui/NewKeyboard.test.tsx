@@ -442,3 +442,50 @@ describe('Encoders in the wizard', () => {
     ]);
   });
 });
+
+describe('Encoders on keyboards made before encoders existed', () => {
+  it('adds an encoder to the right half only, and one on the left doesn’t appear on the right', async () => {
+    const hw = { ...testSplit, wiring: { kind: 'matrix', diodeDirection: 'col2row', rows: [4], cols: [6, 7], right: { rows: [4], cols: [7, 6] } } } as KeyboardHardware;
+    localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config: newHardwareConfig(hw, 'v0.3') }));
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Test Split ▾' }));
+    await user.click(screen.getByRole('button', { name: 'Edit hardware' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+
+    await user.click(within(screen.getByRole('region', { name: 'Left half' })).getByRole('button', { name: 'Add encoder' }));
+    expect(screen.queryByLabelText('Right encoder 0 A')).toBeNull();
+    await user.click(within(screen.getByRole('region', { name: 'Left half' })).getByRole('button', { name: 'Remove encoder 0' }));
+
+    await user.click(within(screen.getByRole('region', { name: 'Right half' })).getByRole('button', { name: 'Add encoder' }));
+    await user.selectOptions(screen.getByLabelText('Right encoder 0 A'), '8');
+    await user.selectOptions(screen.getByLabelText('Right encoder 0 B'), '9');
+    expect(screen.queryByLabelText('Left encoder 0 A')).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Save hardware' }));
+
+    const saved = stored();
+    expect(saved.hardware.rightEncoders).toEqual([{ a: 8, b: 9 }]);
+    expect(saved.hardware.encoders ?? []).toEqual([]);
+    expect(saved.keymap.layers[0].sensorBindings).toHaveLength(1);
+  });
+});
+
+describe('Starting over after picking encoder pins', () => {
+  it('asks before a size change throws away encoder pins', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const user = userEvent.setup();
+    render(<App />);
+    await openWizard(user);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Add encoder' }));
+    await user.selectOptions(screen.getByLabelText('Left encoder 0 A'), '8');
+    await user.click(screen.getByRole('button', { name: 'Back' }));
+    await type(user, 'Rows', '4');
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(confirm).toHaveBeenCalled();
+    expect(screen.getByLabelText('Keyboard name')).toBeTruthy();
+  });
+});
+
