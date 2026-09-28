@@ -106,8 +106,77 @@ select {
   letter-spacing: 0.02em;
 }
 
+.brand {
+  gap: 14px;
+}
+
+.brand-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .brand-mark {
   color: var(--accent);
+}
+
+/* The keyboard and ZMK version controls: labelled, full-size, easy to spot. */
+.top-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.top-field-label {
+  font-family: var(--font-body, inherit);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.top-select {
+  height: 32px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.top-select:hover,
+.top-select.active {
+  border-color: var(--accent);
+}
+
+.topbar-end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.coffee-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: #5f7fff;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.coffee-link:hover {
+  background: #4d6dee;
 }
 
 .badge {
@@ -795,6 +864,54 @@ select {
 .chip.active {
   background: var(--accent-soft);
   border-color: var(--accent);
+}
+
+.palette-chips .chip {
+  padding: 4px 12px;
+  font-size: 13px;
+}
+
+/* Modifiers are toggles, not filters: their own labelled row and a square style. */
+.palette-mods {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.palette-mods-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.mod-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.mod-toggle {
+  min-width: 48px;
+  padding: 4px 8px;
+  border: 1px solid var(--keycap-edge);
+  border-radius: 4px;
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mod-toggle:hover {
+  border-color: var(--text-muted);
+}
+
+.mod-toggle.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
 }
 
 .chip:disabled {
@@ -2236,6 +2353,34 @@ select {
   }
 }
 
+/* Open from GitHub */
+
+.popover-anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.popover {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 25%);
+}
+
+.popover p {
+  margin: 0;
+}
+
 /* Printable cheat sheet */
 
 .print-view {
@@ -2262,10 +2407,27 @@ select {
 }
 
 .print-sheet {
+  /* Plain white paper: no fills anywhere, so printing only uses ink for outlines and text. */
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #ffffff;
+  --keycap: #ffffff;
+  --keycap-top: #ffffff;
   padding: 24px;
   border-radius: 8px;
-  background: var(--bg);
+  background: #ffffff;
   color: var(--text);
+}
+
+.print-sheet .keycap,
+.print-sheet .encoder {
+  background: none;
+  box-shadow: none;
+}
+
+/* The knob picture is only decoration, and it is all fill. */
+.print-sheet .encoder-knob {
+  display: none;
 }
 
 .print-header h1 {
@@ -2333,6 +2495,12 @@ select {
     margin: 12mm;
   }
 
+  /* A dark screen theme would otherwise paint the page margins dark. */
+  :root,
+  :root[data-theme='dark'] {
+    color-scheme: light;
+  }
+
   html,
   body,
   #root,
@@ -2367,9 +2535,10 @@ select {
     break-before: page;
   }
 
-  .keycap,
-  .encoder {
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
+  /* Belt and braces: nothing on the sheet prints a background, even with "Background graphics" on. */
+  .print-sheet,
+  .print-sheet * {
+    background: none !important;
+    box-shadow: none !important;
   }
 }

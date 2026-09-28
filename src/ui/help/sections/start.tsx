@@ -21,7 +21,8 @@ export const START: HelpSection[] = [
             <li>
               To use your own keyboard, either open your files with <Ui>Open files</Ui> in the top bar, connect your
               repository on the <Ui>Build</Ui> tab and choose <Ui>Load config from repo</Ui>, or start from ZMK's default
-              keymap for your keyboard on the Keyboard page (the keyboard name button at the top left).
+              keymap for your keyboard on the Keyboard page (the keyboard button at the top left). To look at someone
+              else's public config, use <Ui>Open from GitHub</Ui>; see <See to="open-github">below</See>.
             </li>
             <li>Edit the keymap. Everything can be undone with Ctrl+Z.</li>
             <li>
@@ -49,11 +50,21 @@ export const START: HelpSection[] = [
             written, and are listed under <strong>Import notes</strong> in the side panel of the Keymap tab.
           </p>
         </Sub>
+        <Sub id="open-github" title="Opening a public repository">
+          <p>
+            <Ui>Open from GitHub</Ui> in the top bar opens any public <code>zmk-config</code> repository without logging
+            in: paste <code>owner/repo</code> or its GitHub link (a link to a branch, <code>…/tree/branch</code>, opens
+            that branch), and optionally a <Ui>Branch</Ui>. It replaces the editor's contents, after asking. It only
+            reads: to commit your changes, connect to your own repository on the Build tab. GitHub allows about 60
+            requests an hour without logging in, so opening many repositories in a row can hit that limit for a while.
+          </p>
+        </Sub>
         <Sub id="print" title="Printing a cheat sheet">
           <p>
             <Ui>Print keymap</Ui> in the top bar shows every layer as a keyboard diagram, plus your combos, ready to print.
             Untick layers or combos you don't want, then press <Ui>Print</Ui>. To get a PDF instead of paper, choose
-            “Save as PDF” in the print dialog. The sheet is always printed in light colors, two layers to a page.
+            “Save as PDF” in the print dialog. The sheet prints on plain white, with no backgrounds, so it only uses ink for the key outlines and labels,
+            two layers to a page.
           </p>
         </Sub>
         <Sub id="saving" title="What is saved where">

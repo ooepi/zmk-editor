@@ -6,6 +6,8 @@ A visual editor for [ZMK](https://zmk.dev) keyboard configs, in the browser. Edi
 
 Nothing to install. Your work stays in your browser until you commit it.
 
+<a href="https://www.buymeacoffee.com/gristone"><img src="https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=gristone&button_colour=5F7FFF&font_colour=ffffff&font_family=Lato&outline_colour=000000&coffee_colour=FFDD00" alt="Buy me a coffee" /></a>
+
 ![The keymap view: the keyboard, the key palette underneath and the side panel editing one key](docs/images/keymap.png)
 
 ## What it does
@@ -32,6 +34,7 @@ Nothing to install. Your work stays in your browser until you commit it.
 2. Bring in your keyboard:
    - On the **Build** tab, connect your `zmk-config` repository and choose **Load config from repo**.
    - Or use **Open files** to pick your `.keymap` (and `.conf`, `west.yml`…).
+   - Or use **Open from GitHub** to open any public `zmk-config` repository, no login needed.
    - Or click the keyboard name at the top left to start from ZMK's default keymap for your keyboard.
 3. Edit away. **Help** (the tab, or **?** at the top right) explains every feature, and "Learn more" links throughout the app open the relevant section.
 4. On the **Build** tab, press **Commit & build**, wait a few minutes, then write the firmware to your keyboard.

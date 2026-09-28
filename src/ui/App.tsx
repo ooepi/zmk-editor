@@ -176,18 +176,25 @@ export function App() {
       <div className="app">
         <header className="topbar">
           <div className="brand">
-            <span className="brand-mark" aria-hidden="true">
-              ⌨
+            <span className="brand-name">
+              <span className="brand-mark" aria-hidden="true">
+                ⌨
+              </span>
+              ZMK Editor
             </span>
-            ZMK Editor
-            <button
-              type="button"
-              className={`badge badge-button${['keyboard', 'designer', 'newKeyboard', 'editHardware'].includes(view) ? ' active' : ''}`}
-              onClick={() => setView('keyboard')}
-              title="Keyboard and layout"
-            >
-              {config.hardware?.displayName ?? findKeyboard(config.keyboard)?.name ?? config.keyboard} ▾
-            </button>
+            <div className="top-field">
+              <span className="top-field-label" aria-hidden="true">
+                Keyboard
+              </span>
+              <button
+                type="button"
+                className={`top-select${['keyboard', 'designer', 'newKeyboard', 'editHardware'].includes(view) ? ' active' : ''}`}
+                onClick={() => setView('keyboard')}
+                title="Keyboard and layout"
+              >
+                {config.hardware?.displayName ?? findKeyboard(config.keyboard)?.name ?? config.keyboard} ▾
+              </button>
+            </div>
             <VersionSelect config={config} dispatch={dispatch} />
           </div>
           <Toolbar
@@ -200,9 +207,14 @@ export function App() {
             onPrint={() => setView('print')}
             dispatch={dispatch}
           />
-          <button type="button" className="button help-button" aria-label="Open help" title="Help" onClick={() => openHelp()}>
-            ?
-          </button>
+          <div className="topbar-end">
+            <button type="button" className="button help-button" aria-label="Open help" title="Help" onClick={() => openHelp()}>
+              ?
+            </button>
+            <a className="coffee-link" href="https://www.buymeacoffee.com/gristone" target="_blank" rel="noopener noreferrer">
+              <span aria-hidden="true">☕</span> Buy me a coffee
+            </a>
+          </div>
         </header>
         <nav className="viewtabs" aria-label="Views">
           {tabs.map((t) => (

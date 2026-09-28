@@ -4,7 +4,9 @@ import { configPaths, customLayout, generateConfig, importConfig, type ZmkConfig
 import { definitionPath } from '../../core/hardware/definition.ts';
 import { generateKeymap } from '../../core/keymap/generator.ts';
 import { textLayoutFor } from '../../core/layouts/index.ts';
+import type { PublicRepo } from '../../core/github/publicRepo.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
+import { OpenFromGitHub } from './OpenFromGitHub.tsx';
 import { demoConfig } from '../state/demo.ts';
 import type { Theme } from '../useTheme.ts';
 
@@ -63,6 +65,19 @@ export function Toolbar({ config, canUndo, canRedo, locked, theme, onToggleTheme
       const { config: next, warnings } = await filesToConfig(files, config);
       if (next.keymap.layers.length === 0) throw new Error("That keymap has no layers, so it can't be edited here.");
       dispatch({ type: 'load', config: next, warnings });
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : String(error));
+    }
+  };
+
+  const openRepo = (repo: PublicRepo) => {
+    const name = `${repo.owner}/${repo.repo} (${repo.branch})`;
+    if (!window.confirm(`Replace the editor contents with ${name}?`)) return;
+    try {
+      const { config: next, warnings } = importConfig(repo.files);
+      if (next.keymap.layers.length === 0) throw new Error("That keymap has no layers, so it can't be edited here.");
+      dispatch({ type: 'load', config: next, warnings });
+      dispatch({ type: 'notify', notice: `Opened ${name}. To commit changes, connect to your own repository on the Build tab.` });
     } catch (error) {
       window.alert(error instanceof Error ? error.message : String(error));
     }
@@ -128,6 +143,7 @@ export function Toolbar({ config, canUndo, canRedo, locked, theme, onToggleTheme
           e.target.value = '';
         }}
       />
+      <OpenFromGitHub disabled={locked} title={locked ? lockedTitle : undefined} onOpened={openRepo} />
       <button type="button" className="button" onClick={downloadKeymap}>
         Download .keymap
       </button>

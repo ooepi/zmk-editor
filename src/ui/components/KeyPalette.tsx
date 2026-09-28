@@ -7,6 +7,7 @@ import {
   MODIFIER_FUNCTIONS,
   preferredName,
   searchKeycodes,
+  type Keycode,
   type KeycodeCategory,
   type ModifierFunction,
 } from '../../core/catalog/keycodes.ts';
@@ -87,6 +88,14 @@ export function KeyPalette({ keymap, armed, selection, onPick }: KeyPaletteProps
     );
   };
 
+  const keyTile = (keycode: Keycode) => {
+    const token = formatKeyExpression({ mods, key: preferredName(keycode) });
+    const label = mods.length > 0 ? keyExpressionLabel(token) : keycode.label;
+    return tile({ kind: 'keycode', token }, { main: label, sub: token }, `${label} (${token})`, `${keycode.description} (${token})`);
+  };
+  // With no category or search, keys are shown under their category headings.
+  const grouped = !category && !query.trim();
+
   const hint = armed
     ? 'Click keys to place the highlighted tile · Esc or click the tile again to stop'
     : selection.length > 1
@@ -149,7 +158,7 @@ export function KeyPalette({ keymap, armed, selection, onPick }: KeyPaletteProps
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-            <div className="chips" role="group" aria-label="Palette key categories">
+            <div className="chips palette-chips" role="group" aria-label="Palette key categories">
               {KEYCODE_CATEGORIES.map((c) => (
                 <button
                   key={c.id}
@@ -162,30 +171,48 @@ export function KeyPalette({ keymap, armed, selection, onPick }: KeyPaletteProps
                 </button>
               ))}
             </div>
-            <div className="chips" role="group" aria-label="Hold with placed keys">
-              {MODIFIER_FUNCTIONS.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  className={`chip${mods.includes(m.id) ? ' active' : ''}`}
-                  aria-pressed={mods.includes(m.id)}
-                  aria-label={`Hold ${m.name} with placed keys`}
-                  title={`Hold ${m.name} with the placed key (${m.id})`}
-                  onClick={() => toggleMod(m.id)}
-                >
-                  +{m.label}
-                </button>
-              ))}
+            <div className="palette-mods">
+              <span className="palette-mods-label" id="palette-mods-label">
+                Hold with placed keys:
+              </span>
+              <div className="mod-toggles" role="group" aria-labelledby="palette-mods-label">
+                {MODIFIER_FUNCTIONS.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    className={`mod-toggle${mods.includes(m.id) ? ' active' : ''}`}
+                    aria-pressed={mods.includes(m.id)}
+                    aria-label={`Hold ${m.name} with placed keys`}
+                    title={`Hold ${m.name} with the placed key (${m.id})`}
+                    onClick={() => toggleMod(m.id)}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-          <div className="palette-tiles" role="group" aria-label="Keys">
-            {keycodes.map((keycode) => {
-              const token = formatKeyExpression({ mods, key: preferredName(keycode) });
-              const label = mods.length > 0 ? keyExpressionLabel(token) : keycode.label;
-              return tile({ kind: 'keycode', token }, { main: label, sub: token }, `${label} (${token})`, `${keycode.description} (${token})`);
-            })}
-            {keycodes.length === 0 && <p className="muted">No keys match.</p>}
-          </div>
+          {grouped ? (
+            <div className="palette-groups">
+              {KEYCODE_CATEGORIES.map((c) => {
+                const inCategory = keycodes.filter((k) => k.category === c.id);
+                if (inCategory.length === 0) return null;
+                return (
+                  <div key={c.id} className="palette-group">
+                    <h3 className="palette-group-title">{c.label}</h3>
+                    <div className="palette-tiles" role="group" aria-label={c.label}>
+                      {inCategory.map(keyTile)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="palette-tiles" role="group" aria-label="Keys">
+              {keycodes.map(keyTile)}
+              {keycodes.length === 0 && <p className="muted">No keys match.</p>}
+            </div>
+          )}
         </>
       ) : (
         <>
