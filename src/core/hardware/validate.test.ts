@@ -89,6 +89,15 @@ describe('validateHardware', () => {
     expect(messages(pad, 'warning')).toEqual(['Input 1 has no key.']);
     expect(hasErrors(validateHardware(pad))).toBe(false);
   });
+  it('checks encoder pins like any other pin', () => {
+    const hw = wired();
+    expect(messages({ ...hw, encoders: [{ a: 10, b: null }] })).toEqual(['Encoder 0 B on the left half has no pin.']);
+    expect(messages({ ...hw, encoders: [{ a: 4, b: 9 }] })).toEqual(['D4 is used for both Row 0 and Encoder 0 A on the left half.']);
+    // The right half's own encoders are checked on their own.
+    const right = { ...hw, wiring: { ...hw.wiring, right: { rows: [4, 5], cols: [6, 7, 8] } }, rightEncoders: [{ a: 6, b: 9 }] } as KeyboardHardware;
+    expect(messages(right)).toEqual(['D6 is used for both Column 0 and Encoder 0 A on the right half.']);
+    expect(validateHardware({ ...hw, encoders: [{ a: 10, b: 14 }] })).toEqual([]);
+  });
 });
 
 describe('validateBasics', () => {
