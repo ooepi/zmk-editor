@@ -24,6 +24,7 @@ import type { EditorAction } from '../state/editorReducer.ts';
 import { setPreferences, usePreferences } from '../state/preferences.ts';
 import { ModuleFinder } from './ModuleFinder.tsx';
 import { HelpLink } from '../help/HelpLink.tsx';
+import { httpsUrl } from '../../core/url.ts';
 
 interface ModulesViewProps {
   config: ZmkConfig;
@@ -144,7 +145,7 @@ export function ModulesView({ config, dispatch }: ModulesViewProps) {
             {others.map((m) => (
               <li key={m.name} className="row wrap">
                 <span className="grow">
-                  <a className="mono" href={`${m.urlBase}/${m.name}`} target="_blank" rel="noreferrer">
+                  <a className="mono" href={httpsUrl(`${m.urlBase}/${m.name}`)} target="_blank" rel="noreferrer">
                     {m.name}
                   </a>{' '}
                   at {m.revision ?? `${version} (follows ZMK)`}
@@ -182,7 +183,7 @@ function ModuleCard({ module, config, dispatch, installed, onRemove }: ModuleCar
       <header className="module-head">
         <div>
           <h3>{module.name}</h3>
-          <a className="mono small" href={module.homepage} target="_blank" rel="noreferrer">
+          <a className="mono small" href={httpsUrl(module.homepage)} target="_blank" rel="noreferrer">
             {module.id}
           </a>
         </div>

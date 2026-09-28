@@ -20,6 +20,7 @@ import { clearTokens } from '../state/githubLogin.ts';
 import { ConnectSection, type Connection } from './ConnectSection.tsx';
 import { DiffView } from './DiffView.tsx';
 import { HardwareIssueList } from './HardwareIssueList.tsx';
+import { httpsUrl } from '../../core/url.ts';
 
 interface BuildViewProps {
   config: ZmkConfig;
@@ -317,7 +318,7 @@ function BuildStatus({ build, onFirmware }: { build: BuildState; onFirmware: (ru
       </p>
       {run && (
         <p className="small">
-          <a href={run.html_url} target="_blank" rel="noreferrer">
+          <a href={httpsUrl(run.html_url)} target="_blank" rel="noreferrer">
             Open the build on GitHub
           </a>
         </p>

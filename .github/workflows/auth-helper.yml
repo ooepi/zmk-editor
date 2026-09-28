@@ -12,6 +12,10 @@ on:
       - '.github/workflows/auth-helper.yml'
   workflow_dispatch:
 
+# The job only reads the repo; the deploy uses the Cloudflare token, not GitHub's.
+permissions:
+  contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -37,7 +41,7 @@ jobs:
       - name: Deploy worker
         if: steps.check.outputs.configured == 'true'
         working-directory: worker
-        run: npx --yes wrangler@4 deploy
+        run: npx --yes wrangler@4.143.0 deploy
       - name: Set worker secrets
         if: steps.check.outputs.configured == 'true'
         working-directory: worker
@@ -45,5 +49,5 @@ jobs:
           GH_APP_CLIENT_ID: ${{ vars.GH_APP_CLIENT_ID }}
           GH_APP_CLIENT_SECRET: ${{ secrets.GH_APP_CLIENT_SECRET }}
         run: |
-          printf '%s' "$GH_APP_CLIENT_ID" | npx --yes wrangler@4 secret put GITHUB_CLIENT_ID
-          printf '%s' "$GH_APP_CLIENT_SECRET" | npx --yes wrangler@4 secret put GITHUB_CLIENT_SECRET
+          printf '%s' "$GH_APP_CLIENT_ID" | npx --yes wrangler@4.143.0 secret put GITHUB_CLIENT_ID
+          printf '%s' "$GH_APP_CLIENT_SECRET" | npx --yes wrangler@4.143.0 secret put GITHUB_CLIENT_SECRET
