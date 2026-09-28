@@ -44,6 +44,9 @@ export interface Encoder {
   b: Pin;
 }
 
+/** A screen on one half: a nice!view (via ZMK's adapter) or an SSD1306 OLED on the Pro Micro's I2C pins. */
+export type DisplayKind = 'nice_view' | 'oled_128x32' | 'oled_128x64';
+
 /** A keyboard designed in the editor; its ZMK shield is generated from this. */
 export interface KeyboardHardware {
   /** Shield id: lowercase letters, digits and `_`, e.g. `my_split`. */
@@ -60,6 +63,8 @@ export interface KeyboardHardware {
   encoders?: Encoder[];
   /** The right half's own encoders; without it the right half mirrors the left's, with A and B swapped. */
   rightEncoders?: Encoder[];
+  /** A display per half; a one-piece keyboard uses `left`. */
+  displays?: { left?: DisplayKind; right?: DisplayKind };
 }
 
 /** The keys' positions as a physical layout. */
