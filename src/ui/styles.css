@@ -104,8 +104,77 @@ select {
   letter-spacing: 0.02em;
 }
 
+.brand {
+  gap: 14px;
+}
+
+.brand-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .brand-mark {
   color: var(--accent);
+}
+
+/* The keyboard and ZMK version controls: labelled, full-size, easy to spot. */
+.top-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.top-field-label {
+  font-family: var(--font-body, inherit);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.top-select {
+  height: 32px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.top-select:hover,
+.top-select.active {
+  border-color: var(--accent);
+}
+
+.topbar-end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.coffee-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: #5f7fff;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.coffee-link:hover {
+  background: #4d6dee;
 }
 
 .badge {
@@ -793,6 +862,54 @@ select {
 .chip.active {
   background: var(--accent-soft);
   border-color: var(--accent);
+}
+
+.palette-chips .chip {
+  padding: 4px 12px;
+  font-size: 13px;
+}
+
+/* Modifiers are toggles, not filters: their own labelled row and a square style. */
+.palette-mods {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.palette-mods-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.mod-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.mod-toggle {
+  min-width: 48px;
+  padding: 4px 8px;
+  border: 1px solid var(--keycap-edge);
+  border-radius: 4px;
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mod-toggle:hover {
+  border-color: var(--text-muted);
+}
+
+.mod-toggle.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
 }
 
 .chip:disabled {
