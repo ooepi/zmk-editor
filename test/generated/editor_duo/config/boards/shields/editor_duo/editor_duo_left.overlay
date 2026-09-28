@@ -2,6 +2,10 @@
 
 #include "editor_duo.dtsi"
 
+&left_encoder_0 {
+    status = "okay";
+};
+
 &kscan0 {
     input-gpios
         = <&pro_micro  2 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>

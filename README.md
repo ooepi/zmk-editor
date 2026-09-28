@@ -1,6 +1,6 @@
 # ZMK Editor
 
-A web-based editor for [ZMK](https://zmk.dev) keyboard configs. It edits your `zmk-config` repo on GitHub, supports the features ZMK Studio doesn't (encoders, combos, macros, modules like Unicode ä/ö/å), lets you design your own keyboard (Pro Micro nRF52840; matrix or direct wiring; split or one piece), and builds your firmware with GitHub Actions so you can download the `.uf2`.
+A web-based editor for [ZMK](https://zmk.dev) keyboard configs. It edits your `zmk-config` repo on GitHub, supports the features ZMK Studio doesn't (encoders, combos, macros, modules like Unicode ä/ö/å), lets you design your own keyboard (Pro Micro nRF52840; matrix or direct wiring; split or one piece; rotary encoders), and builds your firmware with GitHub Actions so you can download the `.uf2`.
 
 Status: early development. See [the design spec](docs/specs/2026-09-26-zmk-editor-design.md) and [the current plan](docs/plans/2026-09-26-milestones-1-2.md).
 

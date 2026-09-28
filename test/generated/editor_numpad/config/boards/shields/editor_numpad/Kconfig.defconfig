@@ -5,4 +5,8 @@ if SHIELD_EDITOR_NUMPAD
 config ZMK_KEYBOARD_NAME
     default "Editor Numpad"
 
+choice EC11_TRIGGER_MODE
+    default EC11_TRIGGER_GLOBAL_THREAD
+endchoice
+
 endif

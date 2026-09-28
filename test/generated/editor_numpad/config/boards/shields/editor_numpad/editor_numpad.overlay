@@ -43,6 +43,19 @@ RC(4,0) RC(4,1) RC(4,2) RC(4,3)
         >;
     };
 
+    encoder_0: encoder_0 {
+        compatible = "alps,ec11";
+        a-gpios = <&pro_micro 14 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+        b-gpios = <&pro_micro 15 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+        steps = <80>;
+    };
+
+    sensors: sensors {
+        compatible = "zmk,keymap-sensors";
+        sensors = <&encoder_0>;
+        triggers-per-rotation = <20>;
+    };
+
     editor_numpad_layout: editor_numpad_layout {
         compatible = "zmk,physical-layout";
         display-name = "Editor Numpad";
