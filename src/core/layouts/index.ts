@@ -60,5 +60,5 @@ export function gridLayout(keyCount: number, columns = 12): PhysicalLayout {
   };
 }
 
-export { layoutBounds } from './types.ts';
+export { layoutBounds, layoutExtent } from './types.ts';
 export type { PhysicalKey, PhysicalLayout, TextLayout } from './types.ts';

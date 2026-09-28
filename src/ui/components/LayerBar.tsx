@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type Dispatch, type DragEvent, type Keyboa
 import type { Layer } from '../../core/keymap/model.ts';
 import { dragKind } from '../dnd.ts';
 import { useReorder } from '../reorder.ts';
+import { Icon } from './Icon.tsx';
 import type { EditorAction } from '../state/editorReducer.ts';
 
 interface LayerBarProps {
@@ -77,6 +78,9 @@ export function LayerBar({ layers, active, dispatch }: LayerBarProps) {
 
   return (
     <div className="layerbar">
+      <span className="layerbar-label" aria-hidden="true">
+        Layers
+      </span>
       <div className="layer-tabs" role="tablist" aria-label="Layers">
         {layers.map((layer, index) =>
           renaming === index ? (
@@ -119,47 +123,50 @@ export function LayerBar({ layers, active, dispatch }: LayerBarProps) {
         )}
       </div>
       <div className="layer-actions">
-        <button type="button" className="icon-button" onClick={addLayer} aria-label="Add layer" title="Add layer">
-          +
+        <button type="button" className="layer-action" onClick={addLayer} aria-label="Add layer" title="Add layer">
+          <Icon name="plus" />
+          Add
         </button>
         <button
           type="button"
-          className="icon-button"
+          className="layer-action"
           onClick={() => startRename(active)}
           aria-label="Rename layer"
           title="Rename layer"
         >
-          ✎
+          <Icon name="pencil" />
+          Rename
         </button>
         <button
           type="button"
-          className="icon-button"
+          className="layer-action"
           disabled={active === 0}
           onClick={() => dispatch({ type: 'moveLayer', from: active, to: active - 1 })}
           aria-label="Move layer left"
           title="Move layer left"
         >
-          ←
+          <Icon name="left" />
         </button>
         <button
           type="button"
-          className="icon-button"
+          className="layer-action"
           disabled={active === layers.length - 1}
           onClick={() => dispatch({ type: 'moveLayer', from: active, to: active + 1 })}
           aria-label="Move layer right"
           title="Move layer right"
         >
-          →
+          <Icon name="right" />
         </button>
         <button
           type="button"
-          className="icon-button danger"
+          className="layer-action danger"
           disabled={layers.length <= 1}
           onClick={deleteActive}
           aria-label="Delete layer"
           title="Delete layer"
         >
-          🗑
+          <Icon name="trash" />
+          Delete
         </button>
       </div>
     </div>

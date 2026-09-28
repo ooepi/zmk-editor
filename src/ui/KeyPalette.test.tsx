@@ -143,7 +143,29 @@ describe('palette layout', () => {
   });
 });
 
+describe('modifiers on palette tiles', () => {
+  it('keeps the key readable and shows the held modifiers on the small line', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(palette().getByRole('button', { name: 'Hold Left Ctrl with placed keys' }));
+    await user.click(palette().getByRole('button', { name: 'Hold Left Shift with placed keys' }));
+    const tile = palette().getByRole('button', { name: 'Place Ctl+Sft+A (LC(LS(A)))' });
+    expect(tile.querySelector('.palette-tile-main')?.textContent).toBe('A');
+    expect(tile.querySelector('.palette-tile-sub')?.textContent).toBe('Ctl+Sft');
+  });
+});
+
 describe('top bar', () => {
+  it('switches between the dark and light themes', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const toggle = screen.getByRole('switch', { name: 'Dark theme' });
+    expect(toggle.getAttribute('aria-checked')).toBe('true');
+    await user.click(toggle);
+    expect(toggle.getAttribute('aria-checked')).toBe('false');
+    expect(document.documentElement.dataset.theme).toBe('light');
+  });
+
   it('links to Buy me a coffee in a new tab', () => {
     render(<App />);
     const link = screen.getByRole('link', { name: 'Buy me a coffee' });

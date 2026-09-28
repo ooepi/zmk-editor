@@ -38,3 +38,35 @@ export function layoutBounds(layout: PhysicalLayout): { width: number; height: n
     height: Math.max(...layout.keys.map((k) => k.y + k.h)),
   };
 }
+
+/** The axis-aligned outline of a key, rotated around (rx, ry) when it has a rotation. */
+export function keyBounds(k: PhysicalKey): { left: number; top: number; right: number; bottom: number } {
+  const corners = [
+    [k.x, k.y],
+    [k.x + k.w, k.y],
+    [k.x, k.y + k.h],
+    [k.x + k.w, k.y + k.h],
+  ].map(([x = 0, y = 0]) => {
+    if (!k.r) return [x, y] as const;
+    const a = (k.r * Math.PI) / 180;
+    const dx = x - k.rx;
+    const dy = y - k.ry;
+    return [k.rx + dx * Math.cos(a) - dy * Math.sin(a), k.ry + dx * Math.sin(a) + dy * Math.cos(a)] as const;
+  });
+  const xs = corners.map(([x]) => x);
+  const ys = corners.map(([, y]) => y);
+  return { left: Math.min(...xs), top: Math.min(...ys), right: Math.max(...xs), bottom: Math.max(...ys) };
+}
+
+/**
+ * The area every key covers, rotated keys included, which can start left of
+ * or above 0. Drawing from this keeps every key on the canvas (and the page).
+ */
+export function layoutExtent(layout: PhysicalLayout): { left: number; top: number; width: number; height: number } {
+  const bounds = layout.keys.map(keyBounds);
+  const left = Math.min(0, ...bounds.map((b) => b.left));
+  const top = Math.min(0, ...bounds.map((b) => b.top));
+  const right = Math.max(...bounds.map((b) => b.right));
+  const bottom = Math.max(...bounds.map((b) => b.bottom));
+  return { left, top, width: right - left, height: bottom - top };
+}

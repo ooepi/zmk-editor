@@ -88,10 +88,20 @@ export function KeyPalette({ keymap, armed, selection, onPick }: KeyPaletteProps
     );
   };
 
+  // With modifiers held, the tile still shows the key big; the modifiers go on the small line, in colour.
+  const modsText = MODIFIER_FUNCTIONS.filter((m) => mods.includes(m.id))
+    .map((m) => m.label)
+    .join('+');
   const keyTile = (keycode: Keycode) => {
     const token = formatKeyExpression({ mods, key: preferredName(keycode) });
-    const label = mods.length > 0 ? keyExpressionLabel(token) : keycode.label;
-    return tile({ kind: 'keycode', token }, { main: label, sub: token }, `${label} (${token})`, `${keycode.description} (${token})`);
+    const full = mods.length > 0 ? keyExpressionLabel(token) : keycode.label;
+    return tile(
+      { kind: 'keycode', token },
+      { main: keycode.label, sub: mods.length > 0 ? modsText : token },
+      `${full} (${token})`,
+      `${keycode.description}: ${full} (${token})`,
+      mods.length > 0 ? 'mods' : 'key',
+    );
   };
   // With no category or search, keys are shown under their category headings.
   const grouped = !category && !query.trim();
