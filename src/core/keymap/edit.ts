@@ -22,11 +22,11 @@ export function swapBindings(model: KeymapModel, layerIndex: number, a: number, 
   return setBinding(setBinding(model, layerIndex, a, second), layerIndex, b, first);
 }
 
-/** Copies one key's binding onto another key on the same layer. */
-export function copyBinding(model: KeymapModel, layerIndex: number, from: number, to: number): KeymapModel {
-  const binding = model.layers[layerIndex]?.bindings[from];
+/** Copies one key's binding onto another key, from the same layer or `fromLayer`. */
+export function copyBinding(model: KeymapModel, layerIndex: number, from: number, to: number, fromLayer = layerIndex): KeymapModel {
+  const binding = model.layers[fromLayer]?.bindings[from];
   if (!binding) throw new Error('No such key');
-  if (from === to) return model;
+  if (from === to && fromLayer === layerIndex) return model;
   return setBinding(model, layerIndex, to, binding);
 }
 

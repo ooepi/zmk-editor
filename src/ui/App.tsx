@@ -18,10 +18,12 @@ import { KeyboardView } from './components/KeyboardView.tsx';
 import { KeyPalette } from './components/KeyPalette.tsx';
 import { LayoutDesigner } from './components/LayoutDesigner.tsx';
 import { LayerBar } from './components/LayerBar.tsx';
+import { SelectionPanel } from './components/SelectionPanel.tsx';
 import { ModulesView } from './components/ModulesView.tsx';
 import { SettingsView } from './components/SettingsView.tsx';
 import { Toolbar } from './components/Toolbar.tsx';
 import { VersionSelect } from './components/VersionSelect.tsx';
+import type { KeyRef } from './dnd.ts';
 import { useEditor } from './state/useEditor.ts';
 import { isLoginCallback } from './state/githubLogin.ts';
 import { usePreferences } from './state/preferences.ts';
@@ -42,11 +44,14 @@ export function App() {
   const [macro, setMacro] = useState<string | null>(null);
   /** A palette tile placed on each clicked key, until Esc. */
   const [armed, setArmed] = useState<PaletteItem | null>(null);
-  const { config, layer, key, sensor } = state;
+  const { config, layer, key, selection, clipboard, sensor } = state;
   const { keymap } = config;
   const keyCount = keymap.layers[0]?.bindings.length ?? 0;
   const { layouts } = usePreferences();
   const layout = physicalLayoutFor(config.keyboard, keyCount, layouts[config.keyboard], customLayout(config));
+
+  const hasSelection = selection.length > 0;
+  const hasClipboard = clipboard !== null;
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -65,14 +70,26 @@ export function App() {
       } else if (event.key === 'Escape') {
         setArmed(null);
         dispatch({ type: 'selectKey', index: null });
-      } else if ((event.key === 'Delete' || event.key === 'Backspace') && key !== null && view === 'keymap') {
+      } else if (view !== 'keymap') {
+        return;
+      } else if (mod && event.key.toLowerCase() === 'a') {
         event.preventDefault();
-        dispatch({ type: 'setBinding', binding: { behavior: 'trans', params: [] } });
+        dispatch({ type: 'selectKeys', indices: Array.from({ length: keyCount }, (_, i) => i), additive: false });
+      } else if (mod && /^[cx]$/i.test(event.key) && hasSelection && !window.getSelection()?.toString()) {
+        // With page text selected, Ctrl+C copies that text as usual.
+        event.preventDefault();
+        dispatch({ type: event.key.toLowerCase() === 'x' ? 'cutKeys' : 'copyKeys' });
+      } else if (mod && event.key.toLowerCase() === 'v' && hasClipboard) {
+        event.preventDefault();
+        dispatch({ type: 'pasteKeys' });
+      } else if ((event.key === 'Delete' || event.key === 'Backspace') && hasSelection) {
+        event.preventDefault();
+        dispatch({ type: 'placeOnSelection', item: { kind: 'binding', binding: { behavior: 'trans', params: [] } } });
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [dispatch, key, view]);
+  }, [dispatch, view, keyCount, hasSelection, hasClipboard]);
 
   const selectedCombo = keymap.combos.find((c) => c.name === combo);
   const macroCount = keymap.behaviors.filter((b) => behaviorKind(b) === 'macro').length;
@@ -86,7 +103,7 @@ export function App() {
     { id: 'build', label: 'Build' },
   ];
 
-  const onKeyClick = (index: number) => {
+  const onKeyClick = (index: number, additive = false) => {
     if (view === 'combos') {
       if (selectedCombo) {
         dispatch({ type: 'edit', keymap: replaceCombo(keymap, selectedCombo.name, toggleComboKey(selectedCombo, index)) });
@@ -97,19 +114,27 @@ export function App() {
       dispatch({ type: 'placeOnKey', index, item: armed });
       return;
     }
-    dispatch({ type: 'selectKey', index: index === key ? null : index });
+    if (additive) dispatch({ type: 'toggleKey', index });
+    else dispatch({ type: 'selectKey', index: index === key ? null : index });
   };
 
-  // With a key selected a tile goes straight onto it; otherwise the tile is armed for clicking keys.
+  // With keys selected a tile goes straight onto them; otherwise the tile is armed for clicking keys.
   const onPaletteClick = (item: PaletteItem) => {
     if (armed) setArmed(JSON.stringify(armed) === JSON.stringify(item) ? null : item);
-    else if (key !== null) dispatch({ type: 'placeOnKey', index: key, item });
+    else if (hasSelection) dispatch({ type: 'placeOnSelection', item });
     else setArmed(item);
   };
 
   const keyDrop = {
+    layer,
     onDropItem: (index: number, item: PaletteItem) => dispatch({ type: 'placeOnKey', index, item }),
-    onDropKey: (from: number, to: number, copy: boolean) => dispatch({ type: copy ? 'copyKey' : 'swapKeys', from, to }),
+    // A key dragged in from another layer is copied; on the same layer keys swap unless Alt/Ctrl copies.
+    onDropKey: (from: KeyRef, to: number, copy: boolean) =>
+      dispatch(
+        from.layer !== layer
+          ? { type: 'copyKey', from: from.index, to, fromLayer: from.layer }
+          : { type: copy ? 'copyKey' : 'swapKeys', from: from.index, to },
+      ),
   };
 
   return (
@@ -218,7 +243,10 @@ export function App() {
                 keymap={keymap}
                 layout={layout}
                 layer={view === 'combos' ? 0 : layer}
-                selectedKey={view === 'keymap' ? key : null}
+                selection={view === 'keymap' ? selection : []}
+                onSelectBox={
+                  view === 'keymap' ? (indices, additive) => dispatch({ type: 'selectKeys', indices, additive }) : undefined
+                }
                 highlighted={view === 'combos' && selectedCombo ? new Set(selectedCombo.keyPositions.map(Number)) : undefined}
                 onSelectKey={onKeyClick}
                 drop={view === 'keymap' ? keyDrop : undefined}
@@ -232,13 +260,22 @@ export function App() {
                 />
               )}
             </div>
-            {view === 'keymap' && <KeyPalette keymap={keymap} armed={armed} selectedKey={key} onPick={onPaletteClick} />}
+            {view === 'keymap' && <KeyPalette keymap={keymap} armed={armed} selection={selection} onPick={onPaletteClick} />}
           </section>
           <aside className="panel" aria-label="Details">
             {view === 'combos' ? (
               <CombosPanel keymap={keymap} selected={combo} onSelect={setCombo} dispatch={dispatch} />
             ) : key !== null ? (
-              <BindingPanel key={`${layer}-${key}`} keymap={keymap} layer={layer} keyIndex={key} dispatch={dispatch} />
+              <BindingPanel
+                key={`${layer}-${key}`}
+                keymap={keymap}
+                layer={layer}
+                keyIndex={key}
+                clipboard={clipboard}
+                dispatch={dispatch}
+              />
+            ) : selection.length > 1 ? (
+              <SelectionPanel keymap={keymap} layer={layer} selection={selection} clipboard={clipboard} dispatch={dispatch} />
             ) : sensor !== null ? (
               <EncoderPanel key={`${layer}-s${sensor}`} keymap={keymap} layer={layer} sensor={sensor} dispatch={dispatch} />
             ) : (
@@ -263,8 +300,9 @@ function Overview({ warnings }: { warnings: string[] }) {
         tab to rename it.
       </p>
       <p className="muted small">
-        Shortcuts: Ctrl+Z undo · Ctrl+Shift+Z redo · Delete makes the key transparent · Esc deselects · Drag a key
-        onto another to swap them, hold Alt to copy
+        Shortcuts: Ctrl+Z undo · Ctrl+Shift+Z redo · Ctrl+click or drag a box to select several keys · Ctrl+A selects
+        all · Ctrl+C / Ctrl+X / Ctrl+V copy, cut and paste keys · Delete makes keys transparent · Esc deselects ·
+        Drag a key onto another to swap them (hold Alt to copy), or onto a layer tab to copy it to that layer
       </p>
       {warnings.length > 0 && (
         <>
