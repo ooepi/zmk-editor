@@ -19,12 +19,14 @@ interface KeyboardViewProps {
   dispatch: Dispatch<EditorAction>;
   onCreated: () => void;
   onDesign?: () => void;
+  onNewKeyboard?: () => void;
+  onEditHardware?: () => void;
 }
 
 const FEATURE_LABELS: Record<string, string> = { encoder: 'encoder', display: 'display', underglow: 'RGB', studio: 'Studio', backlight: 'backlight' };
 
 /** The current keyboard's layout, and starting a new config for another keyboard. */
-export function KeyboardView({ config, dispatch, onCreated, onDesign }: KeyboardViewProps) {
+export function KeyboardView({ config, dispatch, onCreated, onDesign, onNewKeyboard, onEditHardware }: KeyboardViewProps) {
   const keyCount = config.keymap.layers[0]?.bindings.length ?? 0;
   const current = findKeyboard(config.keyboard);
   const fitting = current ? layoutsFor(current, keyCount) : [];
@@ -35,7 +37,7 @@ export function KeyboardView({ config, dispatch, onCreated, onDesign }: Keyboard
       <section className="build-section" aria-label="Current keyboard">
         <h2 className="panel-title">This config</h2>
         <p>
-          <strong>{current?.name ?? config.keyboard}</strong> <span className="muted">({keyCount} keys)</span>
+          <strong>{config.hardware?.displayName ?? current?.name ?? config.keyboard}</strong> <span className="muted">({keyCount} keys)</span>
           {current?.url && (
             <>
               {' '}
@@ -46,10 +48,13 @@ export function KeyboardView({ config, dispatch, onCreated, onDesign }: Keyboard
             </>
           )}
         </p>
+        {config.hardware && (
+          <p className="small">Your own keyboard, defined in config/boards/shields/{config.keyboard}/.</p>
+        )}
         {config.layout && config.layout.keys.length === keyCount && (
           <p className="small">Using your own layout (saved as config/info.json).</p>
         )}
-        {!current && !config.layout && (
+        {!current && !config.layout && !config.hardware && (
           <p className="muted small">
             “{config.keyboard}” isn’t in ZMK’s keyboard list (it may be defined in your own repo), so it’s drawn as a grid.
           </p>
@@ -73,14 +78,35 @@ export function KeyboardView({ config, dispatch, onCreated, onDesign }: Keyboard
             </select>
           </label>
         )}
-        {onDesign && (
-          <div className="row">
-            <button type="button" className="button" onClick={onDesign}>
-              Open layout designer
-            </button>
-          </div>
+        {config.hardware ? (
+          onEditHardware && (
+            <div className="row">
+              <button type="button" className="button" onClick={onEditHardware}>
+                Edit hardware
+              </button>
+            </div>
+          )
+        ) : (
+          onDesign && (
+            <div className="row">
+              <button type="button" className="button" onClick={onDesign}>
+                Open layout designer
+              </button>
+            </div>
+          )
         )}
       </section>
+
+      {onNewKeyboard && (
+        <section className="build-section" aria-label="Design your own keyboard">
+          <h2 className="panel-title">Your own keyboard</h2>
+          <p className="muted small">
+            Built one yourself, or designing a PCB? Describe its controller, wiring and layout, and the editor writes the ZMK
+            files for it.
+          </p>
+          <button type="button" className="button" onClick={onNewKeyboard}>Design your own keyboard</button>
+        </section>
+      )}
 
       <NewConfig config={config} dispatch={dispatch} onCreated={onCreated} />
     </div>

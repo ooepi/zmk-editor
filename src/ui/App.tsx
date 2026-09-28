@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { customLayout } from '../core/config.ts';
 import { toggleComboKey, replaceCombo } from '../core/keymap/comboEdit.ts';
 import { behaviorKind } from '../core/keymap/model.ts';
 import { findKeyboard } from '../core/catalog/keyboards.ts';
@@ -10,6 +11,7 @@ import { CombosPanel } from './components/CombosPanel.tsx';
 import { ConditionalLayersPanel } from './components/ConditionalLayersPanel.tsx';
 import { EncoderPanel } from './components/EncoderPanel.tsx';
 import { EncoderStrip } from './components/EncoderStrip.tsx';
+import { HardwareWizard } from './components/HardwareWizard.tsx';
 import { KeyboardCanvas } from './components/KeyboardCanvas.tsx';
 import { KeyboardView } from './components/KeyboardView.tsx';
 import { LayoutDesigner } from './components/LayoutDesigner.tsx';
@@ -23,7 +25,7 @@ import { isLoginCallback } from './state/githubLogin.ts';
 import { usePreferences } from './state/preferences.ts';
 import { useTheme } from './useTheme.ts';
 
-type View = 'keymap' | 'combos' | 'behaviors' | 'macros' | 'modules' | 'settings' | 'build' | 'keyboard' | 'designer';
+type View = 'keymap' | 'combos' | 'behaviors' | 'macros' | 'modules' | 'settings' | 'build' | 'keyboard' | 'designer' | 'newKeyboard' | 'editHardware';
 
 function isTyping(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|SELECT|TEXTAREA)$/.test(target.tagName));
@@ -40,16 +42,20 @@ export function App() {
   const { keymap } = config;
   const keyCount = keymap.layers[0]?.bindings.length ?? 0;
   const { layouts } = usePreferences();
-  const layout = physicalLayoutFor(config.keyboard, keyCount, layouts[config.keyboard], config.layout);
+  const layout = physicalLayoutFor(config.keyboard, keyCount, layouts[config.keyboard], customLayout(config));
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (isTyping(event.target)) return;
       const mod = event.ctrlKey || event.metaKey;
-      if (mod && event.key.toLowerCase() === 'z') {
+      // The wizard keeps its own draft on top of the live config; a global undo/redo
+      // here would change that config behind its back (e.g. undoing the load that
+      // created the keyboard being edited).
+      const wizardOpen = view === 'newKeyboard' || view === 'editHardware';
+      if (mod && !wizardOpen && event.key.toLowerCase() === 'z') {
         event.preventDefault();
         dispatch({ type: event.shiftKey ? 'redo' : 'undo' });
-      } else if (mod && event.key.toLowerCase() === 'y') {
+      } else if (mod && !wizardOpen && event.key.toLowerCase() === 'y') {
         event.preventDefault();
         dispatch({ type: 'redo' });
       } else if (event.key === 'Escape') {
@@ -95,11 +101,11 @@ export function App() {
           ZMK Editor
           <button
             type="button"
-            className={`badge badge-button${view === 'keyboard' || view === 'designer' ? ' active' : ''}`}
+            className={`badge badge-button${['keyboard', 'designer', 'newKeyboard', 'editHardware'].includes(view) ? ' active' : ''}`}
             onClick={() => setView('keyboard')}
             title="Keyboard and layout"
           >
-            {findKeyboard(config.keyboard)?.name ?? config.keyboard} ▾
+            {config.hardware?.displayName ?? findKeyboard(config.keyboard)?.name ?? config.keyboard} ▾
           </button>
           <VersionSelect config={config} dispatch={dispatch} />
         </div>
@@ -107,6 +113,7 @@ export function App() {
           config={config}
           canUndo={state.past.length > 0}
           canRedo={state.future.length > 0}
+          locked={view === 'newKeyboard' || view === 'editHardware'}
           theme={theme}
           onToggleTheme={toggleTheme}
           dispatch={dispatch}
@@ -135,11 +142,29 @@ export function App() {
       )}
       {view === 'keyboard' ? (
         <main className="workspace single">
-          <KeyboardView config={config} dispatch={dispatch} onCreated={() => setView('keymap')} onDesign={() => setView('designer')} />
+          <KeyboardView
+            config={config}
+            dispatch={dispatch}
+            onCreated={() => setView('keymap')}
+            onDesign={() => setView('designer')}
+            onNewKeyboard={() => setView('newKeyboard')}
+            onEditHardware={() => setView('editHardware')}
+          />
         </main>
       ) : view === 'designer' ? (
         <main className="workspace single">
           <LayoutDesigner config={config} dispatch={dispatch} onClose={() => setView('keyboard')} />
+        </main>
+      ) : view === 'newKeyboard' || view === 'editHardware' ? (
+        <main className="workspace single">
+          <HardwareWizard
+            key={view}
+            config={config}
+            dispatch={dispatch}
+            mode={view === 'editHardware' ? 'edit' : 'create'}
+            onDone={() => setView(view === 'editHardware' ? 'keyboard' : 'keymap')}
+            onCancel={() => setView('keyboard')}
+          />
         </main>
       ) : view === 'settings' ? (
         <main className="workspace single">

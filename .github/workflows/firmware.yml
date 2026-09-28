@@ -1,6 +1,6 @@
-# Builds the generated Lily58 config (test/generated/lily58/) with the same
-# container and west commands as ZMK's build-user-config workflow, to prove
-# that generated configs compile. The ZMK version comes from the generated
+# Builds every generated config in test/generated/… with the same container
+# and west commands as ZMK's build-user-config workflow, to prove that
+# generated configs compile. The ZMK version comes from each generated
 # west.yml, so this follows the editor's output.
 name: Firmware build check
 
@@ -15,9 +15,6 @@ on:
       - '.github/workflows/firmware.yml'
   workflow_dispatch:
 
-env:
-  CONFIG_DIR: test/generated/lily58
-
 jobs:
   matrix:
     runs-on: ubuntu-latest
@@ -26,7 +23,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - id: matrix
-        run: echo "build_matrix=$(yq -oj -I0 "$CONFIG_DIR/build.yaml")" >> "$GITHUB_OUTPUT"
+        run: |
+          matrix=$(for dir in test/generated/*/; do
+            yq -oj -I0 ".include[] | .dir = \"${dir%/}\"" "$dir/build.yaml"
+          done | jq -sc '{include: .}')
+          echo "build_matrix=$matrix" >> "$GITHUB_OUTPUT"
 
   build:
     needs: matrix
@@ -36,14 +37,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.matrix.outputs.build_matrix) }}
-    name: Build ${{ matrix.shield }}
+    name: Build ${{ matrix.dir }} ${{ matrix.shield }}
     steps:
       - uses: actions/checkout@v5
 
       - name: Copy the generated config into a fresh west workspace
         run: |
           mkdir -p /tmp/ws
-          cp -R "$CONFIG_DIR/config" /tmp/ws/config
+          cp -R "${{ matrix.dir }}/config" /tmp/ws/config
 
       - name: Cache west modules
         uses: actions/cache@v4

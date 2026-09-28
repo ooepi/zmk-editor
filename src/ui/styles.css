@@ -1361,6 +1361,11 @@ select {
   stroke-width: 6;
 }
 
+.designer-key.flagged rect {
+  stroke: var(--danger);
+  stroke-width: 6;
+}
+
 .designer-label {
   fill: var(--text);
   font-size: 26px;
@@ -1395,6 +1400,106 @@ select {
 
 @media (max-width: 900px) {
   .designer {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Keyboard wizard */
+.hardware-wizard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.wizard-steps {
+  display: flex;
+  gap: 16px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  color: var(--text-muted);
+}
+
+.wizard-steps .active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.wiring-step {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: start;
+}
+
+.pin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
+}
+
+.pin-grid select.active-pin {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.pinout-board {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--keycap-edge);
+  border-radius: 10px;
+}
+
+.pinout-column {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pinout-usb {
+  align-self: start;
+  padding: 4px 10px;
+  border: 1px solid var(--keycap-edge);
+  border-radius: 6px;
+  color: var(--text-muted);
+}
+
+.pinout-pad {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  min-width: 96px;
+  padding: 2px 8px;
+  border: 1px solid var(--keycap-edge);
+  border-radius: 6px;
+  background: var(--keycap);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.pinout-pad.power {
+  cursor: default;
+  color: var(--text-muted);
+}
+
+.pinout-pad.used {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.pinout-sub,
+.pinout-use {
+  font-size: 0.8em;
+  color: var(--text-muted);
+}
+
+@media (max-width: 800px) {
+  .wiring-step {
     grid-template-columns: 1fr;
   }
 }

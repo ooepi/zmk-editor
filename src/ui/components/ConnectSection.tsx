@@ -16,6 +16,7 @@ export interface Connection {
 
 const isConfigFile = (path: string) =>
   /^config\/[^/]+\.(keymap|conf)$/.test(path) ||
+  path.startsWith('config/boards/shields/') ||
   ['config/west.yml', 'config/info.json', 'build.yaml', '.github/workflows/build.yml'].includes(path);
 
 const message = (error: unknown) => (error instanceof Error ? error.message : String(error));
