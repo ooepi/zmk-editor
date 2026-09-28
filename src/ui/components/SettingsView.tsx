@@ -2,6 +2,7 @@ import { useId, useMemo, useState, type Dispatch } from 'react';
 import type { ZmkConfig } from '../../core/config.ts';
 import {
   findSetting,
+  lacksHardwareFor,
   readSetting,
   SETTING_GROUPS,
   SETTINGS,
@@ -65,7 +66,7 @@ export function SettingsView({ config, dispatch }: SettingsViewProps) {
                     if (def && w.fix) set(def, w.fix.value);
                   }}
                 >
-                  Turn on
+                  {w.fix.value === false ? 'Turn off' : 'Turn on'}
                 </button>
               )}
             </div>
@@ -79,7 +80,13 @@ export function SettingsView({ config, dispatch }: SettingsViewProps) {
             <h3>{group.label}</h3>
             <p className="muted small">{group.description}</p>
             {SETTINGS.filter((s) => s.group === group.id).map((def) => (
-              <SettingField key={def.name} def={def} value={readSetting(config.kconfig, def)} onChange={(v) => set(def, v)} />
+              <SettingField
+                key={def.name}
+                def={def}
+                value={readSetting(config.kconfig, def)}
+                unavailable={lacksHardwareFor(config, def.name) ? `${config.hardware?.displayName ?? 'This keyboard'} doesn’t have this hardware yet.` : undefined}
+                onChange={(v) => set(def, v)}
+              />
             ))}
           </section>
         ))}
@@ -99,7 +106,18 @@ export function SettingsView({ config, dispatch }: SettingsViewProps) {
   );
 }
 
-function SettingField({ def, value, onChange }: { def: SettingDef; value: SettingValue | undefined; onChange: (v: SettingValue | undefined) => void }) {
+function SettingField({
+  def,
+  value,
+  unavailable,
+  onChange,
+}: {
+  def: SettingDef;
+  value: SettingValue | undefined;
+  /** Why this can't be turned on (a designed keyboard without the hardware); it can still be turned off. */
+  unavailable?: string;
+  onChange: (v: SettingValue | undefined) => void;
+}) {
   const id = useId();
   const isSet = value !== undefined;
   const { type } = def;
@@ -110,6 +128,7 @@ function SettingField({ def, value, onChange }: { def: SettingDef; value: Settin
   );
   const hint = (
     <span id={`${id}-help`} className="field-help">
+      {unavailable && `${unavailable} `}
       {def.help}
       {def.help && ' '}Default: {describeDefault(def)}.
       {type.kind === 'int' && type.unit === 'ms' && typeof value === 'number' && ` Now: ${duration(value)}.`}
@@ -123,7 +142,13 @@ function SettingField({ def, value, onChange }: { def: SettingDef; value: Settin
       <div className={`setting${isSet ? ' is-set' : ''}`}>
         <div className="setting-bool">
           {/* Always explicit: boards and shields can change defaults (nice_view turns the display on). */}
-          <input {...common} type="checkbox" checked={effective === true} onChange={(e) => onChange(e.target.checked)} />
+          <input
+            {...common}
+            type="checkbox"
+            checked={effective === true}
+            disabled={!!unavailable && effective !== true}
+            onChange={(e) => onChange(e.target.checked)}
+          />
           <label htmlFor={id}>{def.label}</label>
           {reset}
         </div>

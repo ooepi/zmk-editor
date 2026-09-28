@@ -7,6 +7,7 @@ import { generateConfig } from '../core/config.ts';
 import { FakeGitHub } from '../core/github/fakeGitHub.ts';
 import { newHardwareConfig } from '../core/hardware/config.ts';
 import { testPad } from '../core/hardware/testFixtures.ts';
+import { findSetting, writeSetting } from '../core/catalog/settings.ts';
 import { App } from './App.tsx';
 import { demoConfig } from './state/demo.ts';
 
@@ -154,6 +155,25 @@ describe('Build tab with a designed keyboard', () => {
     await connect(user);
     expect(await screen.findByText(/test_pad\.overlay was changed outside the editor/)).toBeTruthy();
     expect(screen.getByLabelText('Replace my changes to the shield files')).toHaveProperty('checked', false);
+    expect(screen.getByRole('button', { name: 'Commit & build' })).toHaveProperty('disabled', true);
+  });
+});
+
+describe('Build tab with settings the designed keyboard can’t support', () => {
+  it('blocks the commit while the display is on for a keyboard without a screen', async () => {
+    const config = newHardwareConfig(testPad, 'v0.3');
+    const def = findSetting('ZMK_DISPLAY');
+    if (!def) throw new Error('setting');
+    config.kconfig = writeSetting(config.kconfig, def, true);
+    const files = generateConfig(newHardwareConfig(testPad, 'v0.3'));
+    fake = new FakeGitHub(files);
+    vi.stubGlobal('fetch', fake.fetch);
+    localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config }));
+
+    const user = userEvent.setup();
+    render(<App />);
+    await connect(user);
+    expect(await screen.findByText('Display is on, but Test Pad has no screen yet, so the firmware won’t build.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Commit & build' })).toHaveProperty('disabled', true);
   });
 });
