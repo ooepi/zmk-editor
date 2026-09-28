@@ -7,6 +7,7 @@ import type { EditorAction } from '../state/editorReducer.ts';
 import { BindingEditor } from './BindingEditor.tsx';
 import { LabelField } from './LabelField.tsx';
 import { PropertyFields } from './PropertyFields.tsx';
+import { HelpLink } from '../help/HelpLink.tsx';
 
 interface CombosPanelProps {
   keymap: KeymapModel;
@@ -29,7 +30,9 @@ export function CombosPanel({ keymap, selected, onSelect, dispatch }: CombosPane
   return (
     <div className="binding-panel">
       <h2 className="panel-title">Combos</h2>
-      <p className="muted small">Press several keys together to trigger a combo.</p>
+      <p className="muted small">
+        Press several keys together to trigger a combo. <HelpLink to="combos" />
+      </p>
       <ul className="item-list" aria-label="Combos">
         {keymap.combos.map((c) => (
           <li key={c.name}>

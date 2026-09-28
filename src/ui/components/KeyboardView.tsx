@@ -13,6 +13,7 @@ import { gridLayout } from '../../core/layouts/index.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
 import { setPreferences, usePreferences } from '../state/preferences.ts';
 import { LayoutPreview } from './LayoutPreview.tsx';
+import { HelpLink } from '../help/HelpLink.tsx';
 
 interface KeyboardViewProps {
   config: ZmkConfig;
@@ -102,7 +103,7 @@ export function KeyboardView({ config, dispatch, onCreated, onDesign, onNewKeybo
           <h2 className="panel-title">Your own keyboard</h2>
           <p className="muted small">
             Built one yourself, or designing a PCB? Describe its controller, wiring and layout, and the editor writes the ZMK
-            files for it.
+            files for it. <HelpLink to="wizard" />
           </p>
           <button type="button" className="button" onClick={onNewKeyboard}>Design your own keyboard</button>
         </section>
@@ -125,7 +126,8 @@ function NewConfig({ config, dispatch, onCreated }: KeyboardViewProps) {
     <section className="build-section" aria-label="Start a new config">
       <h2 className="panel-title">Start a new config</h2>
       <p className="muted small">
-        Pick a keyboard from ZMK’s list ({KEYBOARDS.length} keyboards). The editor starts from ZMK’s default keymap for it.
+        Pick a keyboard from ZMK’s list ({KEYBOARDS.length} keyboards). The editor starts from ZMK’s default keymap for it.{' '}
+        <HelpLink to="new-config" />
       </p>
       <div className="keyboard-picker">
         <div className="keyboard-list-column">

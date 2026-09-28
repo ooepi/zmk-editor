@@ -4,6 +4,7 @@ import { ensureFresh, getUser, listAppRepos, listBranches, type AuthConfig, type
 import { loadRepoFiles } from '../../core/github/repo.ts';
 import { loadGitHubSettings, saveGitHubSettings } from '../state/github.ts';
 import { authConfig, beginLogin, clearTokens, completeLogin, isLoginCallback, loadTokens, saveTokens } from '../state/githubLogin.ts';
+import { HelpLink } from '../help/HelpLink.tsx';
 
 export interface Connection {
   client: GitHubClient;
@@ -75,7 +76,9 @@ export function ConnectSection({ connection, onConnected, onDisconnect, onLoad }
   return (
     <section className="build-section" aria-label="Connect to GitHub">
       <h2 className="panel-title">Connect to GitHub</h2>
-      <p className="muted small">The editor commits to your zmk-config repository and GitHub Actions builds the firmware.</p>
+      <p className="muted small">
+        The editor commits to your zmk-config repository and GitHub Actions builds the firmware. <HelpLink to="building" />
+      </p>
       {config ? (
         <>
           <LoginPanel config={config} onConnected={onConnected} />

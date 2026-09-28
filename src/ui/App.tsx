@@ -24,12 +24,28 @@ import { SettingsView } from './components/SettingsView.tsx';
 import { Toolbar } from './components/Toolbar.tsx';
 import { VersionSelect } from './components/VersionSelect.tsx';
 import type { KeyRef } from './dnd.ts';
+import { HelpContext } from './help/helpContext.ts';
+import { HelpLink } from './help/HelpLink.tsx';
+import { HelpView } from './help/HelpView.tsx';
+import { SHORTCUTS } from './shortcuts.ts';
 import { useEditor } from './state/useEditor.ts';
 import { isLoginCallback } from './state/githubLogin.ts';
 import { setPreferences, usePreferences } from './state/preferences.ts';
 import { useTheme } from './useTheme.ts';
 
-type View = 'keymap' | 'combos' | 'behaviors' | 'macros' | 'modules' | 'settings' | 'build' | 'keyboard' | 'designer' | 'newKeyboard' | 'editHardware';
+type View =
+  | 'keymap'
+  | 'combos'
+  | 'behaviors'
+  | 'macros'
+  | 'modules'
+  | 'settings'
+  | 'build'
+  | 'help'
+  | 'keyboard'
+  | 'designer'
+  | 'newKeyboard'
+  | 'editHardware';
 
 function isTyping(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|SELECT|TEXTAREA)$/.test(target.tagName));
@@ -39,6 +55,12 @@ export function App() {
   const [theme, toggleTheme] = useTheme();
   const [state, dispatch] = useEditor();
   const [view, setView] = useState<View>(() => (isLoginCallback() ? 'build' : 'keymap'));
+  /** The Help section asked for; `request` changes on every request so the same section scrolls again. */
+  const [help, setHelp] = useState<{ section: string | null; request: number }>({ section: null, request: 0 });
+  const openHelp = (section?: string) => {
+    setHelp((h) => ({ section: section ?? null, request: h.request + 1 }));
+    setView('help');
+  };
   const [combo, setCombo] = useState<string | null>(null);
   const [behavior, setBehavior] = useState<string | null>(null);
   const [macro, setMacro] = useState<string | null>(null);
@@ -104,6 +126,7 @@ export function App() {
     { id: 'modules', label: `Modules (${config.west.modules.length})` },
     { id: 'settings', label: 'Settings' },
     { id: 'build', label: 'Build' },
+    { id: 'help', label: 'Help' },
   ];
 
   const onKeyClick = (index: number, additive = false) => {
@@ -147,162 +170,174 @@ export function App() {
   };
 
   return (
-    <div className="app">
-      <header className="topbar">
-        <div className="brand">
-          <span className="brand-mark" aria-hidden="true">
-            ⌨
-          </span>
-          ZMK Editor
-          <button
-            type="button"
-            className={`badge badge-button${['keyboard', 'designer', 'newKeyboard', 'editHardware'].includes(view) ? ' active' : ''}`}
-            onClick={() => setView('keyboard')}
-            title="Keyboard and layout"
-          >
-            {config.hardware?.displayName ?? findKeyboard(config.keyboard)?.name ?? config.keyboard} ▾
-          </button>
-          <VersionSelect config={config} dispatch={dispatch} />
-        </div>
-        <Toolbar
-          config={config}
-          canUndo={state.past.length > 0}
-          canRedo={state.future.length > 0}
-          locked={view === 'newKeyboard' || view === 'editHardware'}
-          theme={theme}
-          onToggleTheme={toggleTheme}
-          dispatch={dispatch}
-        />
-      </header>
-      <nav className="viewtabs" aria-label="Views">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            className={`viewtab${view === t.id ? ' active' : ''}`}
-            aria-current={view === t.id ? 'page' : undefined}
-            onClick={() => setView(t.id)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </nav>
-      {state.notice && (
-        <div className="notice" role="status">
-          {state.notice}
-          <button type="button" className="link-button" onClick={() => dispatch({ type: 'dismissNotice' })}>
-            Dismiss
-          </button>
-        </div>
-      )}
-      {view === 'keyboard' ? (
-        <main className="workspace single">
-          <KeyboardView
+    <HelpContext.Provider value={openHelp}>
+      <div className="app">
+        <header className="topbar">
+          <div className="brand">
+            <span className="brand-mark" aria-hidden="true">
+              ⌨
+            </span>
+            ZMK Editor
+            <button
+              type="button"
+              className={`badge badge-button${['keyboard', 'designer', 'newKeyboard', 'editHardware'].includes(view) ? ' active' : ''}`}
+              onClick={() => setView('keyboard')}
+              title="Keyboard and layout"
+            >
+              {config.hardware?.displayName ?? findKeyboard(config.keyboard)?.name ?? config.keyboard} ▾
+            </button>
+            <VersionSelect config={config} dispatch={dispatch} />
+          </div>
+          <Toolbar
             config={config}
-            dispatch={dispatch}
-            onCreated={() => setView('keymap')}
-            onDesign={() => setView('designer')}
-            onNewKeyboard={() => setView('newKeyboard')}
-            onEditHardware={() => setView('editHardware')}
-          />
-        </main>
-      ) : view === 'designer' ? (
-        <main className="workspace single">
-          <LayoutDesigner config={config} dispatch={dispatch} onClose={() => setView('keyboard')} />
-        </main>
-      ) : view === 'newKeyboard' || view === 'editHardware' ? (
-        <main className="workspace single">
-          <HardwareWizard
-            key={view}
-            config={config}
-            dispatch={dispatch}
-            mode={view === 'editHardware' ? 'edit' : 'create'}
-            onDone={() => setView(view === 'editHardware' ? 'keyboard' : 'keymap')}
-            onCancel={() => setView('keyboard')}
-          />
-        </main>
-      ) : view === 'settings' ? (
-        <main className="workspace single">
-          <SettingsView config={config} dispatch={dispatch} />
-        </main>
-      ) : view === 'build' ? (
-        <main className="workspace single">
-          <BuildView config={config} dispatch={dispatch} />
-        </main>
-      ) : view === 'modules' ? (
-        <main className="workspace single">
-          <ModulesView config={config} dispatch={dispatch} />
-        </main>
-      ) : view === 'behaviors' || view === 'macros' ? (
-        <main className="workspace single">
-          <BehaviorsView
-            keymap={keymap}
-            kind={view}
-            selected={view === 'macros' ? macro : behavior}
-            onSelect={view === 'macros' ? setMacro : setBehavior}
+            canUndo={state.past.length > 0}
+            canRedo={state.future.length > 0}
+            locked={view === 'newKeyboard' || view === 'editHardware'}
+            theme={theme}
+            onToggleTheme={toggleTheme}
             dispatch={dispatch}
           />
-        </main>
-      ) : (
-        <main className="workspace">
-          <section className="canvas-area" aria-label="Keymap">
-            {view === 'keymap' && <LayerBar layers={keymap.layers} active={layer} dispatch={dispatch} />}
-            <div className="canvas">
-              <KeyboardCanvas
-                keymap={keymap}
-                layout={layout}
-                layer={view === 'combos' ? 0 : layer}
-                selection={view === 'keymap' ? selection : []}
-                onSelectBox={
-                  view === 'keymap' ? (indices, additive) => dispatch({ type: 'selectKeys', indices, additive }) : undefined
-                }
-                highlighted={view === 'combos' && selectedCombo ? new Set(selectedCombo.keyPositions.map(Number)) : undefined}
-                onSelectKey={onKeyClick}
-                drop={view === 'keymap' ? keyDrop : undefined}
-              />
-              {view === 'keymap' && (
-                <EncoderStrip
+          <button type="button" className="button help-button" aria-label="Open help" title="Help" onClick={() => openHelp()}>
+            ?
+          </button>
+        </header>
+        <nav className="viewtabs" aria-label="Views">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              className={`viewtab${view === t.id ? ' active' : ''}`}
+              aria-current={view === t.id ? 'page' : undefined}
+              onClick={() => setView(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
+        {state.notice && (
+          <div className="notice" role="status">
+            {state.notice}
+            <button type="button" className="link-button" onClick={() => dispatch({ type: 'dismissNotice' })}>
+              Dismiss
+            </button>
+          </div>
+        )}
+        {view === 'keyboard' ? (
+          <main className="workspace single">
+            <KeyboardView
+              config={config}
+              dispatch={dispatch}
+              onCreated={() => setView('keymap')}
+              onDesign={() => setView('designer')}
+              onNewKeyboard={() => setView('newKeyboard')}
+              onEditHardware={() => setView('editHardware')}
+            />
+          </main>
+        ) : view === 'designer' ? (
+          <main className="workspace single">
+            <LayoutDesigner config={config} dispatch={dispatch} onClose={() => setView('keyboard')} />
+          </main>
+        ) : view === 'newKeyboard' || view === 'editHardware' ? (
+          <main className="workspace single">
+            <HardwareWizard
+              key={view}
+              config={config}
+              dispatch={dispatch}
+              mode={view === 'editHardware' ? 'edit' : 'create'}
+              onDone={() => setView(view === 'editHardware' ? 'keyboard' : 'keymap')}
+              onCancel={() => setView('keyboard')}
+            />
+          </main>
+        ) : view === 'settings' ? (
+          <main className="workspace single">
+            <SettingsView config={config} dispatch={dispatch} />
+          </main>
+        ) : view === 'build' ? (
+          <main className="workspace single">
+            <BuildView config={config} dispatch={dispatch} />
+          </main>
+        ) : view === 'help' ? (
+          <main className="workspace single">
+            <HelpView key={help.request} section={help.section} />
+          </main>
+        ) : view === 'modules' ? (
+          <main className="workspace single">
+            <ModulesView config={config} dispatch={dispatch} />
+          </main>
+        ) : view === 'behaviors' || view === 'macros' ? (
+          <main className="workspace single">
+            <BehaviorsView
+              keymap={keymap}
+              kind={view}
+              selected={view === 'macros' ? macro : behavior}
+              onSelect={view === 'macros' ? setMacro : setBehavior}
+              dispatch={dispatch}
+            />
+          </main>
+        ) : (
+          <main className="workspace">
+            <section className="canvas-area" aria-label="Keymap">
+              {view === 'keymap' && <LayerBar layers={keymap.layers} active={layer} dispatch={dispatch} />}
+              <div className="canvas">
+                <KeyboardCanvas
+                  keymap={keymap}
+                  layout={layout}
+                  layer={view === 'combos' ? 0 : layer}
+                  selection={view === 'keymap' ? selection : []}
+                  onSelectBox={
+                    view === 'keymap' ? (indices, additive) => dispatch({ type: 'selectKeys', indices, additive }) : undefined
+                  }
+                  highlighted={view === 'combos' && selectedCombo ? new Set(selectedCombo.keyPositions.map(Number)) : undefined}
+                  onSelectKey={onKeyClick}
+                  drop={view === 'keymap' ? keyDrop : undefined}
+                />
+                {view === 'keymap' && (
+                  <EncoderStrip
+                    keymap={keymap}
+                    layer={layer}
+                    selected={sensor}
+                    onSelect={(index) => dispatch({ type: 'selectSensor', index: index === sensor ? null : index })}
+                    onDropItem={(index: number, direction: EncoderDirection, item: PaletteItem) => {
+                      dispatch({ type: 'placeOnEncoder', index, direction, item });
+                      if (applyToEncoder({ behavior: 'trans', params: [] }, item, direction)) remember(item);
+                    }}
+                  />
+                )}
+              </div>
+              {view === 'keymap' && <KeyPalette keymap={keymap} armed={armed} selection={selection} onPick={onPaletteClick} />}
+            </section>
+            <aside className="panel" aria-label="Details">
+              {view === 'combos' ? (
+                <CombosPanel keymap={keymap} selected={combo} onSelect={setCombo} dispatch={dispatch} />
+              ) : key !== null ? (
+                <BindingPanel
+                  key={`${layer}-${key}`}
                   keymap={keymap}
                   layer={layer}
-                  selected={sensor}
-                  onSelect={(index) => dispatch({ type: 'selectSensor', index: index === sensor ? null : index })}
-                  onDropItem={(index: number, direction: EncoderDirection, item: PaletteItem) => {
-                    dispatch({ type: 'placeOnEncoder', index, direction, item });
-                    if (applyToEncoder({ behavior: 'trans', params: [] }, item, direction)) remember(item);
-                  }}
+                  keyIndex={key}
+                  clipboard={clipboard}
+                  dispatch={dispatch}
                 />
+              ) : selection.length > 1 ? (
+                <SelectionPanel keymap={keymap} layer={layer} selection={selection} clipboard={clipboard} dispatch={dispatch} />
+              ) : sensor !== null ? (
+                <EncoderPanel key={`${layer}-s${sensor}`} keymap={keymap} layer={layer} sensor={sensor} dispatch={dispatch} />
+              ) : (
+                <>
+                  <Overview warnings={state.warnings} />
+                  <ConditionalLayersPanel keymap={keymap} dispatch={dispatch} />
+                </>
               )}
-            </div>
-            {view === 'keymap' && <KeyPalette keymap={keymap} armed={armed} selection={selection} onPick={onPaletteClick} />}
-          </section>
-          <aside className="panel" aria-label="Details">
-            {view === 'combos' ? (
-              <CombosPanel keymap={keymap} selected={combo} onSelect={setCombo} dispatch={dispatch} />
-            ) : key !== null ? (
-              <BindingPanel
-                key={`${layer}-${key}`}
-                keymap={keymap}
-                layer={layer}
-                keyIndex={key}
-                clipboard={clipboard}
-                dispatch={dispatch}
-              />
-            ) : selection.length > 1 ? (
-              <SelectionPanel keymap={keymap} layer={layer} selection={selection} clipboard={clipboard} dispatch={dispatch} />
-            ) : sensor !== null ? (
-              <EncoderPanel key={`${layer}-s${sensor}`} keymap={keymap} layer={layer} sensor={sensor} dispatch={dispatch} />
-            ) : (
-              <>
-                <Overview warnings={state.warnings} />
-                <ConditionalLayersPanel keymap={keymap} dispatch={dispatch} />
-              </>
-            )}
-          </aside>
-        </main>
-      )}
-    </div>
+            </aside>
+          </main>
+        )}
+      </div>
+    </HelpContext.Provider>
   );
 }
+
+/** The shortcuts the keymap overview lists; Help has them all. */
+const OVERVIEW_SHORTCUTS = SHORTCUTS.filter((s) => s.handles);
 
 function Overview({ warnings }: { warnings: string[] }) {
   return (
@@ -310,12 +345,11 @@ function Overview({ warnings }: { warnings: string[] }) {
       <h2 className="panel-title">Details</h2>
       <p className="muted">
         Select a key or an encoder to edit it, or drag keys from the palette below the keyboard. Double-click a layer
-        tab to rename it.
+        tab to rename it. <HelpLink to="editing-keys" />
       </p>
       <p className="muted small">
-        Shortcuts: Ctrl+Z undo · Ctrl+Shift+Z redo · Ctrl+click or drag a box to select several keys · Ctrl+A selects
-        all · Ctrl+C / Ctrl+X / Ctrl+V copy, cut and paste keys · Delete makes keys transparent · Esc deselects ·
-        Drag a key onto another to swap them (hold Alt to copy), or onto a layer tab to copy it to that layer
+        Shortcuts: {OVERVIEW_SHORTCUTS.map((s) => `${s.keys}: ${s.action.toLowerCase()}`).join(' · ')}.{' '}
+        <HelpLink to="shortcuts">All shortcuts</HelpLink>
       </p>
       {warnings.length > 0 && (
         <>

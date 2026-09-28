@@ -191,6 +191,13 @@ select {
   place-items: center;
   padding: 16px 24px 32px;
   overflow: auto;
+  /* The keyboard sizes itself to this area's height too (see .keyboard). */
+  container-type: size;
+}
+
+/* Room for the encoder strip under the keyboard. */
+.canvas:has(.encoders) {
+  --encoder-space: 72px;
 }
 
 .panel {
@@ -303,7 +310,8 @@ select {
 
 .keyboard {
   position: relative;
-  width: 100%;
+  /* As wide as fits, but never so wide that its height overflows the canvas. */
+  width: min(100%, calc((100cqh - var(--encoder-space, 0px)) * var(--ratio, 3)));
   max-width: 1100px;
   container-type: inline-size;
 }
@@ -862,6 +870,11 @@ select {
 
   .workspace:has(.palette) .canvas {
     flex: none;
+    container-type: normal;
+  }
+
+  .workspace:has(.palette) .keyboard {
+    width: 100%;
   }
 }
 
@@ -2051,4 +2064,172 @@ select {
 
 .conditional {
   margin-bottom: 8px;
+}
+
+/* Help */
+
+.help-button {
+  width: 32px;
+  padding: 4px 0;
+  border-radius: 50%;
+  font-weight: 700;
+}
+
+.help-link {
+  font-size: inherit;
+  white-space: nowrap;
+}
+
+.help {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 760px);
+  gap: 32px;
+  justify-content: center;
+  padding: 24px;
+}
+
+.help-toc {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.help-toc ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.help-toc-link {
+  width: 100%;
+  padding: 5px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  text-align: left;
+  cursor: pointer;
+}
+
+.help-toc-link:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.help-toc-select {
+  display: none;
+}
+
+.help-content {
+  line-height: 1.6;
+}
+
+.help-title {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+
+.help-content section {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 12px;
+}
+
+.help-content h2 {
+  margin: 24px 0 8px;
+  font-size: 19px;
+}
+
+.help-content h3 {
+  margin: 18px 0 6px;
+  font-size: 15px;
+  scroll-margin-top: 12px;
+}
+
+.help-content li {
+  margin: 4px 0;
+}
+
+.help-content code,
+.help-content kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.help-ui {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.help-content .link-button {
+  padding: 0;
+  font-size: inherit;
+}
+
+.help-content a {
+  color: var(--accent);
+}
+
+.help-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.help-table th,
+.help-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.help-table td:first-child {
+  white-space: nowrap;
+}
+
+.help-faq dt {
+  margin-top: 14px;
+  font-weight: 600;
+}
+
+.help-faq dd {
+  margin: 4px 0 0;
+}
+
+::highlight(help-search) {
+  background-color: var(--accent-soft);
+  color: var(--text);
+  text-decoration: underline 2px var(--accent);
+}
+
+@media (max-width: 800px) {
+  .help {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .help-toc {
+    position: static;
+  }
+
+  .help-toc ol {
+    display: none;
+  }
+
+  .help-toc-select {
+    display: block;
+  }
+
+  .help-table td:first-child {
+    white-space: normal;
+  }
 }

@@ -13,6 +13,7 @@ import {
 } from '../../core/catalog/settings.ts';
 import { generateKconfig, parseKconfig } from '../../core/files/kconfig.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
+import { HelpLink } from '../help/HelpLink.tsx';
 
 interface SettingsViewProps {
   config: ZmkConfig;
@@ -49,7 +50,7 @@ export function SettingsView({ config, dispatch }: SettingsViewProps) {
       <h2 className="panel-title">Settings</h2>
       <p className="muted">
         These go in <span className="mono">config/{config.keyboard}.conf</span> and apply to both halves. Empty fields use
-        ZMK’s default. Changes take effect after you build and flash.
+        ZMK’s default. Changes take effect after you build and flash. <HelpLink to="settings" />
       </p>
 
       {warnings.length > 0 && (

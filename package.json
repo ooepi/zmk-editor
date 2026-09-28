@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "screenshots": "npm run build && node --experimental-strip-types scripts/screenshots.ts"
   },
   "dependencies": {
     "fflate": "^0.8.3",
@@ -32,6 +33,7 @@
     "eslint-plugin-react-refresh": "^0.5.7",
     "globals": "^17.12.0",
     "jsdom": "^30.1.1",
+    "playwright": "^1.63.0",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.70.1",
     "vite": "^8.3.1",
