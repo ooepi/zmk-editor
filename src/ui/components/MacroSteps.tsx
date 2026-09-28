@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { describeBinding, displayContext } from '../../core/keymap/display.ts';
 import { textToBindings } from '../../core/keymap/macroText.ts';
 import type { Behavior, Binding, KeymapModel } from '../../core/keymap/model.ts';
+import { moveItem, useReorder } from '../reorder.ts';
 import { BindingEditor } from './BindingEditor.tsx';
 
 interface MacroStepsProps {
@@ -31,13 +32,10 @@ export function MacroSteps({ keymap, behavior, onChange }: MacroStepsProps) {
 
   const setSteps = (bindings: Binding[]) => onChange({ ...behavior, bindings });
   const move = (from: number, to: number) => {
-    const next = [...steps];
-    const [step] = next.splice(from, 1);
-    if (!step) return;
-    next.splice(to, 0, step);
-    setSteps(next);
+    setSteps(moveItem(steps, from, to));
     setSelected(to);
   };
+  const reorder = useReorder('macro-steps', move);
   const add = (bindings: Binding[]) => {
     setSteps([...steps, ...bindings]);
     setSelected(steps.length + bindings.length - 1);
@@ -57,7 +55,10 @@ export function MacroSteps({ keymap, behavior, onChange }: MacroStepsProps) {
         {steps.map((_, i) => {
           const label = labels[i];
           return (
-            <li key={i} className={`step${i === selected ? ' active' : ''}`}>
+            <li key={i} className={`step${i === selected ? ' active' : ''}${reorder.dropClass(i)}`} {...reorder.handle(i)} {...reorder.target(i)}>
+              <span className="grip" aria-hidden="true" title="Drag to reorder">
+                ⋮⋮
+              </span>
               <button
                 type="button"
                 className="step-main"
