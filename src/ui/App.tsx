@@ -129,7 +129,6 @@ export function App() {
     { id: 'macros', label: `Macros (${macroCount})` },
     { id: 'modules', label: `Modules (${config.west.modules.length})` },
     { id: 'settings', label: 'Settings' },
-    { id: 'build', label: 'Build' },
     { id: 'help', label: 'Help' },
   ];
 
@@ -229,6 +228,17 @@ export function App() {
               {t.label}
             </button>
           ))}
+          {/* The last step, set apart: where you go once the keymap is done. */}
+          <button
+            type="button"
+            className={`viewtab build-tab${view === 'build' ? ' active' : ''}`}
+            aria-current={view === 'build' ? 'page' : undefined}
+            title="Commit to GitHub, build the firmware and flash it"
+            onClick={() => setView('build')}
+          >
+            <Icon name="rocket" />
+            Build &amp; flash
+          </button>
         </nav>
         {state.notice && (
           <div className="notice" role="status">

@@ -58,13 +58,13 @@ export async function openPublicRepo(client: GitHubClient, input: RepoInput): Pr
     if (!(error instanceof GitHubError)) throw error;
     if (error.status === 403 || error.status === 429) {
       throw new Error(
-        'GitHub allows 60 requests an hour without logging in, and that limit is used up. Try again later, or connect on the Build tab.',
+        'GitHub allows 60 requests an hour without logging in, and that limit is used up. Try again later, or connect on the Build & flash tab.',
         { cause: error },
       );
     }
     if (error.status === 404 || error.status === 401) {
       const what = input.branch ? `${name} with a branch ${input.branch}` : name;
-      throw new Error(`Couldn't find ${what}. Check the name; a private repository needs you to connect on the Build tab.`, {
+      throw new Error(`Couldn't find ${what}. Check the name; a private repository needs you to connect on the Build & flash tab.`, {
         cause: error,
       });
     }

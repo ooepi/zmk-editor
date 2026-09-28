@@ -71,7 +71,7 @@ export function OpenFromGitHub({ disabled, title, onOpened }: OpenFromGitHubProp
         >
           <p className="muted small">
             Open a public zmk-config repository, no login needed. To commit changes, connect to your own repository on the
-            Build tab.
+            Build &amp; flash tab.
           </p>
           <label className="field">
             <span className="field-label">Repository</span>

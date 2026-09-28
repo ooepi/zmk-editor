@@ -1097,6 +1097,30 @@ select {
   border-bottom-color: var(--accent);
 }
 
+/* Build & flash: the last step, pushed to the far end and filled so it can't be missed. */
+.viewtab.build-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: center;
+  margin: 5px 0 5px auto;
+  padding: 6px 16px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 700;
+}
+
+.viewtab.build-tab:hover {
+  color: var(--accent-contrast);
+  filter: brightness(1.08);
+}
+
+.viewtab.build-tab.active {
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
 .workspace.single {
   display: block;
   overflow: auto;

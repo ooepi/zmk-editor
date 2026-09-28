@@ -61,7 +61,7 @@ export const CONFIG: HelpSection[] = [
     body: (
       <>
         <p>
-          The <Ui>Build</Ui> tab commits your config to GitHub, where GitHub Actions builds the firmware. You need a{' '}
+          The <Ui>Build &amp; flash</Ui> tab commits your config to GitHub, where GitHub Actions builds the firmware. You need a{' '}
           <code>zmk-config</code> repository on GitHub, for example one made from ZMK's template.
         </p>
         <Sub id="connect" title="Connecting to GitHub">
