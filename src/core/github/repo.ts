@@ -16,6 +16,12 @@ async function headCommit(client: GitHubClient, ref: RepoRef): Promise<{ sha: st
   return { sha: head.object.sha, tree: commit.tree.sha };
 }
 
+/** The files of a zmk-config repo the editor reads and writes. */
+export const isConfigFile = (path: string) =>
+  /^config\/[^/]+\.(keymap|conf)$/.test(path) ||
+  path.startsWith('config/boards/shields/') ||
+  ['config/west.yml', 'config/info.json', 'build.yaml', '.github/workflows/build.yml'].includes(path);
+
 /** Reads the text files the filter picks from the branch head. */
 export async function loadRepoFiles(
   client: GitHubClient,
