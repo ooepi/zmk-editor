@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { importConfig } from '../config.ts';
 import { generateKconfig, parseKconfig } from '../files/kconfig.ts';
 import { newHardwareConfig } from '../hardware/config.ts';
+import { setDisplay } from '../hardware/displays.ts';
 import { testSplit } from '../hardware/testFixtures.ts';
 import { findSetting, readSetting, SETTINGS, settingWarnings, unsupportedHardwareSettings, writeSetting } from './settings.ts';
 
@@ -147,5 +148,18 @@ describe('settings a designed keyboard has no hardware for', () => {
     // Written off explicitly: the encoders wouldn't work, so offer to turn it on.
     const off = { ...withEncoder, kconfig: writeSetting(withEncoder.kconfig, def, false) };
     expect(settingWarnings(off)).toContainEqual(expect.objectContaining({ fix: { name: 'EC11', value: true } }));
+  });
+  it('treats the display as available and on for a keyboard with a screen', () => {
+    const withScreen = newHardwareConfig(setDisplay(testSplit, 'left', 'oled_128x32'), 'v0.3');
+    const def = findSetting('ZMK_DISPLAY');
+    if (!def) throw new Error('setting');
+    expect(unsupportedHardwareSettings({ ...withScreen, kconfig: writeSetting(withScreen.kconfig, def, true) })).toEqual([]);
+    expect(settingWarnings(withScreen).some((w) => w.fix?.name === 'ZMK_DISPLAY')).toBe(false);
+    // An explicit "off" (e.g. written by Settings earlier) overrides the shield's own setting: offer to turn it on.
+    const off = { ...withScreen, kconfig: writeSetting(withScreen.kconfig, def, false) };
+    expect(settingWarnings(off)).toContainEqual({
+      message: 'Test Split has a screen, but Display is off in Settings, so it stays dark.',
+      fix: { name: 'ZMK_DISPLAY', value: true },
+    });
   });
 });

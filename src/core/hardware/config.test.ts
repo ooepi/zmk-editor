@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { configPaths, generateConfig, importConfig } from '../config.ts';
 import { formatBinding } from '../keymap/bindings.ts';
 import { applyHardware, newHardwareConfig } from './config.ts';
+import { setDisplay } from './displays.ts';
 import { definitionPath, serializeHardware } from './definition.ts';
 import { handEditedShieldFiles } from './generate.ts';
 import { testSplit } from './testFixtures.ts';
@@ -95,5 +96,20 @@ describe('configs with a designed keyboard', () => {
       '&inc_dec_kp C_VOL_UP C_VOL_DN',
     ]);
     expect(importConfig(generateConfig(config)).config).toEqual(config);
+  });
+  it('adds the nice!view shields to the halves that have one, and follows later display changes', () => {
+    const viewLeft = setDisplay(testSplit, 'left', 'nice_view');
+    const start = newHardwareConfig(viewLeft, 'v0.3');
+    expect(start.build.include.map((t) => t.shield)).toEqual(['test_split_left nice_view_adapter nice_view', 'test_split_right']);
+    // A nice!view Gem (module) replacing nice_view is kept while the display stays a nice!view…
+    const gem = { ...start, build: { include: start.build.include.map((t, i) => (i === 0 ? { ...t, shield: 'test_split_left nice_view_adapter nice_view_gem' } : t)) } };
+    const both = setDisplay(viewLeft, 'right', 'nice_view');
+    expect(applyHardware(gem, both, testSplit.keys.map((_, i) => i)).config.build.include.map((t) => t.shield)).toEqual([
+      'test_split_left nice_view_adapter nice_view_gem',
+      'test_split_right nice_view_adapter nice_view',
+    ]);
+    // …and removed with it.
+    const oled = setDisplay(setDisplay(testSplit, 'left', 'oled_128x32'), 'right', undefined);
+    expect(applyHardware(gem, oled, testSplit.keys.map((_, i) => i)).config.build.include.map((t) => t.shield)).toEqual(['test_split_left', 'test_split_right']);
   });
 });
