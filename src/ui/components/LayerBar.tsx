@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type Dispatch, type DragEvent, type KeyboardEvent } from 'react';
 import type { Layer } from '../../core/keymap/model.ts';
 import { dragKind } from '../dnd.ts';
+import { useReorder } from '../reorder.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
 
 interface LayerBarProps {
@@ -18,6 +19,7 @@ export function LayerBar({ layers, active, dispatch }: LayerBarProps) {
   const [renaming, setRenaming] = useState<number | null>(null);
   const [draft, setDraft] = useState('');
   const [hovered, setHovered] = useState<number | null>(null);
+  const reorder = useReorder('layers', (from, to) => dispatch({ type: 'moveLayer', from, to }));
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const stopHover = () => {
@@ -94,15 +96,21 @@ export function LayerBar({ layers, active, dispatch }: LayerBarProps) {
               type="button"
               role="tab"
               aria-selected={index === active}
-              className={`layer-tab${index === active ? ' active' : ''}${hovered === index ? ' drag-hover' : ''}`}
+              className={`layer-tab${index === active ? ' active' : ''}${hovered === index ? ' drag-hover' : ''}${reorder.dropClass(index)}`}
               onClick={() => dispatch({ type: 'selectLayer', index })}
+              {...reorder.handle(index)}
+              {...reorder.target(index, 'x')}
               onDragEnter={(event) => onTabDragEnter(event, index)}
               onDragLeave={(event) => {
+                reorder.target(index, 'x').onDragLeave(event);
                 if (!event.currentTarget.contains(event.relatedTarget as Node | null)) stopHover();
               }}
-              onDrop={stopHover}
+              onDrop={(event) => {
+                reorder.target(index, 'x').onDrop(event);
+                stopHover();
+              }}
               onDoubleClick={() => startRename(index)}
-              title="Double-click to rename"
+              title="Double-click to rename, drag to reorder"
             >
               <span className="layer-index">{index}</span>
               {layerName(layer)}

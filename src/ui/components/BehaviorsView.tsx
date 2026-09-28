@@ -12,6 +12,7 @@ import {
 } from '../../core/keymap/behaviorEdit.ts';
 import { behaviorSource } from '../../core/keymap/behaviorSource.ts';
 import { behaviorKind, type Behavior, type Binding, type KeymapModel } from '../../core/keymap/model.ts';
+import { moveItem, useReorder } from '../reorder.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
 import { BindingEditor } from './BindingEditor.tsx';
 import { LabelField } from './LabelField.tsx';
@@ -194,15 +195,32 @@ function BehaviorEditor({ keymap, behavior, label, onChange, onRename, onDelete 
 function TapDanceTaps({ keymap, behavior, onChange }: { keymap: KeymapModel; behavior: Behavior; onChange: (b: Behavior) => void }) {
   const taps = behavior.bindings;
   const set = (bindings: Binding[]) => onChange({ ...behavior, bindings });
+  const move = (from: number, to: number) => set(moveItem(taps, from, to));
+  const reorder = useReorder('tap-dance', move);
   return (
     <fieldset className="fieldset">
       <legend>Taps</legend>
       {taps.map((binding, i) => {
         const name = `${i + 1} tap${i === 0 ? '' : 's'}`;
         return (
-          <div key={i} className="tap">
-            <div className="row">
+          <div key={i} className={`tap${reorder.dropClass(i)}`} {...reorder.target(i)}>
+            <div className="row tap-header" {...reorder.handle(i)}>
+              <span className="grip" aria-hidden="true" title="Drag to reorder">
+                ⋮⋮
+              </span>
               <strong className="grow">{name}</strong>
+              <button type="button" className="icon-button" aria-label={`Move ${name} up`} disabled={i === 0} onClick={() => move(i, i - 1)}>
+                ↑
+              </button>
+              <button
+                type="button"
+                className="icon-button"
+                aria-label={`Move ${name} down`}
+                disabled={i === taps.length - 1}
+                onClick={() => move(i, i + 1)}
+              >
+                ↓
+              </button>
               <button
                 type="button"
                 className="icon-button danger"
