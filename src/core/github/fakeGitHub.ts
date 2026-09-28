@@ -30,6 +30,10 @@ export class FakeGitHub {
   onCommit?: (sha: string) => void;
   /** Simulates the browser blocking the artifact redirect. */
   blockArtifactDownload = false;
+  /** Answers requests without a token, like a public repo. */
+  isPublic = false;
+  /** Answers every request with GitHub's rate-limit error. */
+  rateLimited = false;
   private counter = 0;
 
   constructor(files: Record<string, string>) {
@@ -54,7 +58,14 @@ export class FakeGitHub {
     const path = url.pathname;
     this.requests.push({ method, path, body });
     const auth = new Headers(init?.headers).get('Authorization');
-    if (auth !== `Bearer ${this.token}`) return this.json(401, { message: 'Bad credentials' });
+    if (this.rateLimited) {
+      return new Response(JSON.stringify({ message: 'API rate limit exceeded' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json', 'x-ratelimit-remaining': '0' },
+      });
+    }
+    // A public repo answers anonymous requests too.
+    if (!(this.isPublic && auth === null) && auth !== `Bearer ${this.token}`) return this.json(401, { message: 'Bad credentials' });
     const repo = '/repos/me/zmk-config';
     if (path === '/user') return this.json(200, { login: 'me', avatar_url: 'https://avatars.githubusercontent.com/u/1' });
     if (path === '/user/installations') return this.json(200, { installations: [{ id: 5 }] });
