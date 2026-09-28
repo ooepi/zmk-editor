@@ -1557,7 +1557,16 @@ select {
   gap: 8px;
 }
 
-.pin-grid select.active-pin {
+.encoder-pins {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(104px, 1fr)) auto;
+  gap: 8px;
+  align-items: end;
+  margin-bottom: 8px;
+}
+
+.pin-grid select.active-pin,
+.encoder-pins select.active-pin {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }

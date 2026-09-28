@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { sensorOrder } from '../../core/hardware/encoders.ts';
 import { addKey, deleteKeys } from '../../core/hardware/keys.ts';
 import { hardwareLayout, type HardwareKey, type KeyboardHardware, type Side } from '../../core/hardware/types.ts';
 import type { HardwareIssue } from '../../core/hardware/validate.ts';
@@ -23,12 +24,12 @@ export function HardwareLayoutStep({ draft, issues, onChange }: Props) {
   const updateKey = (index: number, patch: Partial<HardwareKey>) =>
     setHw({ ...hw, keys: hw.keys.map((k, i) => (i === index ? { ...k, ...patch } : k)) });
   const add = (side?: Side) => {
-    onChange({ hw: addKey(hw, side), origins: [...draft.origins, undefined] });
+    onChange({ ...draft, hw: addKey(hw, side), origins: [...draft.origins, undefined] });
     setSelection([hw.keys.length]);
   };
   const remove = (indices: number[]) => {
     const gone = new Set(indices);
-    onChange({ hw: deleteKeys(hw, indices), origins: draft.origins.filter((_, i) => !gone.has(i)) });
+    onChange({ ...draft, hw: deleteKeys(hw, indices), origins: draft.origins.filter((_, i) => !gone.has(i)) });
     setSelection([]);
   };
   const key = selected === null ? undefined : hw.keys[selected];
@@ -41,6 +42,11 @@ export function HardwareLayoutStep({ draft, issues, onChange }: Props) {
           empty spot to select several keys and move them together. Each key shows its matrix
           {direct ? ' input' : ' row,column'}; select one to change it. Keys are numbered in keymap order.
         </p>
+        {sensorOrder(hw).length > 0 && (
+          <p className="muted small">
+            An encoder’s push button is wired like any other switch: add a key for it here and give it a row and column.
+          </p>
+        )}
         <DesignerCanvas
           layout={hardwareLayout(hw)}
           labels={labels}
