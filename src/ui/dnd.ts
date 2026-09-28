@@ -9,8 +9,14 @@ export function setPaletteDrag(data: DataTransfer, item: PaletteItem): void {
   data.effectAllowed = 'copy';
 }
 
-export function setKeyDrag(data: DataTransfer, index: number): void {
-  data.setData(KEY_TYPE, String(index));
+/** A key on a given layer, as carried by a key drag. */
+export interface KeyRef {
+  layer: number;
+  index: number;
+}
+
+export function setKeyDrag(data: DataTransfer, key: KeyRef): void {
+  data.setData(KEY_TYPE, JSON.stringify(key));
   data.effectAllowed = 'copyMove';
 }
 
@@ -33,8 +39,13 @@ export function readPaletteDrag(data: DataTransfer): PaletteItem | undefined {
   }
 }
 
-export function readKeyDrag(data: DataTransfer): number | undefined {
+export function readKeyDrag(data: DataTransfer): KeyRef | undefined {
   const text = data.getData(KEY_TYPE);
-  const index = text === '' ? NaN : Number(text);
-  return Number.isInteger(index) ? index : undefined;
+  if (!text) return undefined;
+  try {
+    const key = JSON.parse(text) as Partial<KeyRef>;
+    return Number.isInteger(key.layer) && Number.isInteger(key.index) ? (key as KeyRef) : undefined;
+  } catch {
+    return undefined;
+  }
 }

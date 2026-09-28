@@ -1,5 +1,6 @@
-import { useState, type Dispatch, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type Dispatch, type DragEvent, type KeyboardEvent } from 'react';
 import type { Layer } from '../../core/keymap/model.ts';
+import { dragKind } from '../dnd.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
 
 interface LayerBarProps {
@@ -10,9 +11,31 @@ interface LayerBarProps {
 
 const layerName = (layer: Layer) => layer.displayName ?? layer.name;
 
+/** How long a drag has to rest on a layer tab before switching to that layer. */
+export const HOVER_SWITCH_MS = 500;
+
 export function LayerBar({ layers, active, dispatch }: LayerBarProps) {
   const [renaming, setRenaming] = useState<number | null>(null);
   const [draft, setDraft] = useState('');
+  const [hovered, setHovered] = useState<number | null>(null);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  const stopHover = () => {
+    clearTimeout(hoverTimer.current);
+    setHovered(null);
+  };
+  useEffect(() => () => clearTimeout(hoverTimer.current), []);
+
+  // Dragging a key or a palette tile over a tab switches to that layer after a moment.
+  const onTabDragEnter = (event: DragEvent, index: number) => {
+    if (!dragKind(event.dataTransfer) || index === active || hovered === index) return;
+    clearTimeout(hoverTimer.current);
+    setHovered(index);
+    hoverTimer.current = setTimeout(() => {
+      setHovered(null);
+      dispatch({ type: 'selectLayer', index });
+    }, HOVER_SWITCH_MS);
+  };
 
   const startRename = (index: number) => {
     const layer = layers[index];
@@ -71,8 +94,13 @@ export function LayerBar({ layers, active, dispatch }: LayerBarProps) {
               type="button"
               role="tab"
               aria-selected={index === active}
-              className={`layer-tab${index === active ? ' active' : ''}`}
+              className={`layer-tab${index === active ? ' active' : ''}${hovered === index ? ' drag-hover' : ''}`}
               onClick={() => dispatch({ type: 'selectLayer', index })}
+              onDragEnter={(event) => onTabDragEnter(event, index)}
+              onDragLeave={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) stopHover();
+              }}
+              onDrop={stopHover}
               onDoubleClick={() => startRename(index)}
               title="Double-click to rename"
             >

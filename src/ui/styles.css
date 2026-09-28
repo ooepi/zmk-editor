@@ -278,6 +278,12 @@ select {
   border-color: var(--accent);
 }
 
+.layer-tab.drag-hover {
+  color: var(--text);
+  border-color: var(--accent);
+  border-style: dashed;
+}
+
 .layer-index {
   font-size: 10px;
   color: var(--text-muted);
@@ -401,9 +407,29 @@ select {
   box-shadow: 0 0 0 calc(var(--unit) * 0.04) var(--accent);
 }
 
+/* Box select on the keymap. */
+.select-box {
+  position: absolute;
+  border: 1px dashed var(--accent);
+  background: var(--accent-soft);
+  pointer-events: none;
+}
+
 /* Let drags over a key's labels count as over the key. */
 .keycap > span {
   pointer-events: none;
+}
+
+.clipboard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.clipboard p {
+  margin: 0;
 }
 
 /* Key palette */

@@ -1,13 +1,15 @@
 import { useState, type CSSProperties, type DragEvent } from 'react';
 import type { KeycapLabel } from '../../core/keymap/display.ts';
 import type { PaletteItem } from '../../core/keymap/palette.ts';
-import { dragKind, readKeyDrag, readPaletteDrag, setKeyDrag } from '../dnd.ts';
+import { dragKind, readKeyDrag, readPaletteDrag, setKeyDrag, type KeyRef } from '../dnd.ts';
 
 /** Drop handlers; when given, the key can be dragged and accepts palette tiles and other keys. */
 export interface KeyDropHandlers {
+  /** The layer shown; recorded in key drags so a drop on another layer can copy from it. */
+  layer: number;
   onDropItem: (index: number, item: PaletteItem) => void;
-  /** `copy` when Alt or Ctrl was held, otherwise the keys swap. */
-  onDropKey: (from: number, to: number, copy: boolean) => void;
+  /** `copy` when Alt or Ctrl was held. */
+  onDropKey: (from: KeyRef, to: number, copy: boolean) => void;
 }
 
 interface KeycapProps {
@@ -16,7 +18,8 @@ interface KeycapProps {
   selected: boolean;
   highlighted?: boolean;
   style: CSSProperties;
-  onSelect: (index: number) => void;
+  /** `additive` for Ctrl/Shift-clicks, which add to the selection. */
+  onSelect: (index: number, additive: boolean) => void;
   drop?: KeyDropHandlers | undefined;
 }
 
@@ -54,7 +57,7 @@ export function Keycap({ index, label, selected, highlighted = false, style, onS
   const dragProps = drop
     ? {
         draggable: true,
-        onDragStart: (event: DragEvent) => setKeyDrag(event.dataTransfer, index),
+        onDragStart: (event: DragEvent) => setKeyDrag(event.dataTransfer, { layer: drop.layer, index }),
         onDragOver,
         onDragLeave: () => setOver(false),
         onDrop,
@@ -69,7 +72,7 @@ export function Keycap({ index, label, selected, highlighted = false, style, onS
       aria-label={`Key ${index}: ${description}`}
       aria-pressed={selected}
       title={description}
-      onClick={() => onSelect(index)}
+      onClick={(event) => onSelect(index, event.ctrlKey || event.metaKey || event.shiftKey)}
       {...dragProps}
     >
       <span className={`keycap-main ${sizeClass(label.main)}`}>{label.main}</span>

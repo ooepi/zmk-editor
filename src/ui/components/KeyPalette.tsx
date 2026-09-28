@@ -19,7 +19,7 @@ interface KeyPaletteProps {
   keymap: KeymapModel;
   /** The tile being placed by clicking keys, if any. */
   armed: PaletteItem | null;
-  selectedKey: number | null;
+  selection: readonly number[];
   /** A tile was clicked. */
   onPick: (item: PaletteItem) => void;
 }
@@ -32,7 +32,7 @@ const NONE: PaletteItem = { kind: 'binding', binding: { behavior: 'none', params
 const sameItem = (a: PaletteItem | null, b: PaletteItem) => a !== null && JSON.stringify(a) === JSON.stringify(b);
 
 /** Keys and behaviors laid out as tiles: drag one onto a key, or click it and then keys. */
-export function KeyPalette({ keymap, armed, selectedKey, onPick }: KeyPaletteProps) {
+export function KeyPalette({ keymap, armed, selection, onPick }: KeyPaletteProps) {
   const [tab, setTab] = useState<Tab>('keys');
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<KeycodeCategory | undefined>(undefined);
@@ -69,8 +69,10 @@ export function KeyPalette({ keymap, armed, selectedKey, onPick }: KeyPalettePro
 
   const hint = armed
     ? 'Click keys to place the highlighted tile · Esc or click the tile again to stop'
-    : selectedKey !== null
-      ? `Click a tile to put it on key ${selectedKey}, or drag it onto any key`
+    : selection.length > 1
+      ? `Click a tile to put it on the ${selection.length} selected keys, or drag it onto any key`
+      : selection.length === 1
+        ? `Click a tile to put it on key ${selection[0]}, or drag it onto any key`
       : 'Drag a tile onto a key, or click a tile and then keys · Drag keys onto each other to swap (hold Alt to copy)';
 
   return (

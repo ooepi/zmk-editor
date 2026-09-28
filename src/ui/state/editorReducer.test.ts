@@ -48,6 +48,68 @@ describe('editorReducer', () => {
     expect(run(state, { type: 'swapKeys', from: 2, to: 2 }).past).toHaveLength(0);
   });
 
+  it('keeps key and selection in step', () => {
+    let state = run(start(), { type: 'selectKey', index: 3 });
+    expect([state.key, state.selection]).toEqual([3, [3]]);
+    state = run(state, { type: 'toggleKey', index: 5 });
+    expect([state.key, state.selection]).toEqual([null, [3, 5]]);
+    state = run(state, { type: 'toggleKey', index: 3 });
+    expect([state.key, state.selection]).toEqual([5, [5]]);
+    state = run(state, { type: 'selectKeys', indices: [1, 2], additive: true });
+    expect(state.selection).toEqual([5, 1, 2]);
+    state = run(state, { type: 'selectKeys', indices: [7], additive: false });
+    expect([state.key, state.selection]).toEqual([7, [7]]);
+    state = run(state, { type: 'selectSensor', index: 0 });
+    expect([state.key, state.selection]).toEqual([null, []]);
+  });
+
+  it('places a palette item on every selected key in one step', () => {
+    let state = run(start(), { type: 'selectKeys', indices: [0, 1, 2], additive: false });
+    state = run(state, { type: 'placeOnSelection', item: { kind: 'binding', binding: { behavior: 'trans', params: [] } } });
+    expect([0, 1, 2].map((i) => binding(state, 0, i))).toEqual(['&trans', '&trans', '&trans']);
+    expect(state.past).toHaveLength(1);
+  });
+
+  it('copies keys to the same positions on another layer', () => {
+    const originals = [0, 1].map((i) => binding(start(), 0, i));
+    let state = run(start(), { type: 'selectKeys', indices: [0, 1], additive: false }, { type: 'copyKeys' });
+    expect(state.clipboard?.keys).toHaveLength(2);
+    expect(state.past).toHaveLength(0);
+    state = run(state, { type: 'selectLayer', index: 3 }, { type: 'pasteKeys' });
+    expect([0, 1].map((i) => binding(state, 3, i))).toEqual(originals);
+    expect(run(state, { type: 'undo' }).past).toHaveLength(0);
+  });
+
+  it('pastes one copied key onto all selected keys', () => {
+    const esc = binding(start(), 0, 0);
+    let state = run(start(), { type: 'selectKey', index: 0 }, { type: 'copyKeys' });
+    state = run(state, { type: 'selectKeys', indices: [2, 3], additive: false }, { type: 'pasteKeys' });
+    expect([binding(state, 0, 2), binding(state, 0, 3)]).toEqual([esc, esc]);
+  });
+
+  it('explains a paste that would change nothing', () => {
+    let state = run(start(), { type: 'selectKeys', indices: [0, 1], additive: false }, { type: 'copyKeys' }, { type: 'pasteKeys' });
+    expect(state.past).toHaveLength(0);
+    expect(state.notice).toMatch(/Switch to another layer/);
+    state = run(start(), { type: 'selectKey', index: 0 }, { type: 'copyKeys' }, { type: 'selectKey', index: null }, { type: 'pasteKeys' });
+    expect(state.notice).toMatch(/Select the keys/);
+  });
+
+  it('cuts keys to the clipboard and leaves them transparent', () => {
+    const a = binding(start(), 0, 0);
+    let state = run(start(), { type: 'selectKey', index: 0 }, { type: 'cutKeys' });
+    expect(binding(state, 0, 0)).toBe('&trans');
+    state = run(state, { type: 'selectKey', index: 4 }, { type: 'pasteKeys' });
+    expect(binding(state, 0, 4)).toBe(a);
+  });
+
+  it('copies a key dragged from another layer', () => {
+    const a = binding(start(), 0, 0);
+    const state = run(start(), { type: 'selectLayer', index: 3 }, { type: 'copyKey', from: 0, to: 2, fromLayer: 0 });
+    expect(binding(state, 3, 2)).toBe(a);
+    expect(binding(state, 0, 0)).toBe(a);
+  });
+
   it('ignores setBinding without a selected key', () => {
     const state = start();
     expect(run(state, { type: 'setBinding', binding: { behavior: 'kp', params: ['X'] } })).toBe(state);
