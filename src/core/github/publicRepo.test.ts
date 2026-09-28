@@ -48,7 +48,7 @@ describe('openPublicRepo', () => {
   it('explains a missing or private repo', async () => {
     const { client } = setup();
     await expect(openPublicRepo(client, { owner: 'me', repo: 'nope' })).rejects.toThrow(
-      /Couldn't find me\/nope\. Check the name; a private repository needs you to connect on the Build tab/,
+      /Couldn't find me\/nope\. Check the name; a private repository needs you to connect on the Build & flash tab/,
     );
   });
 

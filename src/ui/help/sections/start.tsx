@@ -20,13 +20,13 @@ export const START: HelpSection[] = [
             </li>
             <li>
               To use your own keyboard, either open your files with <Ui>Open files</Ui> in the top bar, connect your
-              repository on the <Ui>Build</Ui> tab and choose <Ui>Load config from repo</Ui>, or start from ZMK's default
+              repository on the <Ui>Build &amp; flash</Ui> tab and choose <Ui>Load config from repo</Ui>, or start from ZMK's default
               keymap for your keyboard on the Keyboard page (the keyboard button at the top left). To look at someone
               else's public config, use <Ui>Open from GitHub</Ui>; see <See to="open-github">below</See>.
             </li>
             <li>Edit the keymap. Everything can be undone with Ctrl+Z.</li>
             <li>
-              On the <Ui>Build</Ui> tab, review the changes and press <Ui>Commit &amp; build</Ui>. When the build is done,
+              On the <Ui>Build &amp; flash</Ui> tab, review the changes and press <Ui>Commit &amp; build</Ui>. When the build is done,
               download the firmware or write it straight onto the keyboard. See{' '}
               <See to="building">Building and flashing</See>.
             </li>
@@ -55,7 +55,7 @@ export const START: HelpSection[] = [
             <Ui>Open from GitHub</Ui> in the top bar opens any public <code>zmk-config</code> repository without logging
             in: paste <code>owner/repo</code> or its GitHub link (a link to a branch, <code>…/tree/branch</code>, opens
             that branch), and optionally a <Ui>Branch</Ui>. It replaces the editor's contents, after asking. It only
-            reads: to commit your changes, connect to your own repository on the Build tab. GitHub allows about 60
+            reads: to commit your changes, connect to your own repository on the Build &amp; flash tab. GitHub allows about 60
             requests an hour without logging in, so opening many repositories in a row can hit that limit for a while.
           </p>
         </Sub>
@@ -71,7 +71,7 @@ export const START: HelpSection[] = [
           <ul>
             <li>
               <strong>Your config</strong> is saved in this browser after every change, so a reload keeps your work. It is
-              only in your GitHub repository after you commit on the Build tab.
+              only in your GitHub repository after you commit on the Build &amp; flash tab.
             </li>
             <li>
               <strong>Preferences</strong> (theme, recently used palette keys, layout variants, Unicode languages) are

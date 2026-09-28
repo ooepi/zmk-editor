@@ -58,7 +58,7 @@ export const REFERENCE: HelpSection[] = [
         </dd>
         <dt>The build failed.</dt>
         <dd>
-          Open the build on GitHub (the link on the Build tab) and look for the first error. Common causes: a module
+          Open the build on GitHub (the link on the Build &amp; flash tab) and look for the first error. Common causes: a module
           pinned to a different ZMK version (the Modules tab warns about it), settings for hardware the keyboard doesn't
           have (the Settings tab warns about it), or a hand-edited file with a typo.
         </dd>

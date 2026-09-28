@@ -75,7 +75,7 @@ export function Toolbar({ config, canUndo, canRedo, locked, onPrint, dispatch }:
       const { config: next, warnings } = importConfig(repo.files);
       if (next.keymap.layers.length === 0) throw new Error("That keymap has no layers, so it can't be edited here.");
       dispatch({ type: 'load', config: next, warnings });
-      dispatch({ type: 'notify', notice: `Opened ${name}. To commit changes, connect to your own repository on the Build tab.` });
+      dispatch({ type: 'notify', notice: `Opened ${name}. To commit changes, connect to your own repository on the Build & flash tab.` });
     } catch (error) {
       window.alert(error instanceof Error ? error.message : String(error));
     }

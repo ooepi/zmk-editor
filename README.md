@@ -32,12 +32,12 @@ Nothing to install. Your work stays in your browser until you commit it.
 
 1. [Open the editor](https://ooepi.github.io/zmk-editor/). It starts with a Lily58 demo you can try things on.
 2. Bring in your keyboard:
-   - On the **Build** tab, connect your `zmk-config` repository and choose **Load config from repo**.
+   - On the **Build & flash** tab, connect your `zmk-config` repository and choose **Load config from repo**.
    - Or use **Open files** to pick your `.keymap` (and `.conf`, `west.yml`…).
    - Or use **Open from GitHub** to open any public `zmk-config` repository, no login needed.
    - Or click the keyboard name at the top left to start from ZMK's default keymap for your keyboard.
 3. Edit away. **Help** (the tab, or **?** at the top right) explains every feature, and "Learn more" links throughout the app open the relevant section.
-4. On the **Build** tab, press **Commit & build**, wait a few minutes, then write the firmware to your keyboard.
+4. On the **Build & flash** tab, press **Commit & build**, wait a few minutes, then write the firmware to your keyboard.
 
 No `zmk-config` repository yet? Create one from [ZMK's template](https://github.com/zmkfirmware/unified-zmk-config-template), or use **Download config (.zip)** to get a complete one from the editor.
 
@@ -92,4 +92,4 @@ Design notes for each feature are in [`docs/specs/`](docs/specs), and their impl
 
 `.github/workflows/pages.yml` deploys `main` to GitHub Pages. To enable it, go to Settings → Pages and set Source to GitHub Actions. Pages on a private repository needs a paid GitHub plan.
 
-"Log in with GitHub" needs a GitHub App and a small login helper on Cloudflare Workers ([`worker/`](worker)). See [docs/github-login-setup.md](docs/github-login-setup.md). Without them, the Build tab uses a personal access token instead.
+"Log in with GitHub" needs a GitHub App and a small login helper on Cloudflare Workers ([`worker/`](worker)). See [docs/github-login-setup.md](docs/github-login-setup.md). Without them, the Build & flash tab uses a personal access token instead.

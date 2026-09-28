@@ -41,7 +41,7 @@ afterEach(() => {
 });
 
 async function connect(user: ReturnType<typeof userEvent.setup>, token = 'good-token') {
-  await user.click(screen.getByRole('button', { name: 'Build' }));
+  await user.click(screen.getByRole('button', { name: 'Build & flash' }));
   await user.type(screen.getByLabelText('Token'), token);
   await user.type(screen.getByLabelText('Repository'), 'me/zmk-config');
   await user.click(screen.getByRole('button', { name: 'Connect' }));

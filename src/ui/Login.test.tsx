@@ -44,7 +44,7 @@ describe('Log in with GitHub', () => {
     const user = userEvent.setup();
     const go = vi.spyOn(navigation, 'go').mockImplementation(() => undefined);
     render(<App />);
-    await user.click(screen.getByRole('button', { name: 'Build' }));
+    await user.click(screen.getByRole('button', { name: 'Build & flash' }));
     await user.click(screen.getByRole('button', { name: 'Log in with GitHub' }));
     await vi.waitFor(() => expect(go).toHaveBeenCalled());
     const url = new URL(String(go.mock.calls[0]?.[0]));
@@ -90,7 +90,7 @@ describe('Log in with GitHub', () => {
   it('keeps the token form as a fallback', async () => {
     const user = userEvent.setup();
     render(<App />);
-    await user.click(screen.getByRole('button', { name: 'Build' }));
+    await user.click(screen.getByRole('button', { name: 'Build & flash' }));
     await user.click(screen.getByText('Use a token instead'));
     expect(screen.getByLabelText('Token')).toBeTruthy();
   });
