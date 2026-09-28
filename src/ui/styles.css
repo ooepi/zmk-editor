@@ -1571,6 +1571,13 @@ select {
   margin-bottom: 8px;
 }
 
+.pinout-view {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
 .pinout-board {
   display: flex;
   gap: 8px;

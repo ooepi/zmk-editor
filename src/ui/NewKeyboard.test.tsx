@@ -9,8 +9,12 @@ import { testPad } from '../core/hardware/testFixtures.ts';
 import type { KeyboardHardware } from '../core/hardware/types.ts';
 import { createCombo } from '../core/keymap/comboEdit.ts';
 import { App } from './App.tsx';
+import { reloadPreferences } from './state/preferences.ts';
 
-beforeEach(() => localStorage.clear());
+beforeEach(() => {
+  localStorage.clear();
+  reloadPreferences();
+});
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
@@ -340,5 +344,41 @@ describe('Wizard problem list', () => {
     // A fresh 3×6 split: 3 rows + 6 columns without a pin.
     expect(screen.getByText('9 pin fields don’t have a pin yet.')).toBeTruthy();
     expect(screen.queryByText('Row 0 on the left half has no pin.')).toBeNull();
+  });
+});
+
+describe('Pinout seen from the bottom', () => {
+  // Pads in screen order: the left column top to bottom, then the right column.
+  const padOrder = (figure: HTMLElement) => within(figure).getAllByText(/^(D\d+|GND|RAW|RST|VCC)$/).map((el) => el.textContent);
+
+  it('mirrors the pin columns per half and remembers the choice', async () => {
+    const user = userEvent.setup();
+    const view = render(<App />);
+    await openWizard(user);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByLabelText('The right half is wired differently'));
+
+    const left = () => screen.getByRole('figure', { name: 'Pro Micro pinout (left half)' });
+    const right = () => screen.getByRole('figure', { name: 'Pro Micro pinout (right half)' });
+    expect(padOrder(left())[0]).toBe('D1');
+
+    await user.click(within(left()).getByRole('button', { name: 'Bottom' }));
+    expect(within(left()).getByRole('button', { name: 'Bottom' }).getAttribute('aria-pressed')).toBe('true');
+    // From below, the RAW/GND/RST/VCC column is on the left; USB stays at the top.
+    expect(padOrder(left())[0]).toBe('RAW');
+    expect(padOrder(right())[0]).toBe('D1');
+    expect(within(left()).getByText(/seen from below/)).toBeTruthy();
+
+    // Picking still fills the selected field.
+    await user.click(screen.getByLabelText('Left row 0'));
+    await user.click(within(left()).getByRole('button', { name: 'D4' }));
+    expect(screen.getByLabelText('Left row 0')).toHaveProperty('value', '4');
+
+    // Remembered after the page is opened again.
+    view.unmount();
+    render(<App />);
+    await openWizard(user);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(padOrder(screen.getByRole('figure', { name: 'Pro Micro pinout (left half)' }))[0]).toBe('RAW');
   });
 });
