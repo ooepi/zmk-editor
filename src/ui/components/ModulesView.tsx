@@ -23,6 +23,7 @@ import {
 import type { EditorAction } from '../state/editorReducer.ts';
 import { setPreferences, usePreferences } from '../state/preferences.ts';
 import { ModuleFinder } from './ModuleFinder.tsx';
+import { HelpLink } from '../help/HelpLink.tsx';
 
 interface ModulesViewProps {
   config: ZmkConfig;
@@ -75,7 +76,7 @@ export function ModulesView({ config, dispatch }: ModulesViewProps) {
       <h2 className="panel-title">Modules</h2>
       <p className="muted">
         Modules add behaviors, LED and display features to ZMK. Each is set to the release matching your ZMK version (
-        {version}), so the firmware and its modules always fit together.
+        {version}), so the firmware and its modules always fit together. <HelpLink to="modules" />
       </p>
 
       {mismatches.length > 0 && (

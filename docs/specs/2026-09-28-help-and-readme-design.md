@@ -34,7 +34,7 @@ The editor has grown well past its first version, but the README still describes
 
 ### Screenshots
 - **Script:** `npm run screenshots` builds the app, serves it with Vite's preview server, and uses Playwright (a dev dependency) with headless Chromium.
-- **Captures:** five PNGs in `docs/images/`: keymap with palette, several keys selected, behavior editor, Build view, and layout designer.
+- **Captures:** five PNGs in `docs/images/`: keymap with palette, several keys selected, the hold-tap editor, layout designer, and Help. (The Build view needs a real GitHub account to show anything, so it isn't captured.)
 - **Settings:** dark theme, 1400×860 viewport, and a fresh demo config (empty storage).
 - **Browser download:** `npx playwright install chromium` downloads the browser once. It is not committed.
 

@@ -8,6 +8,7 @@ import { gridTemplate, splitTemplate } from '../../core/layouts/templates.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
 import { usePreferences } from '../state/preferences.ts';
 import { DesignerCanvas, RotationField, UnitField } from './DesignerCanvas.tsx';
+import { HelpLink } from '../help/HelpLink.tsx';
 
 interface LayoutDesignerProps {
   config: ZmkConfig;
@@ -56,7 +57,8 @@ export function LayoutDesigner({ config, dispatch, onClose }: LayoutDesignerProp
           <h2 className="panel-title">Layout designer · {findKeyboard(config.keyboard)?.name ?? config.keyboard}</h2>
           <p className="muted small">
             Drag keys (they snap to ¼ key) or select one and use the arrow keys (Shift: 1 key). Ctrl/Shift-click or drag a box
-            to select several and move them together. Keys are numbered in keymap order. This changes where keys are drawn, not how they’re wired: the {keyCount} keys stay the same.
+            to select several and move them together. Keys are numbered in keymap order. This changes where keys are drawn, not how they’re wired: the {keyCount} keys stay the same.{' '}
+            <HelpLink to="designer" />
           </p>
         </div>
         <DesignerCanvas layout={draft} labels={labels} selection={selection} onSelectionChange={setSelection} onChange={update} />

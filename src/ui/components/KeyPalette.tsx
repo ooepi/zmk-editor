@@ -17,6 +17,7 @@ import { behaviorTiles, searchTiles, type PaletteItem } from '../../core/keymap/
 import { sensorCount } from '../../core/keymap/sensorEdit.ts';
 import { setPaletteDrag } from '../dnd.ts';
 import { setPreferences, usePreferences } from '../state/preferences.ts';
+import { HelpLink } from '../help/HelpLink.tsx';
 
 interface KeyPaletteProps {
   keymap: KeymapModel;
@@ -115,7 +116,9 @@ export function KeyPalette({ keymap, armed, selection, onPick }: KeyPaletteProps
           {tile(TRANSPARENT, { main: '▽' }, 'Transparent', 'Transparent: uses the binding of the next active layer below.', 'trans')}
           {tile(NONE, { main: '✕' }, 'None', 'None: does nothing.', 'none')}
         </div>
-        <p className="palette-hint muted small">{hint}</p>
+        <p className="palette-hint muted small">
+          {hint} <HelpLink to="palette" />
+        </p>
       </div>
 
       {recentTiles.length > 0 && (

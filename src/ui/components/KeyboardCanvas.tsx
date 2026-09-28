@@ -45,7 +45,11 @@ export function KeyboardCanvas({
   const bounds = layoutBounds(layout);
   const width = bounds.width + 2 * MARGIN;
   const height = bounds.height + 2 * MARGIN;
-  const style = { aspectRatio: `${width} / ${height}`, '--unit': `${(100 / width) * 100}cqw` } as CSSProperties;
+  const style = {
+    aspectRatio: `${width} / ${height}`,
+    '--ratio': width / height,
+    '--unit': `${(100 / width) * 100}cqw`,
+  } as CSSProperties;
 
   /** The pointer position in layout units. */
   const toLayout = (event: PointerEvent<HTMLDivElement>) => {

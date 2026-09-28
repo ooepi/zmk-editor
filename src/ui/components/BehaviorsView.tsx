@@ -19,6 +19,7 @@ import { LabelField } from './LabelField.tsx';
 import { MacroSteps } from './MacroSteps.tsx';
 import { AdaptiveKeyEditor, LeaderKeyEditor, SourceEditor, TriStateBindings } from './ModuleBehaviorEditors.tsx';
 import { PropertyFields } from './PropertyFields.tsx';
+import { HelpLink } from '../help/HelpLink.tsx';
 
 interface BehaviorsViewProps {
   keymap: KeymapModel;
@@ -119,7 +120,8 @@ export function BehaviorsView({ keymap, kind, selected, onSelect, dispatch }: Be
           <p className="muted">
             {isMacros
               ? 'Macros send a sequence of keys. Select one, or create a new one.'
-              : 'Hold-taps do one thing when tapped and another when held; mod-morphs change with a modifier; encoder behaviors turn knobs into keys; tap-dances send something different for 1, 2, 3… taps. Select one, or create a new one.'}
+              : 'Hold-taps do one thing when tapped and another when held; mod-morphs change with a modifier; encoder behaviors turn knobs into keys; tap-dances send something different for 1, 2, 3… taps. Select one, or create a new one.'}{' '}
+            <HelpLink to={isMacros ? 'macros' : 'behaviors'} />
           </p>
         )}
       </div>
