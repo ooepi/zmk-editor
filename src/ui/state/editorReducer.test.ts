@@ -110,6 +110,25 @@ describe('editorReducer', () => {
     expect(binding(state, 0, 0)).toBe(a);
   });
 
+  it('drops keycodes on an encoder direction and selects the encoder', () => {
+    let state = run(start(), { type: 'selectKey', index: 2 });
+    state = run(state, { type: 'placeOnEncoder', index: 0, direction: 'cw', item: { kind: 'keycode', token: 'PG_UP' } });
+    expect(state.config.keymap.layers[0]?.sensorBindings?.map(formatBinding)).toEqual(['&inc_dec_kp PG_UP C_VOL_DN']);
+    expect([state.sensor, state.key, state.selection]).toEqual([0, null, []]);
+    expect(run(state, { type: 'undo' }).config.keymap.layers[0]?.sensorBindings?.map(formatBinding)).toEqual([
+      '&inc_dec_kp C_VOL_UP C_VOL_DN',
+    ]);
+  });
+
+  it('explains that other behaviors cannot go on an encoder', () => {
+    const state = start();
+    const item = { kind: 'binding' as const, binding: { behavior: 'mo', params: ['1'] } };
+    const next = run(state, { type: 'placeOnEncoder', index: 0, direction: 'cw', item });
+    expect(next.config).toBe(state.config);
+    expect(next.past).toHaveLength(0);
+    expect(next.notice).toMatch(/Only keys, Transparent and None/);
+  });
+
   it('ignores setBinding without a selected key', () => {
     const state = start();
     expect(run(state, { type: 'setBinding', binding: { behavior: 'kp', params: ['X'] } })).toBe(state);

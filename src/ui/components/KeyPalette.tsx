@@ -10,10 +10,13 @@ import {
   type KeycodeCategory,
   type ModifierFunction,
 } from '../../core/catalog/keycodes.ts';
-import type { KeycapLabel } from '../../core/keymap/display.ts';
+import { formatBinding } from '../../core/keymap/bindings.ts';
+import { describeBinding, displayContext, type KeycapLabel } from '../../core/keymap/display.ts';
 import type { KeymapModel } from '../../core/keymap/model.ts';
-import { behaviorTiles, type PaletteItem } from '../../core/keymap/palette.ts';
+import { behaviorTiles, searchTiles, type PaletteItem } from '../../core/keymap/palette.ts';
+import { sensorCount } from '../../core/keymap/sensorEdit.ts';
 import { setPaletteDrag } from '../dnd.ts';
+import { setPreferences, usePreferences } from '../state/preferences.ts';
 
 interface KeyPaletteProps {
   keymap: KeymapModel;
@@ -37,12 +40,28 @@ export function KeyPalette({ keymap, armed, selection, onPick }: KeyPaletteProps
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<KeycodeCategory | undefined>(undefined);
   const [mods, setMods] = useState<ModifierFunction[]>([]);
+  const [behaviorQuery, setBehaviorQuery] = useState('');
+  const { recent } = usePreferences();
+  const hasEncoders = sensorCount(keymap) > 0;
 
   const keycodes = useMemo(() => searchKeycodes(query, category), [query, category]);
   const tiles = useMemo(
     () => behaviorTiles(keymap).filter((t) => t.binding.behavior !== 'trans' && t.binding.behavior !== 'none'),
     [keymap],
   );
+  const shownTiles = useMemo(() => searchTiles(tiles, behaviorQuery), [tiles, behaviorQuery]);
+  const recentTiles = useMemo(() => {
+    const ctx = displayContext(keymap);
+    return recent.map((item) => {
+      if (item.kind === 'keycode') {
+        const label = keyExpressionLabel(item.token);
+        return { item, label: { main: label, sub: item.token }, name: `${label} (${item.token})`, title: item.token, kind: 'key' };
+      }
+      const label = describeBinding(item.binding, ctx);
+      const name = label.sub ? `${label.main} (${label.sub})` : label.main;
+      return { item, label, name, title: formatBinding(item.binding), kind: label.kind };
+    });
+  }, [recent, keymap]);
 
   const toggleMod = (mod: ModifierFunction) =>
     setMods(mods.includes(mod) ? mods.filter((m) => m !== mod) : [...mods, mod]);
@@ -73,7 +92,8 @@ export function KeyPalette({ keymap, armed, selection, onPick }: KeyPaletteProps
       ? `Click a tile to put it on the ${selection.length} selected keys, or drag it onto any key`
       : selection.length === 1
         ? `Click a tile to put it on key ${selection[0]}, or drag it onto any key`
-      : 'Drag a tile onto a key, or click a tile and then keys · Drag keys onto each other to swap (hold Alt to copy)';
+      : 'Drag a tile onto a key, or click a tile and then keys · Drag keys onto each other to swap (hold Alt to copy)' +
+        (hasEncoders ? " · Drop keys on an encoder's ↺ or ↻ side" : '');
 
   return (
     <section className="palette" aria-label="Key palette">
@@ -97,6 +117,23 @@ export function KeyPalette({ keymap, armed, selection, onPick }: KeyPaletteProps
         </div>
         <p className="palette-hint muted small">{hint}</p>
       </div>
+
+      {recentTiles.length > 0 && (
+        <div className="palette-recent">
+          <span className="palette-recent-title">Recent</span>
+          <div className="palette-tiles palette-recent-tiles" role="group" aria-label="Recently used">
+            {recentTiles.map((r) => tile(r.item, r.label, `recent ${r.name}`, r.title, r.kind))}
+          </div>
+          <button
+            type="button"
+            className="link-button small"
+            aria-label="Clear recently used"
+            onClick={() => setPreferences({ recent: [] })}
+          >
+            Clear
+          </button>
+        </div>
+      )}
 
       {tab === 'keys' ? (
         <>
@@ -148,28 +185,41 @@ export function KeyPalette({ keymap, armed, selection, onPick }: KeyPaletteProps
           </div>
         </>
       ) : (
-        <div className="palette-groups">
-          {BEHAVIOR_GROUPS.map((group) => {
-            const inGroup = tiles.filter((t) => t.group === group.id);
-            if (inGroup.length === 0) return null;
-            return (
-              <div key={group.id} className="palette-group">
-                <h3 className="palette-group-title">{group.label}</h3>
-                <div className="palette-tiles" role="group" aria-label={group.label}>
-                  {inGroup.map((t) =>
-                    tile(
-                      { kind: 'binding', binding: t.binding },
-                      t.label,
-                      t.label.sub ? `${t.label.main} (${t.label.sub})` : t.label.main,
-                      t.title,
-                      t.label.kind,
-                    ),
-                  )}
+        <>
+          <div className="palette-filters">
+            <input
+              className="input palette-search"
+              type="search"
+              placeholder="Search behaviors: bluetooth, nav, boot…"
+              aria-label="Search behaviors"
+              value={behaviorQuery}
+              onChange={(e) => setBehaviorQuery(e.target.value)}
+            />
+          </div>
+          <div className="palette-groups">
+            {shownTiles.length === 0 && <p className="muted">No behaviors match.</p>}
+            {BEHAVIOR_GROUPS.map((group) => {
+              const inGroup = shownTiles.filter((t) => t.group === group.id);
+              if (inGroup.length === 0) return null;
+              return (
+                <div key={group.id} className="palette-group">
+                  <h3 className="palette-group-title">{group.label}</h3>
+                  <div className="palette-tiles" role="group" aria-label={group.label}>
+                    {inGroup.map((t) =>
+                      tile(
+                        { kind: 'binding', binding: t.binding },
+                        t.label,
+                        t.label.sub ? `${t.label.main} (${t.label.sub})` : t.label.main,
+                        t.title,
+                        t.label.kind,
+                      ),
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        </>
       )}
     </section>
   );

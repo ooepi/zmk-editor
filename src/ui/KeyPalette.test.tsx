@@ -3,6 +3,7 @@ import { cleanup, createEvent, fireEvent, render, screen, within } from '@testin
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { App } from './App.tsx';
+import { chooseBehavior } from './testUtils.ts';
 
 beforeEach(() => localStorage.clear());
 afterEach(cleanup);
@@ -47,7 +48,7 @@ describe('key palette', () => {
     const user = userEvent.setup();
     render(<App />);
     await user.click(keyButton('Key 54: Space'));
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Behavior' }), 'mt');
+    await chooseBehavior(user, 'mt');
     expect(keyButton('Key 54: Space (Shift)')).toBeTruthy();
     drag(palette().getByRole('button', { name: 'Place B (B)' }), keyButton('Key 54: Space (Shift)'));
     expect(keyButton('Key 54: B (Shift)')).toBeTruthy();

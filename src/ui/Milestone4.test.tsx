@@ -3,6 +3,7 @@ import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { App } from './App.tsx';
+import { chooseBehavior } from './testUtils.ts';
 
 beforeEach(() => localStorage.clear());
 afterEach(cleanup);
@@ -54,7 +55,7 @@ describe('combos, encoders, behaviors and macros', () => {
     await user.selectOptions(screen.getByRole('combobox', { name: 'Flavor' }), 'tap-preferred');
     await user.click(screen.getByRole('button', { name: 'Keymap' }));
     await user.click(screen.getByRole('button', { name: 'Key 0: Esc' }));
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Behavior' }), 'hm');
+    await chooseBehavior(user, 'hm');
     expect(screen.getByRole('button', { name: 'Key 0: A (Esc)' })).toBeTruthy();
   });
 

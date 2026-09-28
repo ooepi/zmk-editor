@@ -3,7 +3,7 @@ import { formatBinding, parseBindings } from './bindings.ts';
 import { copyBinding, swapBindings } from './edit.ts';
 import { importKeymap } from './importer.ts';
 import type { Binding, KeymapModel } from './model.ts';
-import { applyPaletteItem, behaviorTiles } from './palette.ts';
+import { applyPaletteItem, applyToEncoder, behaviorTiles, pushRecent, searchTiles, type PaletteItem } from './palette.ts';
 
 const b = (source: string): Binding => {
   const [binding] = parseBindings(source.split(' ')) ?? [];
@@ -102,5 +102,61 @@ describe('swapBindings / copyBinding', () => {
     const model = load();
     expect(swapBindings(model, 0, 2, 2)).toBe(model);
     expect(copyBinding(model, 0, 2, 2)).toBe(model);
+  });
+});
+
+describe('pushRecent', () => {
+  const k = (token: string): PaletteItem => ({ kind: 'keycode', token });
+
+  it('puts the newest first without duplicates', () => {
+    expect(pushRecent([k('A'), k('B')], k('B'))).toEqual([k('B'), k('A')]);
+    expect(pushRecent([k('A')], { kind: 'binding', binding: b('&mo 1') })).toEqual([{ kind: 'binding', binding: b('&mo 1') }, k('A')]);
+  });
+
+  it('keeps at most the limit', () => {
+    const list = Array.from({ length: 16 }, (_, i) => k(`N${i}`));
+    const next = pushRecent(list, k('X'));
+    expect(next).toHaveLength(16);
+    expect(next[0]).toEqual(k('X'));
+    expect(next.at(-1)).toEqual(k('N14'));
+  });
+});
+
+describe('searchTiles', () => {
+  const found = (query: string) => searchTiles(behaviorTiles(load()), query).map((t) => formatBinding(t.binding));
+
+  it('matches names, labels, descriptions and groups', () => {
+    expect(found('blue')).toContain('&bt BT_CLR');
+    expect(found('nav')).toEqual(expect.arrayContaining(['&mo 1', '&tog 1', '&lt 1 A']));
+    expect(found('nav')).not.toContain('&mo 0');
+    expect(found('boot')).toEqual(['&bootloader']);
+    expect(found('bt clear')).toEqual(expect.arrayContaining(['&bt BT_CLR', '&bt BT_CLR_ALL']));
+  });
+
+  it('returns everything for an empty query', () => {
+    expect(found('  ')).toHaveLength(behaviorTiles(load()).length);
+  });
+});
+
+describe('applyToEncoder', () => {
+  const enc = (current: string, item: PaletteItem, direction: 'cw' | 'ccw') => {
+    const next = applyToEncoder(b(current), item, direction);
+    return next && formatBinding(next);
+  };
+
+  it('sets one direction of a two-key encoder', () => {
+    expect(enc('&inc_dec_kp C_VOL_UP C_VOL_DN', key('PG_UP'), 'cw')).toBe('&inc_dec_kp PG_UP C_VOL_DN');
+    expect(enc('&inc_dec_kp C_VOL_UP C_VOL_DN', key('PG_DN'), 'ccw')).toBe('&inc_dec_kp C_VOL_UP PG_DN');
+  });
+
+  it('turns other encoders into a two-key encoder', () => {
+    expect(enc('&trans', key('RIGHT'), 'cw')).toBe('&inc_dec_kp RIGHT C_VOL_DN');
+    expect(enc('&scroller', key('LEFT'), 'ccw')).toBe('&inc_dec_kp C_VOL_UP LEFT');
+  });
+
+  it('accepts only transparent and none as whole bindings', () => {
+    expect(enc('&inc_dec_kp A B', { kind: 'binding', binding: b('&trans') }, 'cw')).toBe('&trans');
+    expect(enc('&inc_dec_kp A B', { kind: 'binding', binding: b('&none') }, 'ccw')).toBe('&none');
+    expect(enc('&inc_dec_kp A B', { kind: 'binding', binding: b('&mo 1') }, 'cw')).toBeNull();
   });
 });

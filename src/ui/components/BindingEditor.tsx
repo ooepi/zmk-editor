@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import {
-  BEHAVIOR_GROUPS,
   behaviorCatalog,
   findBehavior,
   offeredIn,
@@ -13,6 +12,7 @@ import { tokenizeCells } from '../../core/dts/cells.ts';
 import { formatBinding, parseBindings } from '../../core/keymap/bindings.ts';
 import { changeBehavior } from '../../core/keymap/edit.ts';
 import type { Binding, KeymapModel } from '../../core/keymap/model.ts';
+import { BehaviorSelect } from './BehaviorSelect.tsx';
 import { KeycodePicker } from './KeycodePicker.tsx';
 import { UnicodePicker } from './UnicodePicker.tsx';
 
@@ -50,31 +50,17 @@ export function BindingEditor({ binding, keymap, context, onChange, label, short
 
   return (
     <div className="binding-editor">
-      <label className="field">
-        <span className="field-label">{prefix}Behavior</span>
-        <select
-          className="input"
+      <div className="field">
+        <span className="field-label" aria-hidden="true">
+          {prefix}Behavior
+        </span>
+        <BehaviorSelect
           value={binding.behavior}
-          onChange={(e) => onChange(changeBehavior(binding, e.target.value, keymap))}
-        >
-          {!offered.some((d) => d.ref === binding.behavior) && (
-            <option value={binding.behavior}>&amp;{binding.behavior}</option>
-          )}
-          {BEHAVIOR_GROUPS.map((group) => {
-            const defs = offered.filter((d) => d.group === group.id);
-            if (defs.length === 0) return null;
-            return (
-              <optgroup key={group.id} label={group.label}>
-                {defs.map((d) => (
-                  <option key={d.ref} value={d.ref}>
-                    {d.behavior ? `&${d.ref}` : d.name}
-                  </option>
-                ))}
-              </optgroup>
-            );
-          })}
-        </select>
-      </label>
+          options={offered}
+          label={`${prefix}Behavior`}
+          onChange={(ref) => onChange(changeBehavior(binding, ref, keymap))}
+        />
+      </div>
       {def && <p className="muted small">{def.description}</p>}
 
       {def?.params.map((type, index) =>

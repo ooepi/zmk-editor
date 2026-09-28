@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { importKeymap } from '../keymap/importer.ts';
-import { behaviorCatalog, findBehavior } from './behaviors.ts';
+import { behaviorCatalog, BUILTIN_BEHAVIORS, findBehavior, searchBehaviors } from './behaviors.ts';
 
 const { model } = importKeymap(`
 / {
@@ -70,5 +70,25 @@ describe('behaviorCatalog', () => {
 
   it('has the macro controls', () => {
     expect(findBehavior(catalog, 'macro_wait_time')).toMatchObject({ group: 'macro', params: [{ kind: 'number' }] });
+  });
+});
+
+describe('searchBehaviors', () => {
+  const refs = (query: string) => searchBehaviors(BUILTIN_BEHAVIORS, query).map((d) => d.ref);
+
+  it('puts exact and prefix matches of the ref or name first', () => {
+    expect(refs('lt')[0]).toBe('lt');
+    expect(refs('mo')[0]).toBe('mo');
+    expect(refs('mod')[0]).toBe('mt');
+    expect(refs('tap')).toEqual(expect.arrayContaining(['mt', 'lt', 'macro_tap']));
+  });
+
+  it('finds behaviors by description and group', () => {
+    expect(refs('blue')).toEqual(expect.arrayContaining(['bt', 'out']));
+    expect(refs('flashing')).toEqual(['bootloader']);
+  });
+
+  it('keeps catalog order for an empty query', () => {
+    expect(refs('')).toEqual(BUILTIN_BEHAVIORS.map((d) => d.ref));
   });
 });

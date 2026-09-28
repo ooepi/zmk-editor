@@ -311,6 +311,31 @@ export function behaviorCatalog(model: KeymapModel): BehaviorDef[] {
   return [...BUILTIN_BEHAVIORS, ...fromModules, ...custom];
 }
 
+const GROUP_LABELS = new Map(BEHAVIOR_GROUPS.map((g) => [g.id, g.label]));
+
+/**
+ * Behaviors matching a search, best first: the ref or name itself, then ones
+ * starting or containing it, then ones whose description or group has every word.
+ */
+export function searchBehaviors(defs: BehaviorDef[], query: string): BehaviorDef[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return defs;
+  const words = q.split(/\s+/);
+  const score = (def: BehaviorDef): number => {
+    const names = [def.ref.toLowerCase(), def.name.toLowerCase()];
+    if (names.includes(q)) return 4;
+    if (names.some((n) => n.startsWith(q))) return 3;
+    if (names.some((n) => n.includes(q))) return 2;
+    const text = [...names, def.description, GROUP_LABELS.get(def.group) ?? ''].join(' ').toLowerCase();
+    return words.every((w) => text.includes(w)) ? 1 : 0;
+  };
+  return defs
+    .map((def, index) => ({ def, index, score: score(def) }))
+    .filter((m) => m.score > 0)
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map((m) => m.def);
+}
+
 export function findBehavior(catalog: BehaviorDef[], ref: string): BehaviorDef | undefined {
   return catalog.find((def) => def.ref === ref);
 }

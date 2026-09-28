@@ -1,6 +1,6 @@
 import type { ZmkConfig } from '../../core/config.ts';
 import { addLayer, copyBinding, deleteLayer, moveLayer, renameLayer, setBinding, swapBindings } from '../../core/keymap/edit.ts';
-import { applyPaletteItem, type PaletteItem } from '../../core/keymap/palette.ts';
+import { applyPaletteItem, applyToEncoder, type EncoderDirection, type PaletteItem } from '../../core/keymap/palette.ts';
 import { copyKeys, pasteKeys, type KeyClipboard } from '../../core/keymap/clipboard.ts';
 import { setSensorBinding } from '../../core/keymap/sensorEdit.ts';
 import type { Binding, KeymapModel } from '../../core/keymap/model.ts';
@@ -43,6 +43,8 @@ export type EditorAction =
   | { type: 'swapKeys'; from: number; to: number }
   /** Copies `from` onto `to`; `from` is on `fromLayer` when given (a drag from another layer). */
   | { type: 'copyKey'; from: number; to: number; fromLayer?: number }
+  /** Drops a palette item on one direction of an encoder on the current layer, and selects it. */
+  | { type: 'placeOnEncoder'; index: number; direction: EncoderDirection; item: PaletteItem }
   /** Puts a palette item on every selected key. */
   | { type: 'placeOnSelection'; item: PaletteItem }
   | { type: 'copyKeys' }
@@ -123,6 +125,12 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       if (!current) return state;
       const next = applyPaletteItem(current, action.item, keymap);
       return commit(state, setBinding(keymap, state.layer, action.index, next), select([action.index]));
+    }
+    case 'placeOnEncoder': {
+      const current = keymap.layers[state.layer]?.sensorBindings?.[action.index] ?? TRANSPARENT;
+      const next = applyToEncoder(current, action.item, action.direction);
+      if (!next) return { ...state, notice: 'Only keys, Transparent and None can go on an encoder.' };
+      return commit(state, setSensorBinding(keymap, state.layer, action.index, next), { ...select([]), sensor: action.index });
     }
     case 'placeOnSelection': {
       if (state.selection.length === 0) return state;
