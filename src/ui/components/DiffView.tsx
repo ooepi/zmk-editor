@@ -4,7 +4,7 @@ import { lineDiff, type DiffLine } from '../../core/github/diff.ts';
 const CONTEXT = 2;
 
 /** Changed lines with a little context; long unchanged runs are folded. */
-export function DiffView({ before, after }: { before: string | undefined; after: string }) {
+export function DiffView({ before, after }: { before: string | undefined; after: string | undefined }) {
   const rows = useMemo(() => fold(lineDiff(before, after)), [before, after]);
   return (
     <pre className="diff" aria-label="Changes">

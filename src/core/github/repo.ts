@@ -49,7 +49,8 @@ export type CommitResult = { committed: true; sha: string } | { committed: false
 export async function commitFiles(
   client: GitHubClient,
   ref: RepoRef,
-  files: Record<string, string>,
+  /** Path to new content; null deletes the path. */
+  files: Record<string, string | null>,
   message: string,
 ): Promise<CommitResult> {
   const head = await headCommit(client, ref);
@@ -57,7 +58,7 @@ export async function commitFiles(
     method: 'POST',
     body: {
       base_tree: head.tree,
-      tree: Object.entries(files).map(([path, content]) => ({ path, mode: '100644', type: 'blob', content })),
+      tree: Object.entries(files).map(([path, content]) => ({ path, mode: '100644', type: 'blob', ...(content === null ? { sha: null } : { content }) })),
     },
     what: 'the files (does the token have Contents: read and write, and Workflows: read and write?)',
   });

@@ -139,4 +139,11 @@ describe('lineDiff', () => {
   it('treats a missing file as all added', () => {
     expect(lineDiff(undefined, 'x\n')).toEqual([{ kind: 'added', text: 'x' }]);
   });
+
+  it('deletes files given as null', async () => {
+    const { fake, client } = setup();
+    const result = await commitFiles(client, REPO, { 'build.yaml': 'new', 'README.md': null }, 'Delete');
+    expect(result.committed).toBe(true);
+    expect(fake.trees.get('tree-1')).toEqual({ 'config/lily58.keymap': 'keymap ä', 'config/west.yml': 'west', 'build.yaml': 'new' });
+  });
 });

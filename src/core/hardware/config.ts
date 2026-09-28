@@ -17,6 +17,8 @@ const NICE_VIEW_SHIELDS = ['nice_view_adapter', 'nice_view', 'nice_view_gem'];
 /** A target's shield list with the half's nice!view shields added or removed; other extras are kept. */
 function withDisplayShields(shield: string, niceView: boolean): string {
   const [base = '', ...rest] = shield.split(' ').filter(Boolean);
+  const hasView = rest.includes('nice_view_adapter') && (rest.includes('nice_view') || rest.includes('nice_view_gem'));
+  if (niceView ? hasView : !rest.some((s) => NICE_VIEW_SHIELDS.includes(s))) return shield;
   const others = rest.filter((s) => !NICE_VIEW_SHIELDS.includes(s));
   const view = niceView ? ['nice_view_adapter', rest.includes('nice_view_gem') ? 'nice_view_gem' : 'nice_view'] : [];
   return [base, ...view, ...others].join(' ');
@@ -59,7 +61,13 @@ export function applyHardware(
   const include = config.build.include.map((t) => {
     const base = t.shield?.split(' ')[0] ?? '';
     if (!shields.has(base)) return t;
-    return { ...t, board: hw.controller, shield: withDisplayShields(t.shield ?? base, halfDisplay(hw, sideOf(hw, base)) === 'nice_view') };
+    // Touch the nice!view shields only when that half's nice!view changed, so
+    // shields added by hand (or before displays were modelled) stay as they are.
+    const side = sideOf(hw, base);
+    const niceView = halfDisplay(hw, side) === 'nice_view';
+    const hadNiceView = config.hardware ? halfDisplay(config.hardware, side) === 'nice_view' : false;
+    const shield = niceView === hadNiceView ? t.shield : withDisplayShields(t.shield ?? base, niceView);
+    return { ...t, board: hw.controller, shield };
   });
   return { config: { ...config, keymap: model, hardware: hw, build: { include } }, notes: remapped.notes };
 }

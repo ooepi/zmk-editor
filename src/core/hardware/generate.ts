@@ -269,18 +269,37 @@ export function generateShield(hw: KeyboardHardware): Record<string, string> {
  * generates, i.e. edited by hand. Missing files don't count.
  */
 export function handEditedShieldFiles(files: Record<string, string>, keyboard: string): string[] {
-  const text = files[definitionPath(keyboard)];
-  if (text === undefined) return [];
-  let hw: KeyboardHardware;
-  try {
-    hw = parseHardware(text);
-  } catch {
-    return [];
-  }
-  return Object.entries(generateShield(hw))
+  return Object.entries(previouslyGenerated(files, keyboard))
     .filter(([path, generated]) => {
       const existing = files[path];
-      return existing !== undefined && existing.replace(/\r\n/g, '\n') !== generated;
+      return existing !== undefined && !sameText(existing, generated);
     })
     .map(([path]) => path);
+}
+
+/**
+ * Shield files the repo's own definition generated that `generated` no longer
+ * has (e.g. a removed display's .conf), left untouched since: they should be
+ * deleted on commit. Hand-edited ones stay.
+ */
+export function staleShieldFiles(files: Record<string, string>, keyboard: string, generated: Record<string, string>): string[] {
+  return Object.entries(previouslyGenerated(files, keyboard))
+    .filter(([path, before]) => {
+      const existing = files[path];
+      return !(path in generated) && existing !== undefined && sameText(existing, before);
+    })
+    .map(([path]) => path);
+}
+
+const sameText = (a: string, b: string) => a.replace(/\r\n/g, '\n') === b;
+
+/** What the repo's own definition generates; empty without a readable one. */
+function previouslyGenerated(files: Record<string, string>, keyboard: string): Record<string, string> {
+  const text = files[definitionPath(keyboard)];
+  if (text === undefined) return {};
+  try {
+    return generateShield(parseHardware(text));
+  } catch {
+    return {};
+  }
 }

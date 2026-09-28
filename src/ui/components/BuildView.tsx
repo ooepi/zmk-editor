@@ -12,7 +12,7 @@ import {
 import { diffStats, lineDiff } from '../../core/github/diff.ts';
 import { extractUf2, type FirmwareFile } from '../../core/github/firmware.ts';
 import { commitFiles } from '../../core/github/repo.ts';
-import { handEditedShieldFiles } from '../../core/hardware/generate.ts';
+import { handEditedShieldFiles, staleShieldFiles } from '../../core/hardware/generate.ts';
 import { validateHardware } from '../../core/hardware/validate.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
 import { clearGitHubSettings } from '../state/github.ts';
@@ -58,12 +58,16 @@ export function BuildView({ config, dispatch }: BuildViewProps) {
   const [commitMessage, setCommitMessage] = useState('Update keymap with ZMK Editor');
 
   const generated = useMemo(() => generateConfig(config), [config]);
-  const changes = useMemo(
+  // A null text deletes the file: shield files the editor generated earlier and no longer does.
+  const changes = useMemo<[string, string | null][]>(
     () =>
       connection
-        ? Object.entries(generated).filter(([path, text]) => connection.files[path] !== text)
+        ? [
+            ...Object.entries(generated).filter(([path, text]) => connection.files[path] !== text),
+            ...staleShieldFiles(connection.files, config.keyboard, generated).map((path): [string, null] => [path, null]),
+          ]
         : [],
-    [generated, connection],
+    [generated, connection, config.keyboard],
   );
   const handEdited = useMemo(
     () => (connection ? handEditedShieldFiles(connection.files, config.keyboard).filter((path) => changes.some(([p]) => p === path)) : []),
@@ -107,7 +111,8 @@ export function BuildView({ config, dispatch }: BuildViewProps) {
     setBuild({ phase: 'committing' });
     try {
       const result = await commitFiles(connection.client, connection.ref, Object.fromEntries(changes), commitMessage);
-      const files = { ...connection.files, ...generated };
+      const deleted = new Set(changes.filter(([, text]) => text === null).map(([path]) => path));
+      const files = Object.fromEntries(Object.entries({ ...connection.files, ...generated }).filter(([path]) => !deleted.has(path)));
       const next = { ...connection, files, headSha: result.sha };
       setConnection(next);
       setBuild({ phase: 'waiting', sha: result.sha, run: null });
@@ -172,7 +177,7 @@ export function BuildView({ config, dispatch }: BuildViewProps) {
               <FirstCommitNote connection={connection} keyboard={config.keyboard} />
               <ul className="change-list">
                 {changes.map(([path, text]) => (
-                  <ChangedFile key={path} path={path} before={connection.files[path]} after={text} />
+                  <ChangedFile key={path} path={path} before={connection.files[path]} after={text ?? undefined} />
                 ))}
               </ul>
             </>
@@ -273,7 +278,8 @@ function FirstCommitNote({ connection, keyboard }: { connection: Connection; key
   );
 }
 
-function ChangedFile({ path, before, after }: { path: string; before: string | undefined; after: string }) {
+/** `after` undefined: the file is deleted. */
+function ChangedFile({ path, before, after }: { path: string; before: string | undefined; after: string | undefined }) {
   const [open, setOpen] = useState(false);
   const stats = useMemo(() => diffStats(lineDiff(before, after)), [before, after]);
   return (
@@ -281,7 +287,8 @@ function ChangedFile({ path, before, after }: { path: string; before: string | u
       <button type="button" className="item" aria-expanded={open} onClick={() => setOpen(!open)}>
         <span className="mono">{path}</span>
         <span className="small">
-          {before === undefined ? <span className="diff-added-text">new file</span> : null}{' '}
+          {before === undefined ? <span className="diff-added-text">new file</span> : null}
+          {after === undefined ? <span className="diff-removed-text">deleted</span> : null}{' '}
           <span className="diff-added-text">+{stats.added}</span> <span className="diff-removed-text">−{stats.removed}</span>
         </span>
       </button>

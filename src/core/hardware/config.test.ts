@@ -112,4 +112,23 @@ describe('configs with a designed keyboard', () => {
     const oled = setDisplay(setDisplay(testSplit, 'left', 'oled_128x32'), 'right', undefined);
     expect(applyHardware(gem, oled, testSplit.keys.map((_, i) => i)).config.build.include.map((t) => t.shield)).toEqual(['test_split_left', 'test_split_right']);
   });
+
+  it('leaves build targets alone when a half’s display didn’t change', () => {
+    // A keyboard from before displays existed, with a nice!view added to build.yaml by hand.
+    const start = newHardwareConfig(testSplit, 'v0.3');
+    const legacy = { ...start, build: { include: start.build.include.map((t) => ({ ...t, shield: `${t.shield} rgbled_adapter nice_view_adapter nice_view` })) } };
+    const { config } = applyHardware(legacy, testSplit, testSplit.keys.map((_, i) => i));
+    expect(config.build.include.map((t) => t.shield)).toEqual([
+      'test_split_left rgbled_adapter nice_view_adapter nice_view',
+      'test_split_right rgbled_adapter nice_view_adapter nice_view',
+    ]);
+  });
+
+  it('keeps the shield order when a nice!view is chosen that build.yaml already has', () => {
+    const start = newHardwareConfig(testSplit, 'v0.3');
+    const legacy = { ...start, build: { include: start.build.include.map((t) => ({ ...t, shield: `${t.shield} rgbled_adapter nice_view_adapter nice_view` })) } };
+    const withView = setDisplay(testSplit, 'left', 'nice_view');
+    const { config } = applyHardware(legacy, withView, testSplit.keys.map((_, i) => i));
+    expect(config.build.include.map((t) => t.shield)[0]).toBe('test_split_left rgbled_adapter nice_view_adapter nice_view');
+  });
 });

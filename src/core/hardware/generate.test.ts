@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { setDisplay } from './displays.ts';
-import { generateShield } from './generate.ts';
+import { generateShield, staleShieldFiles } from './generate.ts';
 import { testPad, testSplit } from './testFixtures.ts';
 import type { KeyboardHardware } from './types.ts';
 
@@ -372,3 +372,19 @@ endif
     expect(firmware(generateShield(setDisplay(testSplit, 'left', 'nice_view')))).toEqual(firmware(generateShield(testSplit)));
   });
 });
+
+describe('staleShieldFiles', () => {
+  it('lists shield files the repo’s previous definition generated and the current one no longer does', () => {
+    const repo = generateShield(setDisplay(testSplit, 'left', 'oled_128x32'));
+    const now = generateShield(testSplit);
+    expect(staleShieldFiles(repo, 'test_split', now)).toEqual([`${dir('test_split')}/test_split_left.conf`]);
+    expect(staleShieldFiles(now, 'test_split', now)).toEqual([]);
+  });
+
+  it('leaves a stale file alone when it was edited by hand', () => {
+    const repo = generateShield(setDisplay(testSplit, 'left', 'oled_128x32'));
+    const edited = { ...repo, [`${dir('test_split')}/test_split_left.conf`]: 'CONFIG_ZMK_DISPLAY=y\nCONFIG_MINE=y\n' };
+    expect(staleShieldFiles(edited, 'test_split', generateShield(testSplit))).toEqual([]);
+  });
+});
+
