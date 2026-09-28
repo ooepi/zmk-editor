@@ -23,3 +23,13 @@ describe('hardware definition file', () => {
     expect(() => parseHardware(serializeHardware(hw).replace('"matrix"', '"charlieplex"'))).toThrow('wiring.kind must be matrix or direct');
   });
 });
+
+describe('hardware definition with encoders', () => {
+  it('round-trips encoders, and leaves them out when there are none', () => {
+    const withEncoders = { ...hw, encoders: [{ a: 8, b: 9 }], rightEncoders: [] };
+    const text = serializeHardware(withEncoders);
+    expect(parseHardware(text)).toEqual(withEncoders);
+    expect(text).toContain('"encoders": [');
+    expect(serializeHardware(hw)).not.toContain('ncoders');
+  });
+});
