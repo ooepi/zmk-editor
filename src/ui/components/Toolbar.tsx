@@ -16,6 +16,8 @@ interface ToolbarProps {
   locked?: boolean;
   theme: Theme;
   onToggleTheme: () => void;
+  /** Opens the printable cheat sheet. */
+  onPrint: () => void;
   dispatch: Dispatch<EditorAction>;
 }
 
@@ -52,7 +54,7 @@ async function filesToConfig(files: File[], current: ZmkConfig): Promise<{ confi
   return importConfig(repo, keyboard);
 }
 
-export function Toolbar({ config, canUndo, canRedo, locked, theme, onToggleTheme, dispatch }: ToolbarProps) {
+export function Toolbar({ config, canUndo, canRedo, locked, theme, onToggleTheme, onPrint, dispatch }: ToolbarProps) {
   const fileInput = useRef<HTMLInputElement>(null);
   const lockedTitle = 'Finish or cancel the keyboard wizard first.';
 
@@ -131,6 +133,9 @@ export function Toolbar({ config, canUndo, canRedo, locked, theme, onToggleTheme
       </button>
       <button type="button" className="button" onClick={downloadZip} title="Keymap, .conf, west.yml, build.yaml and the build workflow">
         Download config (.zip)
+      </button>
+      <button type="button" className="button" disabled={locked} onClick={onPrint} title={locked ? lockedTitle : 'A cheat sheet of every layer, to print or save as PDF'}>
+        Print keymap
       </button>
       <button type="button" className="button" disabled={locked} onClick={resetDemo} title={locked ? lockedTitle : undefined}>
         Reset to demo

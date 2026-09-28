@@ -49,6 +49,13 @@ export const START: HelpSection[] = [
             written, and are listed under <strong>Import notes</strong> in the side panel of the Keymap tab.
           </p>
         </Sub>
+        <Sub id="print" title="Printing a cheat sheet">
+          <p>
+            <Ui>Print keymap</Ui> in the top bar shows every layer as a keyboard diagram, plus your combos, ready to print.
+            Untick layers or combos you don't want, then press <Ui>Print</Ui>. To get a PDF instead of paper, choose
+            “Save as PDF” in the print dialog. The sheet is always printed in light colors, two layers to a page.
+          </p>
+        </Sub>
         <Sub id="saving" title="What is saved where">
           <ul>
             <li>
