@@ -1,6 +1,6 @@
-import type { DirectWiring, HardwareKey, KeyboardHardware, MatrixPins, MatrixWiring, Pin, Side } from './types.ts';
+import type { DirectWiring, Encoder, HardwareKey, KeyboardHardware, MatrixPins, MatrixWiring, Pin, Side } from './types.ts';
 
-export type PinList = 'rows' | 'cols' | 'pins';
+export type PinList = 'rows' | 'cols' | 'pins' | 'encoderA' | 'encoderB';
 
 /** The halves to generate: both on a split, one unnamed half otherwise. */
 export function halves(hw: KeyboardHardware): (Side | undefined)[] {
@@ -35,8 +35,29 @@ function withoutRight<T extends { right?: unknown }>(wiring: T): T {
   return copy;
 }
 
+/**
+ * One half's encoders. A mirrored right half (no pins of its own) mirrors the
+ * left's encoders: the same pins with A and B swapped, because a mirrored
+ * encoder turns the other way. A right half with its own pins has its own
+ * encoders: `rightEncoders`, or none (keyboards made before encoders existed).
+ */
+export function halfEncoders(hw: KeyboardHardware, side?: Side): Encoder[] {
+  const left = hw.encoders ?? [];
+  if (side !== 'right') return left;
+  if (hw.rightEncoders) return hw.rightEncoders;
+  return hw.wiring.right ? [] : left.map((e) => ({ a: e.b, b: e.a }));
+}
+
+/** Sets an encoder pin. Setting one on a mirrored right half gives the right half its own pins first. */
+export function setEncoderPin(hw: KeyboardHardware, side: Side | undefined, index: number, which: 'a' | 'b', pin: Pin): KeyboardHardware {
+  const next = side === 'right' && !hw.rightEncoders ? setRightWiredDifferently(hw, true) : hw;
+  const put = (list: Encoder[]) => list.map((e, i) => (i === index ? { ...e, [which]: pin } : e));
+  return side === 'right' ? { ...next, rightEncoders: put(next.rightEncoders ?? []) } : { ...next, encoders: put(next.encoders ?? []) };
+}
+
 /** Sets one pin. Setting a pin on a mirrored right half gives it its own pins first. */
 export function setPin(hw: KeyboardHardware, side: Side | undefined, list: PinList, index: number, pin: Pin): KeyboardHardware {
+  if (list === 'encoderA' || list === 'encoderB') return setEncoderPin(hw, side, index, list === 'encoderA' ? 'a' : 'b', pin);
   const put = (pins: Pin[]) => pins.map((p, i) => (i === index ? pin : p));
   const wiring = hw.wiring;
   if (wiring.kind === 'direct') {
@@ -51,13 +72,19 @@ export function setPin(hw: KeyboardHardware, side: Side | undefined, list: PinLi
   return { ...hw, wiring: { ...wiring, [which]: put(wiring[which]) } };
 }
 
-/** Gives the right half its own pins (starting from the mirrored ones), or makes it a mirror again. */
+/** Gives the right half its own pins and encoders (starting from the mirrored ones), or makes it a mirror again. */
 export function setRightWiredDifferently(hw: KeyboardHardware, on: boolean): KeyboardHardware {
   const wiring = hw.wiring;
-  if (wiring.kind === 'direct') {
-    return { ...hw, wiring: on ? { ...wiring, right: [...directPins(wiring, 'right')] } : withoutRight(wiring) };
-  }
-  return { ...hw, wiring: on ? { ...wiring, right: matrixPins(wiring, 'right') } : withoutRight(wiring) };
+  const nextWiring =
+    wiring.kind === 'direct'
+      ? on ? { ...wiring, right: [...directPins(wiring, 'right')] } : withoutRight(wiring)
+      : on ? { ...wiring, right: matrixPins(wiring, 'right') } : withoutRight(wiring);
+  const next: KeyboardHardware = { ...hw, wiring: nextWiring };
+  const own = on ? halfEncoders(hw, 'right').map((e) => ({ ...e })) : [];
+  // An empty list is the same as none once the right half has its own pins; leave it out.
+  if (own.length > 0) next.rightEncoders = own;
+  else delete next.rightEncoders;
+  return next;
 }
 
 /** Resizes the matrix of both halves; new rows and columns have no pin yet. */
@@ -106,5 +133,9 @@ export function pinUses(hw: KeyboardHardware, side?: Side): Map<number, string[]
     pins.rows.forEach((pin, i) => add(pin, `Row ${i}`));
     pins.cols.forEach((pin, i) => add(pin, `Column ${i}`));
   }
+  halfEncoders(hw, side).forEach((e, i) => {
+    add(e.a, `Encoder ${i} A`);
+    add(e.b, `Encoder ${i} B`);
+  });
   return uses;
 }

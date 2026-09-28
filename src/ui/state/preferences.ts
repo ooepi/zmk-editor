@@ -6,10 +6,12 @@ export interface Preferences {
   unicodeLanguages: string[];
   /** Chosen layout variant per keyboard, for keyboards with several (e.g. 60% ANSI/ISO). */
   layouts: Record<string, string>;
+  /** How each Pro Micro diagram is drawn (key: 'left', 'right' or 'one'); wiring plans are often drawn from below. */
+  pinoutViews: Record<string, 'top' | 'bottom'>;
 }
 
 const STORAGE_KEY = 'zmk-editor.preferences.v1';
-const DEFAULTS: Preferences = { unicodeLanguages: [], layouts: {} };
+const DEFAULTS: Preferences = { unicodeLanguages: [], layouts: {}, pinoutViews: {} };
 
 function load(): Preferences {
   try {

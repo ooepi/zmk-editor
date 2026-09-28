@@ -5,6 +5,7 @@ import type { HardwareIssue } from '../../core/hardware/validate.ts';
 import {
   directInputUsed,
   directPins,
+  halfEncoders,
   matrixPins,
   pinUses,
   removeDirectPin,
@@ -27,9 +28,11 @@ interface Props {
   hw: KeyboardHardware;
   issues: HardwareIssue[];
   onChange: (hw: KeyboardHardware) => void;
+  onAddEncoder: (side?: Side) => void;
+  onRemoveEncoder: (side: Side | undefined, index: number) => void;
 }
 
-export function HardwareWiringStep({ hw, issues, onChange }: Props) {
+export function HardwareWiringStep({ hw, issues, onChange, onAddEncoder, onRemoveEncoder }: Props) {
   const [active, setActive] = useState<Slot | null>(null);
   const differently = hw.wiring.right !== undefined;
   const shown: (Side | undefined)[] = hw.split ? (differently ? ['left', 'right'] : ['left']) : [undefined];
@@ -70,7 +73,15 @@ export function HardwareWiringStep({ hw, issues, onChange }: Props) {
             {side && <h3 className="wiring-half-title">{title(side)}</h3>}
             <div className="wiring-half-body">
               <div className="wiring-tables">
-                <PinTables hw={hw} side={side} active={active} onChange={onChange} onActivate={setActive} />
+                <PinTables
+                  hw={hw}
+                  side={side}
+                  active={active}
+                  onChange={onChange}
+                  onActivate={setActive}
+                  onAddEncoder={onAddEncoder}
+                  onRemoveEncoder={onRemoveEncoder}
+                />
               </div>
               <ProMicroPinout
                 hw={hw}
@@ -93,19 +104,17 @@ export function HardwareWiringStep({ hw, issues, onChange }: Props) {
   );
 }
 
-function PinTables({
-  hw,
-  side,
-  active,
-  onChange,
-  onActivate,
-}: {
+interface PinTablesProps {
   hw: KeyboardHardware;
   side?: Side;
   active: Slot | null;
   onChange: (hw: KeyboardHardware) => void;
   onActivate: (slot: Slot) => void;
-}) {
+  onAddEncoder: (side?: Side) => void;
+  onRemoveEncoder: (side: Side | undefined, index: number) => void;
+}
+
+function PinTables({ hw, side, active, onChange, onActivate, onAddEncoder, onRemoveEncoder }: PinTablesProps) {
   const prefix = side === 'left' ? 'Left ' : side === 'right' ? 'Right ' : '';
   const lists: { list: PinList; title: string; item: string; pins: Pin[] }[] =
     hw.wiring.kind === 'direct'
@@ -115,49 +124,117 @@ function PinTables({
           { list: 'cols', title: 'Columns', item: 'Column', pins: matrixPins(hw.wiring, side).cols },
         ];
   const uses = pinUses(hw, side);
+  const field = (list: PinList, index: number, name: string, pin: Pin) => (
+    <PinSelect
+      hw={hw}
+      side={side}
+      list={list}
+      index={index}
+      name={name}
+      label={prefix ? `${prefix}${name.charAt(0).toLowerCase()}${name.slice(1)}` : name}
+      pin={pin}
+      uses={uses}
+      active={active}
+      onChange={onChange}
+      onActivate={onActivate}
+    />
+  );
+  const encoders = halfEncoders(hw, side);
   return (
     <>
       {lists.map(({ list, title, item, pins }) => (
         <fieldset key={list} className="fieldset">
           <legend>{title}</legend>
           <div className="pin-grid">
-            {pins.map((pin, index) => {
-              const id = `pin-${side ?? 'one'}-${list}-${index}`;
-              const name = `${item} ${index}`;
-              const label = prefix ? `${prefix}${name.toLowerCase()}` : name;
-              const isActive = active !== null && active.side === side && active.list === list && active.index === index;
-              return (
-                <div key={index} className="field">
-                  <label className="field-label" htmlFor={id}>{label}</label>
-                  <select
-                    id={id}
-                    className={`input${isActive ? ' active-pin' : ''}`}
-                    value={pin ?? ''}
-                    onPointerDown={() => onActivate({ side, list, index, label })}
-                    onChange={(e) => onChange(setPin(hw, side, list, index, e.target.value === '' ? null : Number(e.target.value)))}
-                  >
-                    <option value="">No pin</option>
-                    {PRO_MICRO_PINS.map((p) => {
-                      const other = (uses.get(p) ?? []).filter((use) => use !== name);
-                      return (
-                        <option key={p} value={p}>
-                          {pinLabel(p)}
-                          {other.length > 0 ? ` (${other.join(', ')})` : ''}
-                        </option>
-                      );
-                    })}
-                  </select>
-                  {list === 'pins' && !directInputUsed(hw, side, index) && (
-                    <button type="button" className="link-button" onClick={() => onChange(removeDirectPin(hw, side, index))}>
-                      Remove unused input
-                    </button>
-                  )}
-                </div>
-              );
-            })}
+            {pins.map((pin, index) => (
+              <div key={index} className="field">
+                {field(list, index, `${item} ${index}`, pin)}
+                {list === 'pins' && !directInputUsed(hw, side, index) && (
+                  <button type="button" className="link-button" onClick={() => onChange(removeDirectPin(hw, side, index))}>
+                    Remove unused input
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
         </fieldset>
       ))}
+      <fieldset className="fieldset">
+        <legend>Encoders</legend>
+        {encoders.length === 0 && <p className="muted small">No encoders. Most keyboards have none, one or two per half.</p>}
+        {encoders.map((encoder, index) => (
+          <div key={index} className="encoder-pins">
+            <div className="field">{field('encoderA', index, `Encoder ${index} A`, encoder.a)}</div>
+            <div className="field">{field('encoderB', index, `Encoder ${index} B`, encoder.b)}</div>
+            <button type="button" className="link-button" onClick={() => onRemoveEncoder(side, index)}>
+              Remove encoder {index}
+            </button>
+          </div>
+        ))}
+        {hw.split && side === 'left' && hw.wiring.right === undefined && encoders.length > 0 && (
+          <p className="muted small">The right half gets the same encoders, with A and B swapped so both turn the same way.</p>
+        )}
+        <div className="row">
+          <button type="button" className="button" onClick={() => onAddEncoder(side)}>
+            Add encoder
+          </button>
+        </div>
+      </fieldset>
+    </>
+  );
+}
+
+/** A pin field: a select of Pro Micro pins that also arms the pinout for this field when pressed. */
+function PinSelect({
+  hw,
+  side,
+  list,
+  index,
+  name,
+  label,
+  pin,
+  uses,
+  active,
+  onChange,
+  onActivate,
+}: {
+  hw: KeyboardHardware;
+  side?: Side;
+  list: PinList;
+  index: number;
+  /** The field's name in pin uses, e.g. "Row 0". */
+  name: string;
+  /** The visible label, e.g. "Left row 0". */
+  label: string;
+  pin: Pin;
+  uses: Map<number, string[]>;
+  active: Slot | null;
+  onChange: (hw: KeyboardHardware) => void;
+  onActivate: (slot: Slot) => void;
+}) {
+  const id = `pin-${side ?? 'one'}-${list}-${index}`;
+  const isActive = active !== null && active.side === side && active.list === list && active.index === index;
+  return (
+    <>
+      <label className="field-label" htmlFor={id}>{label}</label>
+      <select
+        id={id}
+        className={`input${isActive ? ' active-pin' : ''}`}
+        value={pin ?? ''}
+        onPointerDown={() => onActivate({ side, list, index, label })}
+        onChange={(e) => onChange(setPin(hw, side, list, index, e.target.value === '' ? null : Number(e.target.value)))}
+      >
+        <option value="">No pin</option>
+        {PRO_MICRO_PINS.map((p) => {
+          const other = (uses.get(p) ?? []).filter((use) => use !== name);
+          return (
+            <option key={p} value={p}>
+              {pinLabel(p)}
+              {other.length > 0 ? ` (${other.join(', ')})` : ''}
+            </option>
+          );
+        })}
+      </select>
     </>
   );
 }

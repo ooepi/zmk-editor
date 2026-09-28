@@ -3,7 +3,7 @@ import { MODULES } from '../catalog/modules.ts';
 import { HARDWARE_CONTROLLERS, PRO_MICRO_PINS } from './controllers.ts';
 import type { HardwareBasics } from './grid.ts';
 import type { KeyboardHardware, Pin } from './types.ts';
-import { directPins, halfSize, halves, matrixPins } from './wiring.ts';
+import { directPins, halfEncoders, halfSize, halves, matrixPins } from './wiring.ts';
 
 /** Ids ZMK reserves itself, in addition to catalog keyboards and every module shield id. */
 const RESERVED_IDS = new Set([
@@ -70,14 +70,19 @@ export function validateHardware(hw: KeyboardHardware): HardwareIssue[] {
     const where = side ? ` on the ${side} half` : '';
 
     // A mirrored right half uses the left's pins, so they're checked once.
-    if (side !== 'right' || hw.wiring.right) {
-      const labelled: { label: string; pin: Pin }[] =
-        hw.wiring.kind === 'direct'
+    if (side !== 'right' || hw.wiring.right || hw.rightEncoders) {
+      const labelled: { label: string; pin: Pin }[] = [
+        ...(hw.wiring.kind === 'direct'
           ? directPins(hw.wiring, side).map((pin, i) => ({ label: `Input ${i}`, pin }))
           : [
               ...matrixPins(hw.wiring, side).rows.map((pin, i) => ({ label: `Row ${i}`, pin })),
               ...matrixPins(hw.wiring, side).cols.map((pin, i) => ({ label: `Column ${i}`, pin })),
-            ];
+            ]),
+        ...halfEncoders(hw, side).flatMap((e, i) => [
+          { label: `Encoder ${i} A`, pin: e.a },
+          { label: `Encoder ${i} B`, pin: e.b },
+        ]),
+      ];
       if (labelled.length > PRO_MICRO_PINS.length) {
         add('error', 'wiring', `The wiring${where} needs ${labelled.length} pins, but the controller has ${PRO_MICRO_PINS.length}.`);
       }

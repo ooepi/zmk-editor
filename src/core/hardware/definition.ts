@@ -1,5 +1,5 @@
 import { isRecord } from '../files/yaml-util.ts';
-import type { DirectWiring, HardwareKey, KeyboardHardware, MatrixWiring, Pin, Wiring } from './types.ts';
+import type { DirectWiring, Encoder, HardwareKey, KeyboardHardware, MatrixWiring, Pin, Wiring } from './types.ts';
 
 const VERSION = 1;
 
@@ -14,7 +14,20 @@ export function serializeHardware(hw: KeyboardHardware): string {
       ? { kind: w.kind, diodeDirection: w.diodeDirection, rows: w.rows, cols: w.cols, ...(w.right ? { right: { rows: w.right.rows, cols: w.right.cols } } : {}) }
       : { kind: w.kind, pins: w.pins, ...(w.right ? { right: w.right } : {}) };
   const head = JSON.stringify(
-    { version: VERSION, name: hw.name, displayName: hw.displayName, controller: hw.controller, split: hw.split, wiring, keys: [] },
+    {
+      version: VERSION,
+      name: hw.name,
+      displayName: hw.displayName,
+      controller: hw.controller,
+      split: hw.split,
+      wiring,
+      ...(hw.encoders && hw.encoders.length > 0 ? { encoders: hw.encoders.map(({ a, b }) => ({ a, b })) } : {}),
+      // Only when there are encoders at all: keyboards without them keep their files unchanged.
+      ...(hw.rightEncoders && (hw.rightEncoders.length > 0 || (hw.encoders?.length ?? 0) > 0)
+        ? { rightEncoders: hw.rightEncoders.map(({ a, b }) => ({ a, b })) }
+        : {}),
+      keys: [],
+    },
     null,
     2,
   );
@@ -69,7 +82,14 @@ export function parseHardware(text: string): KeyboardHardware {
     if (k.side === 'left' || k.side === 'right') key.side = k.side;
     return key;
   });
-  return {
+  const encoders = (value: unknown, what: string): Encoder[] => {
+    if (!Array.isArray(value)) throw new Error(`${what} must be a list`);
+    return value.map((e: unknown, i: number) => {
+      if (!isRecord(e)) throw new Error(`${what} ${i} isn’t an object`);
+      return { a: e.a === null ? null : num(e.a, `${what} ${i} a`), b: e.b === null ? null : num(e.b, `${what} ${i} b`) };
+    });
+  };
+  const hardware: KeyboardHardware = {
     name: str(data.name, 'name'),
     displayName: str(data.displayName, 'displayName'),
     controller: str(data.controller, 'controller'),
@@ -77,4 +97,7 @@ export function parseHardware(text: string): KeyboardHardware {
     wiring,
     keys,
   };
+  if (data.encoders !== undefined) hardware.encoders = encoders(data.encoders, 'encoders');
+  if (data.rightEncoders !== undefined) hardware.rightEncoders = encoders(data.rightEncoders, 'rightEncoders');
+  return hardware;
 }

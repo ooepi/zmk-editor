@@ -5,12 +5,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PRO_MICRO_PINS } from '../core/hardware/controllers.ts';
 import { newHardwareConfig } from '../core/hardware/config.ts';
 import { DEFAULT_BASICS, gridHardware } from '../core/hardware/grid.ts';
-import { testPad } from '../core/hardware/testFixtures.ts';
+import { testPad, testSplit } from '../core/hardware/testFixtures.ts';
 import type { KeyboardHardware } from '../core/hardware/types.ts';
 import { createCombo } from '../core/keymap/comboEdit.ts';
 import { App } from './App.tsx';
+import { reloadPreferences } from './state/preferences.ts';
 
-beforeEach(() => localStorage.clear());
+beforeEach(() => {
+  localStorage.clear();
+  reloadPreferences();
+});
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
@@ -342,3 +346,146 @@ describe('Wizard problem list', () => {
     expect(screen.queryByText('Row 0 on the left half has no pin.')).toBeNull();
   });
 });
+
+describe('Pinout seen from the bottom', () => {
+  // Pads in screen order: the left column top to bottom, then the right column.
+  const padOrder = (figure: HTMLElement) => within(figure).getAllByText(/^(D\d+|GND|RAW|RST|VCC)$/).map((el) => el.textContent);
+
+  it('mirrors the pin columns per half and remembers the choice', async () => {
+    const user = userEvent.setup();
+    const view = render(<App />);
+    await openWizard(user);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByLabelText('The right half is wired differently'));
+
+    const left = () => screen.getByRole('figure', { name: 'Pro Micro pinout (left half)' });
+    const right = () => screen.getByRole('figure', { name: 'Pro Micro pinout (right half)' });
+    expect(padOrder(left())[0]).toBe('D1');
+
+    await user.click(within(left()).getByRole('button', { name: 'Bottom' }));
+    expect(within(left()).getByRole('button', { name: 'Bottom' }).getAttribute('aria-pressed')).toBe('true');
+    // From below, the RAW/GND/RST/VCC column is on the left; USB stays at the top.
+    expect(padOrder(left())[0]).toBe('RAW');
+    expect(padOrder(right())[0]).toBe('D1');
+    expect(within(left()).getByText(/seen from below/)).toBeTruthy();
+
+    // Picking still fills the selected field.
+    await user.click(screen.getByLabelText('Left row 0'));
+    await user.click(within(left()).getByRole('button', { name: 'D4' }));
+    expect(screen.getByLabelText('Left row 0')).toHaveProperty('value', '4');
+
+    // Remembered after the page is opened again.
+    view.unmount();
+    render(<App />);
+    await openWizard(user);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(padOrder(screen.getByRole('figure', { name: 'Pro Micro pinout (left half)' }))[0]).toBe('RAW');
+  });
+});
+
+describe('Encoders in the wizard', () => {
+  it('adds an encoder, picks its pins, and shows it in the generated shield', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await openWizard(user);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+
+    await user.click(screen.getByRole('button', { name: 'Add encoder' }));
+    await user.selectOptions(screen.getByLabelText('Left encoder 0 A'), '8');
+    await user.click(screen.getByLabelText('Left encoder 0 B'));
+    await user.click(within(screen.getByRole('figure', { name: 'Pro Micro pinout (left half)' })).getByRole('button', { name: 'D9' }));
+    expect(screen.getByLabelText('Left encoder 0 B')).toHaveProperty('value', '9');
+    expect(screen.getByRole('button', { name: 'D8: Encoder 0 A' })).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByText(/push button is wired like any other switch/)).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    const dtsi = screen.getByLabelText('config/boards/shields/my_keyboard/my_keyboard.dtsi').textContent ?? '';
+    expect(dtsi).toContain('left_encoder_0: encoder_left_0');
+    expect(dtsi).toContain('right_encoder_0: encoder_right_0');
+  });
+
+  it('removes an encoder', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await openWizard(user);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Add encoder' }));
+    await user.click(screen.getByRole('button', { name: 'Remove encoder 0' }));
+    expect(screen.queryByLabelText('Left encoder 0 A')).toBeNull();
+  });
+
+  it('keeps an encoder’s bindings when another encoder is added later', async () => {
+    const hw = { ...testSplit, encoders: [{ a: 8, b: 9 }] };
+    const config = newHardwareConfig(hw, 'v0.3');
+    config.keymap = { ...config.keymap, layers: config.keymap.layers.map((l) => ({ ...l, sensorBindings: [{ behavior: 'inc_dec_kp', params: ['PG_UP', 'PG_DN'] }, { behavior: 'inc_dec_kp', params: ['C_VOL_UP', 'C_VOL_DN'] }] })) };
+    localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config }));
+
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Test Split ▾' }));
+    await user.click(screen.getByRole('button', { name: 'Edit hardware' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Add encoder' }));
+    await user.selectOptions(screen.getByLabelText('Left encoder 1 A'), '10');
+    await user.selectOptions(screen.getByLabelText('Left encoder 1 B'), '16');
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Save hardware' }));
+
+    const saved = stored();
+    expect(saved.keymap.layers[0].sensorBindings.map((b: { params: string[] }) => b.params.join(' '))).toEqual([
+      'PG_UP PG_DN',
+      'C_VOL_UP C_VOL_DN',
+      'C_VOL_UP C_VOL_DN',
+      'C_VOL_UP C_VOL_DN',
+    ]);
+  });
+});
+
+describe('Encoders on keyboards made before encoders existed', () => {
+  it('adds an encoder to the right half only, and one on the left doesn’t appear on the right', async () => {
+    const hw = { ...testSplit, wiring: { kind: 'matrix', diodeDirection: 'col2row', rows: [4], cols: [6, 7], right: { rows: [4], cols: [7, 6] } } } as KeyboardHardware;
+    localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config: newHardwareConfig(hw, 'v0.3') }));
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Test Split ▾' }));
+    await user.click(screen.getByRole('button', { name: 'Edit hardware' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+
+    await user.click(within(screen.getByRole('region', { name: 'Left half' })).getByRole('button', { name: 'Add encoder' }));
+    expect(screen.queryByLabelText('Right encoder 0 A')).toBeNull();
+    await user.click(within(screen.getByRole('region', { name: 'Left half' })).getByRole('button', { name: 'Remove encoder 0' }));
+
+    await user.click(within(screen.getByRole('region', { name: 'Right half' })).getByRole('button', { name: 'Add encoder' }));
+    await user.selectOptions(screen.getByLabelText('Right encoder 0 A'), '8');
+    await user.selectOptions(screen.getByLabelText('Right encoder 0 B'), '9');
+    expect(screen.queryByLabelText('Left encoder 0 A')).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Save hardware' }));
+
+    const saved = stored();
+    expect(saved.hardware.rightEncoders).toEqual([{ a: 8, b: 9 }]);
+    expect(saved.hardware.encoders ?? []).toEqual([]);
+    expect(saved.keymap.layers[0].sensorBindings).toHaveLength(1);
+  });
+});
+
+describe('Starting over after picking encoder pins', () => {
+  it('asks before a size change throws away encoder pins', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const user = userEvent.setup();
+    render(<App />);
+    await openWizard(user);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Add encoder' }));
+    await user.selectOptions(screen.getByLabelText('Left encoder 0 A'), '8');
+    await user.click(screen.getByRole('button', { name: 'Back' }));
+    await type(user, 'Rows', '4');
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(confirm).toHaveBeenCalled();
+    expect(screen.getByLabelText('Keyboard name')).toBeTruthy();
+  });
+});
+

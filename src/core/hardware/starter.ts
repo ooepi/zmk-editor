@@ -1,4 +1,5 @@
 import { emptyKeymap, type KeymapModel } from '../keymap/model.ts';
+import { sensorOrder } from './encoders.ts';
 import type { KeyboardHardware } from './types.ts';
 
 /** Distinct keys, so every switch can be tested after the first flash. */
@@ -23,6 +24,16 @@ export function starterKeymap(hw: KeyboardHardware): KeymapModel {
       { kind: 'include', path: 'behaviors.dtsi', system: true },
       { kind: 'include', path: 'dt-bindings/zmk/keys.h', system: true },
     ],
-    layers: [{ name: 'default_layer', displayName: 'Base', bindings, properties: [] }],
+    layers: [
+      {
+        name: 'default_layer',
+        displayName: 'Base',
+        bindings,
+        properties: [],
+        ...(sensorOrder(hw).length > 0
+          ? { sensorBindings: sensorOrder(hw).map(() => ({ behavior: 'inc_dec_kp', params: ['C_VOL_UP', 'C_VOL_DN'] })) }
+          : {}),
+      },
+    ],
   };
 }

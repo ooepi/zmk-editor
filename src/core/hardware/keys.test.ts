@@ -4,7 +4,7 @@ import { createCombo } from '../keymap/comboEdit.ts';
 import { generateKeymap } from '../keymap/generator.ts';
 import { importKeymap } from '../keymap/importer.ts';
 import { DEFAULT_BASICS, gridHardware } from './grid.ts';
-import { addKey, deleteKey, deleteKeys, remapKeyPositions } from './keys.ts';
+import { addKey, deleteKey, deleteKeys, remapKeyPositions, remapSensors } from './keys.ts';
 import { starterKeymap } from './starter.ts';
 
 const pad = { ...gridHardware({ ...DEFAULT_BASICS, name: 'test_pad', displayName: 'Test Pad', split: false, rows: 1, cols: 3 }) };
@@ -55,5 +55,21 @@ describe('deleteKeys', () => {
   it('removes several keys at once', () => {
     const hw = gridHardware({ ...DEFAULT_BASICS, split: false, rows: 1, cols: 4 });
     expect(deleteKeys(hw, [0, 2]).keys.map((k) => k.col)).toEqual([1, 3]);
+  });
+});
+
+describe('remapSensors', () => {
+  const volume = { behavior: 'inc_dec_kp', params: ['C_VOL_UP', 'C_VOL_DN'] };
+  const pages = { behavior: 'inc_dec_kp', params: ['PG_UP', 'PG_DN'] };
+  const model = { ...starterKeymap(pad), layers: [{ name: 'default_layer', bindings: [], properties: [], sensorBindings: [pages] }, { name: 'nav', bindings: [], properties: [] }] };
+
+  it('keeps bindings of kept encoders, gives new ones volume on the base layer and &trans elsewhere', () => {
+    const next = remapSensors(model, [undefined, 0]);
+    expect(next.layers[0]?.sensorBindings).toEqual([volume, pages]);
+    expect(next.layers[1]?.sensorBindings).toEqual([{ behavior: 'trans', params: [] }, { behavior: 'trans', params: [] }]);
+  });
+
+  it('removes sensor bindings when there are no encoders left', () => {
+    expect(remapSensors(model, []).layers[0]).not.toHaveProperty('sensorBindings');
   });
 });

@@ -3,6 +3,7 @@ import { textLayoutFromPhysical } from '../layouts/derive.ts';
 import { layoutLabel, physicalLayoutNode } from '../layouts/dtsi.ts';
 import { normalizedLayout } from '../layouts/normalize.ts';
 import { definitionPath, parseHardware, serializeHardware, shieldDir } from './definition.ts';
+import { sensorLabel, sensorOrder } from './encoders.ts';
 import { hardwareLayout, type KeyboardHardware, type Pin, type Side } from './types.ts';
 import { directPins, halfSize, matrixPins } from './wiring.ts';
 
@@ -19,10 +20,45 @@ function kconfigShield(hw: KeyboardHardware): string {
   return `# ${note(hw)}\n\n${entries.join('\n')}`;
 }
 
+// As in ZMK's Sofle (v0.3).
+const ENCODER_FLAGS = '(GPIO_ACTIVE_HIGH | GPIO_PULL_UP)';
+
+const EC11_TRIGGER = `choice EC11_TRIGGER_MODE
+    default EC11_TRIGGER_GLOBAL_THREAD
+endchoice
+`;
+
+/** The encoder nodes and the sensors node, or '' without encoders. On splits every encoder starts disabled. */
+function encoderNodes(hw: KeyboardHardware): string {
+  const sensors = sensorOrder(hw);
+  if (sensors.length === 0) return '';
+  const pin = (p: Pin) => String(p ?? '?').padStart(2);
+  const nodes = sensors.map(({ side, index, encoder }) =>
+    [
+      `    ${sensorLabel(side, index)}: ${side ? `encoder_${side}_${index}` : `encoder_${index}`} {`,
+      '        compatible = "alps,ec11";',
+      `        a-gpios = <&pro_micro ${pin(encoder.a)} ${ENCODER_FLAGS}>;`,
+      `        b-gpios = <&pro_micro ${pin(encoder.b)} ${ENCODER_FLAGS}>;`,
+      '        steps = <80>;',
+      ...(hw.split ? ['        status = "disabled";'] : []),
+      '    };',
+    ].join('\n'),
+  );
+  const sensorsNode = [
+    '    sensors: sensors {',
+    '        compatible = "zmk,keymap-sensors";',
+    `        sensors = <${sensors.map(({ side, index }) => `&${sensorLabel(side, index)}`).join(' ')}>;`,
+    '        triggers-per-rotation = <20>;',
+    '    };',
+  ].join('\n');
+  return [...nodes, sensorsNode].join('\n\n');
+}
+
 function kconfigDefconfig(hw: KeyboardHardware): string {
   const [first, second] = shields(hw);
   const name = `config ZMK_KEYBOARD_NAME\n    default "${hw.displayName}"\n`;
-  if (!hw.split || !first || !second) return `# ${note(hw)}\n\nif ${first?.symbol ?? ''}\n\n${name}\nendif\n`;
+  const trigger = sensorOrder(hw).length > 0 ? `\n${EC11_TRIGGER}` : '';
+  if (!hw.split || !first || !second) return `# ${note(hw)}\n\nif ${first?.symbol ?? ''}\n\n${name}${trigger}\nendif\n`;
   return `# ${note(hw)}
 
 if ${first.symbol}
@@ -37,7 +73,7 @@ if ${first.symbol} || ${second.symbol}
 
 config ZMK_SPLIT
     default y
-
+${trigger}
 endif
 `;
 }
@@ -119,7 +155,7 @@ ${kscanNode(hw, withPins)}
 
 ${transformNode(hw)}
 
-${physicalLayoutNode(normalizedLayout(hardwareLayout(hw)), hw.name, hw.displayName, ['transform = <&default_transform>;'])}
+${encoderNodes(hw) ? `${encoderNodes(hw)}\n\n` : ''}${physicalLayoutNode(normalizedLayout(hardwareLayout(hw)), hw.name, hw.displayName, ['transform = <&default_transform>;'])}
 };
 `;
 }
@@ -127,6 +163,9 @@ ${physicalLayoutNode(normalizedLayout(hardwareLayout(hw)), hw.name, hw.displayNa
 function halfOverlay(hw: KeyboardHardware, side: Side): string {
   const parts = [`/* ${note(hw)} */`, `#include "${hw.name}.dtsi"`];
   if (side === 'right') parts.push(`&default_transform {\n    col-offset = <${halfSize(hw, 'left').cols}>;\n};`);
+  for (const { index } of sensorOrder(hw).filter((s) => s.side === side)) {
+    parts.push(`&${sensorLabel(side, index)} {\n    status = "okay";\n};`);
+  }
   parts.push(`&kscan0 {\n${kscanPins(hw, side, '    ')}\n};`);
   return `${parts.join('\n\n')}\n`;
 }

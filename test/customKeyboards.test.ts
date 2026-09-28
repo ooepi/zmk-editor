@@ -27,19 +27,25 @@ const split: KeyboardHardware = (() => {
     ...hw,
     wiring: { kind: 'matrix', diodeDirection: 'col2row', rows: [4, 5, 6, 7], cols: [21, 20, 19, 18, 15, 14] },
     keys,
+    // One encoder per half; the right one mirrors it (A and B swapped).
+    encoders: [{ a: 8, b: 9 }],
   };
 })();
 
-/** A 5×4 numpad, ROW2COL, one piece. */
+/** A 5×4 numpad, ROW2COL, one piece, with one encoder. */
 const numpad: KeyboardHardware = {
   ...gridHardware({ ...DEFAULT_BASICS, name: 'editor_numpad', displayName: 'Editor Numpad', controller: 'puchi_ble_v1', split: false, rows: 5, cols: 4, diodeDirection: 'row2col' }),
   wiring: { kind: 'matrix', diodeDirection: 'row2col', rows: [2, 3, 4, 5, 6], cols: [7, 8, 9, 10] },
+  encoders: [{ a: 14, b: 15 }],
 };
 
 /** A 2×3 direct-wired split whose right half has its own pins. */
 const duo: KeyboardHardware = {
   ...gridHardware({ ...DEFAULT_BASICS, name: 'editor_duo', displayName: 'Editor Duo', controller: 'bluemicro840_v1', wiring: 'direct', rows: 2, cols: 3 }),
   wiring: { kind: 'direct', pins: [2, 3, 4, 5, 6, 7], right: [21, 20, 19, 18, 15, 14] },
+  // An encoder on the left half only: the right half has its own (empty) list.
+  encoders: [{ a: 8, b: 9 }],
+  rightEncoders: [],
 };
 
 // Built with ZMK in CI (.github/workflows/firmware.yml). Update with `npx vitest run -u`.

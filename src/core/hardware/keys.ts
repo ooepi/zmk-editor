@@ -73,3 +73,26 @@ export function deleteKeys(hw: KeyboardHardware, indices: number[]): KeyboardHar
   const gone = new Set(indices);
   return { ...hw, keys: hw.keys.filter((_, i) => !gone.has(i)) };
 }
+
+/**
+ * Moves every layer's sensor bindings to a new encoder list. `newToOld[i]` is the
+ * old index of sensor `i`, or undefined for a new encoder (volume on the base
+ * layer, `&trans` elsewhere). No encoders left: the bindings are removed.
+ */
+export function remapSensors(model: KeymapModel, newToOld: (number | undefined)[]): KeymapModel {
+  const layers = model.layers.map((layer, li) => {
+    const next = { ...layer };
+    if (newToOld.length === 0) {
+      delete next.sensorBindings;
+      return next;
+    }
+    const old = layer.sensorBindings ?? [];
+    next.sensorBindings = newToOld.map((o) => {
+      const kept = o === undefined ? undefined : old[o];
+      if (kept) return kept;
+      return li === 0 ? { behavior: 'inc_dec_kp', params: ['C_VOL_UP', 'C_VOL_DN'] } : trans();
+    });
+    return next;
+  });
+  return { ...model, layers };
+}

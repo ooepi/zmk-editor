@@ -38,6 +38,12 @@ export interface DirectWiring {
 
 export type Wiring = MatrixWiring | DirectWiring;
 
+/** An EC11 rotary encoder's two signal pins; its push button is an ordinary key in the matrix. */
+export interface Encoder {
+  a: Pin;
+  b: Pin;
+}
+
 /** A keyboard designed in the editor; its ZMK shield is generated from this. */
 export interface KeyboardHardware {
   /** Shield id: lowercase letters, digits and `_`, e.g. `my_split`. */
@@ -50,6 +56,10 @@ export interface KeyboardHardware {
   wiring: Wiring;
   /** In keymap order. */
   keys: HardwareKey[];
+  /** Encoders on the left half (or the only half). */
+  encoders?: Encoder[];
+  /** The right half's own encoders; without it the right half mirrors the left's, with A and B swapped. */
+  rightEncoders?: Encoder[];
 }
 
 /** The keys' positions as a physical layout. */

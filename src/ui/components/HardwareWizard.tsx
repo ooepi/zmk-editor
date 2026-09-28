@@ -1,10 +1,11 @@
 import { useState, type Dispatch } from 'react';
 import type { ZmkConfig } from '../../core/config.ts';
 import { applyHardware, newHardwareConfig } from '../../core/hardware/config.ts';
+import { addEncoder, carryEncoderOrigins, removeEncoder, sensorOrder } from '../../core/hardware/encoders.ts';
 import { basicsOf, DEFAULT_BASICS, gridHardware, type HardwareBasics } from '../../core/hardware/grid.ts';
 import type { KeyboardHardware } from '../../core/hardware/types.ts';
 import { hasErrors, validateBasics, validateHardware } from '../../core/hardware/validate.ts';
-import { resizeMatrix } from '../../core/hardware/wiring.ts';
+import { halfEncoders, resizeMatrix } from '../../core/hardware/wiring.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
 import { HardwareBasicsStep } from './HardwareBasicsStep.tsx';
 import { HardwareLayoutStep } from './HardwareLayoutStep.tsx';
@@ -15,6 +16,8 @@ import { HardwareWiringStep } from './HardwareWiringStep.tsx';
 export interface HardwareDraft {
   hw: KeyboardHardware;
   origins: (number | undefined)[];
+  /** Per encoder (in sensor order), its index before this edit (undefined for new encoders). */
+  encoderOrigins: (number | undefined)[];
 }
 
 const STEPS = ['Basics', 'Wiring', 'Layout', 'Review'];
@@ -25,12 +28,14 @@ const shapeOf = (b: HardwareBasics) => `${b.split}|${b.rows}|${b.cols}|${b.wirin
 function anyPin(hw: KeyboardHardware): boolean {
   const w = hw.wiring;
   const pins = w.kind === 'direct' ? [...w.pins, ...(w.right ?? [])] : [...w.rows, ...w.cols, ...(w.right ? [...w.right.rows, ...w.right.cols] : [])];
+  const encoderPins = [...halfEncoders(hw, 'left'), ...halfEncoders(hw, 'right')].flatMap((e) => [e.a, e.b]);
+  if (encoderPins.some((p) => p !== null)) return true;
   return pins.some((p) => p !== null);
 }
 
 function freshDraft(basics: HardwareBasics): HardwareDraft {
   const hw = gridHardware(basics);
-  return { hw, origins: hw.keys.map(() => undefined) };
+  return { hw, origins: hw.keys.map(() => undefined), encoderOrigins: [] };
 }
 
 /** Whether the keys still match a freshly generated grid of `hw`'s own shape, i.e. untouched. */
@@ -54,7 +59,9 @@ export function HardwareWizard({ config, dispatch, mode, onDone, onCancel }: Pro
   const [step, setStep] = useState(0);
   const [basics, setBasics] = useState<HardwareBasics>(() => (existing ? basicsOf(existing) : DEFAULT_BASICS));
   const [draft, setDraft] = useState<HardwareDraft>(() =>
-    existing ? { hw: existing, origins: existing.keys.map((_, i) => i) } : freshDraft(DEFAULT_BASICS),
+    existing
+      ? { hw: existing, origins: existing.keys.map((_, i) => i), encoderOrigins: sensorOrder(existing).map((_, i) => i) }
+      : freshDraft(DEFAULT_BASICS),
   );
   const [shape, setShape] = useState(() => shapeOf(basics));
   const basicsIssues = validateBasics(basics);
@@ -84,7 +91,7 @@ export function HardwareWizard({ config, dispatch, mode, onDone, onCancel }: Pro
         onCancel();
         return;
       }
-      const { config: next, notes } = applyHardware(config, draft.hw, draft.origins);
+      const { config: next, notes } = applyHardware(config, draft.hw, draft.origins, draft.encoderOrigins);
       dispatch({ type: 'editConfig', config: next, notice: ['Saved the keyboard’s hardware.', ...notes].join(' ') });
     } else {
       if (!window.confirm(`Start a new config for ${draft.hw.displayName}? This replaces what's in the editor (your repo is untouched until you commit).`)) return;
@@ -113,7 +120,21 @@ export function HardwareWizard({ config, dispatch, mode, onDone, onCancel }: Pro
       </div>
       <section className="wizard-card" aria-label={STEPS[step]}>
         {step === 0 && <HardwareBasicsStep basics={basics} editing={Boolean(existing)} issues={basicsIssues} onChange={setBasics} />}
-        {step === 1 && <HardwareWiringStep hw={draft.hw} issues={issues.filter((i) => i.area === 'wiring')} onChange={(hw) => setDraft({ ...draft, hw })} />}
+        {step === 1 && (
+          <HardwareWiringStep
+            hw={draft.hw}
+            issues={issues.filter((i) => i.area === 'wiring')}
+            onChange={(hw) => setDraft({ ...draft, hw, encoderOrigins: carryEncoderOrigins(draft.hw, hw, draft.encoderOrigins) })}
+            onAddEncoder={(side) => {
+              const next = addEncoder({ hw: draft.hw, origins: draft.encoderOrigins }, side);
+              setDraft({ ...draft, hw: next.hw, encoderOrigins: next.origins });
+            }}
+            onRemoveEncoder={(side, index) => {
+              const next = removeEncoder({ hw: draft.hw, origins: draft.encoderOrigins }, side, index);
+              setDraft({ ...draft, hw: next.hw, encoderOrigins: next.origins });
+            }}
+          />
+        )}
         {step === 2 && <HardwareLayoutStep draft={draft} issues={issues.filter((i) => i.area === 'keys')} onChange={setDraft} />}
         {step === 3 && <HardwareReviewStep hw={draft.hw} issues={issues} />}
       </section>
