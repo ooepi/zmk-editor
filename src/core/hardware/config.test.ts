@@ -80,4 +80,20 @@ describe('configs with a designed keyboard', () => {
     expect(next.hardware).toBe(edited);
     expect(notes).toEqual([]);
   });
+  it('starts encoders on volume, and keeps their bindings when hardware is edited', () => {
+    const withEncoder = { ...testSplit, encoders: [{ a: 8, b: 9 }] };
+    const start = newHardwareConfig(withEncoder, 'v0.3');
+    expect(start.keymap.layers[0]?.sensorBindings?.map(formatBinding)).toEqual(['&inc_dec_kp C_VOL_UP C_VOL_DN', '&inc_dec_kp C_VOL_UP C_VOL_DN']);
+    const custom = { ...start, keymap: { ...start.keymap, layers: start.keymap.layers.map((l) => ({ ...l, sensorBindings: [{ behavior: 'inc_dec_kp', params: ['PG_UP', 'PG_DN'] }, { behavior: 'inc_dec_kp', params: ['C_VOL_UP', 'C_VOL_DN'] }] })) } };
+    // Add a second left encoder (and its mirror): sensor order left 0, left 1, right 0, right 1.
+    const two = { ...withEncoder, encoders: [{ a: 8, b: 9 }, { a: 10, b: 16 }] };
+    const { config } = applyHardware(custom, two, testSplit.keys.map((_, i) => i), [0, undefined, 1, undefined]);
+    expect(config.keymap.layers[0]?.sensorBindings?.map(formatBinding)).toEqual([
+      '&inc_dec_kp PG_UP PG_DN',
+      '&inc_dec_kp C_VOL_UP C_VOL_DN',
+      '&inc_dec_kp C_VOL_UP C_VOL_DN',
+      '&inc_dec_kp C_VOL_UP C_VOL_DN',
+    ]);
+    expect(importConfig(generateConfig(config)).config).toEqual(config);
+  });
 });

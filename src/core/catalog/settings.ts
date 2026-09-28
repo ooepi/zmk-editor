@@ -1,5 +1,6 @@
 import type { ZmkConfig } from '../config.ts';
 import { readKconfigValue, writeKconfigValue, type KconfigModel } from '../files/kconfig.ts';
+import { sensorOrder } from '../hardware/encoders.ts';
 import type { Binding } from '../keymap/model.ts';
 
 export type SettingType =
@@ -265,6 +266,7 @@ export function unsupportedHardwareSettings(config: ZmkConfig): UnsupportedSetti
 /** Whether a setting needs hardware this designed keyboard doesn't have (always false for catalog keyboards). */
 export function lacksHardwareFor(config: ZmkConfig, name: string): boolean {
   if (!config.hardware || !HARDWARE_FEATURES.some((f) => f.name === name)) return false;
+  if (name === 'EC11') return sensorOrder(config.hardware).length === 0;
   return name !== 'ZMK_DISPLAY' || !hasDisplayShield(config);
 }
 
@@ -276,7 +278,10 @@ function hasDisplayShield(config: ZmkConfig): boolean {
 export function settingWarnings(config: ZmkConfig): SettingWarning[] {
   const value = (name: string) => {
     const def = findSetting(name);
-    return def ? (readSetting(config.kconfig, def) ?? def.default) : undefined;
+    if (!def) return undefined;
+    const set = readSetting(config.kconfig, def);
+    if (set === undefined && name === 'EC11' && config.hardware && sensorOrder(config.hardware).length > 0) return true;
+    return set ?? def.default;
   };
   const { keys, sensors } = usedBehaviors(config);
   const warnings: SettingWarning[] = unsupportedHardwareSettings(config).map(({ name, message }) => ({ message, fix: { name, value: false } }));

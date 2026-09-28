@@ -137,4 +137,15 @@ describe('settings a designed keyboard has no hardware for', () => {
       fix: { name: 'ZMK_RGB_UNDERGLOW', value: false },
     });
   });
+  it('treats encoders as supported and on when the keyboard has them', () => {
+    const withEncoder = newHardwareConfig({ ...testSplit, encoders: [{ a: 8, b: 9 }] }, 'v0.3');
+    const def = findSetting('EC11');
+    if (!def) throw new Error('setting');
+    expect(unsupportedHardwareSettings({ ...withEncoder, kconfig: writeSetting(withEncoder.kconfig, def, true) })).toEqual([]);
+    // No line in the .conf: ZMK turns EC11 on for the enabled encoder nodes, so no warning.
+    expect(settingWarnings(withEncoder).some((w) => w.fix?.name === 'EC11')).toBe(false);
+    // Written off explicitly: the encoders wouldn't work, so offer to turn it on.
+    const off = { ...withEncoder, kconfig: writeSetting(withEncoder.kconfig, def, false) };
+    expect(settingWarnings(off)).toContainEqual(expect.objectContaining({ fix: { name: 'EC11', value: true } }));
+  });
 });

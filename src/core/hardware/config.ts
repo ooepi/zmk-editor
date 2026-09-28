@@ -1,7 +1,8 @@
 import type { ZmkConfig } from '../config.ts';
 import type { BuildTarget } from '../files/build.ts';
 import { parseKconfig } from '../files/kconfig.ts';
-import { remapKeyPositions } from './keys.ts';
+import { sensorOrder } from './encoders.ts';
+import { remapKeyPositions, remapSensors } from './keys.ts';
 import { starterKeymap } from './starter.ts';
 import type { KeyboardHardware } from './types.ts';
 
@@ -27,12 +28,20 @@ export function newHardwareConfig(hw: KeyboardHardware, zmkVersion: string): Zmk
 
 /**
  * Applies edited hardware. `newToOld[i]` is the old index of key `i`
- * (undefined for added keys); the keymap and combos follow. The keyboard's
- * build targets move to the new controller, keeping their extra shields.
+ * (undefined for added keys), and `sensorNewToOld` the same for encoders
+ * in sensor order; the keymap, combos and sensor bindings follow. The
+ * keyboard's build targets move to the new controller, keeping their
+ * extra shields.
  */
-export function applyHardware(config: ZmkConfig, hw: KeyboardHardware, newToOld: (number | undefined)[]): { config: ZmkConfig; notes: string[] } {
-  const { model, notes } = remapKeyPositions(config.keymap, newToOld);
+export function applyHardware(
+  config: ZmkConfig,
+  hw: KeyboardHardware,
+  newToOld: (number | undefined)[],
+  sensorNewToOld: (number | undefined)[] = sensorOrder(hw).map((_, i) => i),
+): { config: ZmkConfig; notes: string[] } {
+  const remapped = remapKeyPositions(config.keymap, newToOld);
+  const model = remapSensors(remapped.model, sensorNewToOld);
   const shields = new Set(shieldNames(hw));
   const include = config.build.include.map((t) => (shields.has(t.shield?.split(' ')[0] ?? '') ? { ...t, board: hw.controller } : t));
-  return { config: { ...config, keymap: model, hardware: hw, build: { include } }, notes };
+  return { config: { ...config, keymap: model, hardware: hw, build: { include } }, notes: remapped.notes };
 }
