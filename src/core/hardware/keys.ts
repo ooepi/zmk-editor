@@ -1,4 +1,5 @@
 import type { Binding, Combo, KeymapModel } from '../keymap/model.ts';
+import { withSensorBindings } from '../keymap/sensorEdit.ts';
 import type { HardwareKey, KeyboardHardware, Side } from './types.ts';
 import { directPins, halfSize } from './wiring.ts';
 
@@ -81,18 +82,15 @@ export function deleteKeys(hw: KeyboardHardware, indices: number[]): KeyboardHar
  */
 export function remapSensors(model: KeymapModel, newToOld: (number | undefined)[]): KeymapModel {
   const layers = model.layers.map((layer, li) => {
-    const next = { ...layer };
-    if (newToOld.length === 0) {
-      delete next.sensorBindings;
-      return next;
-    }
+    // Layers without encoder bindings fall through in ZMK; leave them so.
+    if (li > 0 && !layer.sensorBindings) return layer;
     const old = layer.sensorBindings ?? [];
-    next.sensorBindings = newToOld.map((o) => {
+    const list = newToOld.map((o) => {
       const kept = o === undefined ? undefined : old[o];
       if (kept) return kept;
       return li === 0 ? { behavior: 'inc_dec_kp', params: ['C_VOL_UP', 'C_VOL_DN'] } : trans();
     });
-    return next;
+    return withSensorBindings(layer, list);
   });
   return { ...model, layers };
 }

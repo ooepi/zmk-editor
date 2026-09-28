@@ -4,6 +4,7 @@ import type { TextLayout } from '../layouts/types.ts';
 import { layoutKeyCount } from '../layouts/types.ts';
 import { formatBinding } from './bindings.ts';
 import { bindingLabel } from './labels.ts';
+import { sensorBindingsForZmk } from './sensorEdit.ts';
 import type { Behavior, Binding, Combo, KeymapModel, Layer } from './model.ts';
 import { behaviorKind } from './model.ts';
 
@@ -121,8 +122,10 @@ function printLayer(layer: Layer, layers: Layer[], layout: TextLayout | undefine
   for (const row of alignGrid(grid, layer.bindings.map(formatBinding), 0, false)) lines.push(`${INDENT.repeat(4)}${row}`);
   lines.push(`${inner}>;`);
 
-  if (layer.sensorBindings) {
-    lines.push('', `${inner}sensor-bindings = <${layer.sensorBindings.map(formatBinding).join(' ')}>;`);
+  // Written the way ZMK can compile them: no &trans/&none (see sensorBindingsForZmk).
+  const sensorBindings = sensorBindingsForZmk({ layers })[layers.indexOf(layer)];
+  if (sensorBindings) {
+    lines.push('', `${inner}sensor-bindings = <${sensorBindings.map(formatBinding).join(' ')}>;`);
   }
   lines.push(`${pad}};`);
   return lines.join('\n');

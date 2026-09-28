@@ -177,3 +177,23 @@ describe('Build tab with settings the designed keyboard can’t support', () => 
     expect(screen.getByRole('button', { name: 'Commit & build' })).toHaveProperty('disabled', true);
   });
 });
+
+describe('Build tab with an encoder gap ZMK can’t express', () => {
+  it('blocks the commit and says which encoder needs a binding', async () => {
+    const config = newHardwareConfig({ ...testPad, encoders: [{ a: 8, b: 9 }, { a: 10, b: 16 }] }, 'v0.3');
+    config.keymap = {
+      ...config.keymap,
+      layers: config.keymap.layers.map((l) => ({ ...l, sensorBindings: [{ behavior: 'trans', params: [] }, { behavior: 'inc_dec_kp', params: ['PG_UP', 'PG_DN'] }] })),
+    };
+    fake = new FakeGitHub(generateConfig(newHardwareConfig(testPad, 'v0.3')));
+    vi.stubGlobal('fetch', fake.fetch);
+    localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config }));
+
+    const user = userEvent.setup();
+    render(<App />);
+    await connect(user);
+    expect(await screen.findByText(/Encoder 1 has no binding on layer Base, but encoder 2 after it does/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Commit & build' })).toHaveProperty('disabled', true);
+  });
+});
+

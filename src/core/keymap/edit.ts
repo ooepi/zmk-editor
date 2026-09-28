@@ -93,8 +93,7 @@ export function addLayer(model: KeymapModel, displayName: string): KeymapModel {
     bindings: Array.from({ length: keyCount }, () => ({ behavior: 'trans', params: [] })),
     properties: [],
   };
-  const sensorCount = model.layers[0]?.sensorBindings?.length ?? 0;
-  if (sensorCount > 0) layer.sensorBindings = Array.from({ length: sensorCount }, () => ({ behavior: 'trans', params: [] }));
+  // No encoder bindings: encoders fall through to the layers below (ZMK can't list &trans for them).
   return { ...model, layers: [...model.layers, layer] };
 }
 
