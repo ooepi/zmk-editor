@@ -33,6 +33,8 @@ export function HardwareWiringStep({ hw, issues, onChange }: Props) {
   const [active, setActive] = useState<Slot | null>(null);
   const differently = hw.wiring.right !== undefined;
   const shown: (Side | undefined)[] = hw.split ? (differently ? ['left', 'right'] : ['left']) : [undefined];
+  const title = (side: Side | undefined) =>
+    side === 'right' ? 'Right half' : side === 'left' ? (differently ? 'Left half' : 'Left half (the right half mirrors it)') : undefined;
   return (
     <div className="wiring-step">
       <div className="stack">
@@ -61,22 +63,32 @@ export function HardwareWiringStep({ hw, issues, onChange }: Props) {
             columns sharing a pin.
           </p>
         )}
-        {shown.map((side) => (
-          <PinTables key={side ?? 'one'} hw={hw} side={side} active={active} onChange={onChange} onActivate={setActive} />
-        ))}
-        <HardwareIssueList issues={issues} />
       </div>
-      <ProMicroPinout
-        hw={hw}
-        side={active?.side}
-        label={active?.label}
-        onPick={(pin) => {
-          if (!active) return;
-          // Stale after "wired differently" was just unticked: don't quietly bring the right half's own pins back.
-          if (active.side === 'right' && hw.wiring.right === undefined) return;
-          onChange(setPin(hw, active.side, active.list, active.index, pin));
-        }}
-      />
+      <div className={`wiring-halves${shown.length > 1 ? ' two' : ''}`}>
+        {shown.map((side) => (
+          <section key={side ?? 'one'} className={`wiring-half${side === 'right' ? ' right' : ''}`} aria-label={title(side) ?? 'Pins'}>
+            {side && <h3 className="wiring-half-title">{title(side)}</h3>}
+            <div className="wiring-half-body">
+              <div className="wiring-tables">
+                <PinTables hw={hw} side={side} active={active} onChange={onChange} onActivate={setActive} />
+              </div>
+              <ProMicroPinout
+                hw={hw}
+                side={side}
+                label={active && active.side === side ? active.label : undefined}
+                onPick={(pin) => {
+                  // Each pinout fills fields of its own half only.
+                  if (!active || active.side !== side) return;
+                  // Stale after "wired differently" was just unticked: don't quietly bring the right half's own pins back.
+                  if (active.side === 'right' && hw.wiring.right === undefined) return;
+                  onChange(setPin(hw, active.side, active.list, active.index, pin));
+                }}
+              />
+            </div>
+          </section>
+        ))}
+      </div>
+      <HardwareIssueList issues={issues} />
     </div>
   );
 }
@@ -107,7 +119,7 @@ function PinTables({
     <>
       {lists.map(({ list, title, item, pins }) => (
         <fieldset key={list} className="fieldset">
-          <legend>{side ? `${prefix}half · ${title}` : title}</legend>
+          <legend>{title}</legend>
           <div className="pin-grid">
             {pins.map((pin, index) => {
               const id = `pin-${side ?? 'one'}-${list}-${index}`;

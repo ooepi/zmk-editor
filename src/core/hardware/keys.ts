@@ -66,5 +66,10 @@ export function addKey(hw: KeyboardHardware, side?: Side): KeyboardHardware {
 }
 
 export function deleteKey(hw: KeyboardHardware, index: number): KeyboardHardware {
-  return { ...hw, keys: hw.keys.filter((_, i) => i !== index) };
+  return deleteKeys(hw, [index]);
+}
+
+export function deleteKeys(hw: KeyboardHardware, indices: number[]): KeyboardHardware {
+  const gone = new Set(indices);
+  return { ...hw, keys: hw.keys.filter((_, i) => !gone.has(i)) };
 }

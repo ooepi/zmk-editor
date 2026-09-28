@@ -27,7 +27,8 @@ export function LayoutDesigner({ config, dispatch, onClose }: LayoutDesignerProp
   const { layouts } = usePreferences();
   const initial = physicalLayoutFor(config.keyboard, keyCount, layouts[config.keyboard], config.layout);
   const [draft, setDraft] = useState<PhysicalLayout>(() => ({ name: 'custom', keys: initial.keys.map((k) => ({ ...k })) }));
-  const [selected, setSelected] = useState<number | null>(0);
+  const [selection, setSelection] = useState<number[]>([0]);
+  const selected = selection.length === 1 ? (selection[0] ?? null) : null;
   const [dirty, setDirty] = useState(false);
   const labels = useMemo(() => {
     const ctx = displayContext(config.keymap);
@@ -54,15 +55,15 @@ export function LayoutDesigner({ config, dispatch, onClose }: LayoutDesignerProp
         <div className="designer-head">
           <h2 className="panel-title">Layout designer · {findKeyboard(config.keyboard)?.name ?? config.keyboard}</h2>
           <p className="muted small">
-            Drag keys (they snap to ¼ key) or select one and use the arrow keys (Shift: 1 key). Keys are numbered in keymap
-            order. This changes where keys are drawn, not how they’re wired: the {keyCount} keys stay the same.
+            Drag keys (they snap to ¼ key) or select one and use the arrow keys (Shift: 1 key). Ctrl/Shift-click or drag a box
+            to select several and move them together. Keys are numbered in keymap order. This changes where keys are drawn, not how they’re wired: the {keyCount} keys stay the same.
           </p>
         </div>
-        <DesignerCanvas layout={draft} labels={labels} selected={selected} onSelect={setSelected} onChange={update} />
+        <DesignerCanvas layout={draft} labels={labels} selection={selection} onSelectionChange={setSelection} onChange={update} />
       </div>
 
       <aside className="designer-panel" aria-label="Layout settings">
-        <TemplatePanel keyCount={keyCount} onApply={(layout) => { update(layout); setSelected(0); }} />
+        <TemplatePanel keyCount={keyCount} onApply={(layout) => { update(layout); setSelection([0]); }} />
 
         {key && selected !== null ? (
           <fieldset className="fieldset">
@@ -94,6 +95,8 @@ export function LayoutDesigner({ config, dispatch, onClose }: LayoutDesignerProp
               </button>
             </div>
           </fieldset>
+        ) : selection.length > 1 ? (
+          <p className="muted small">{selection.length} keys selected. Drag them or use the arrow keys to move them together.</p>
         ) : (
           <p className="muted small">Select a key to edit it.</p>
         )}

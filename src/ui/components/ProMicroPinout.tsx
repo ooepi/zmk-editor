@@ -39,7 +39,7 @@ export function ProMicroPinout({ hw, side, label, onPick }: Props) {
     </ul>
   );
   return (
-    <figure className="pinout" aria-label="Pro Micro pinout">
+    <figure className="pinout" aria-label={`Pro Micro pinout${side ? ` (${side} half)` : ''}`}>
       <figcaption className="muted small">
         Pins seen from above, USB at the top{side ? ` (${side} half)` : ''}.{' '}
         {label ? `Picking a pin for ${label}.` : 'Click a pin field, then a pin.'}

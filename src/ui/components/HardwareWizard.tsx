@@ -94,23 +94,36 @@ export function HardwareWizard({ config, dispatch, mode, onDone, onCancel }: Pro
   };
 
   return (
-    <div className="hardware-wizard">
-      <h2 className="panel-title">{existing ? `Edit hardware · ${existing.displayName}` : 'Design your own keyboard'}</h2>
-      <ol className="wizard-steps" aria-label="Steps">
-        {STEPS.map((name, i) => (
-          <li key={name} className={i === step ? 'active' : undefined} aria-current={i === step ? 'step' : undefined}>
-            {i + 1}. {name}
-          </li>
-        ))}
-      </ol>
-      {step === 0 && <HardwareBasicsStep basics={basics} editing={Boolean(existing)} issues={basicsIssues} onChange={setBasics} />}
-      {step === 1 && <HardwareWiringStep hw={draft.hw} issues={issues.filter((i) => i.area === 'wiring')} onChange={(hw) => setDraft({ ...draft, hw })} />}
-      {step === 2 && <HardwareLayoutStep draft={draft} issues={issues.filter((i) => i.area === 'keys')} onChange={setDraft} />}
-      {step === 3 && <HardwareReviewStep hw={draft.hw} issues={issues} />}
-      <div className="row">
+    <div className={`hardware-wizard${step === 0 || step === 3 ? ' narrow' : ''}`}>
+      <div className="wizard-head">
+        <h2 className="panel-title">{existing ? `Edit hardware · ${existing.displayName}` : 'Design your own keyboard'}</h2>
+        <ol className="wizard-steps" aria-label="Steps">
+          {STEPS.map((name, i) => (
+            <li key={name} className={i === step ? 'active' : i < step ? 'done' : undefined} aria-current={i === step ? 'step' : undefined}>
+              {i < step ? (
+                <button type="button" className="wizard-step-button" onClick={() => setStep(i)}>
+                  {i + 1}. {name}
+                </button>
+              ) : (
+                `${i + 1}. ${name}`
+              )}
+            </li>
+          ))}
+        </ol>
+      </div>
+      <section className="wizard-card" aria-label={STEPS[step]}>
+        {step === 0 && <HardwareBasicsStep basics={basics} editing={Boolean(existing)} issues={basicsIssues} onChange={setBasics} />}
+        {step === 1 && <HardwareWiringStep hw={draft.hw} issues={issues.filter((i) => i.area === 'wiring')} onChange={(hw) => setDraft({ ...draft, hw })} />}
+        {step === 2 && <HardwareLayoutStep draft={draft} issues={issues.filter((i) => i.area === 'keys')} onChange={setDraft} />}
+        {step === 3 && <HardwareReviewStep hw={draft.hw} issues={issues} />}
+      </section>
+      <div className="wizard-footer">
         <button type="button" className="button" onClick={step === 0 ? onCancel : () => setStep(step - 1)}>
           {step === 0 ? 'Cancel' : 'Back'}
         </button>
+        <span className="muted small">
+          Step {step + 1} of {STEPS.length}
+        </span>
         {step < 3 ? (
           <button type="button" className="button primary" disabled={step === 0 && hasErrors(basicsIssues)} onClick={step === 0 ? leaveBasics : () => setStep(step + 1)}>
             Next

@@ -1,5 +1,6 @@
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { layoutBounds, type PhysicalKey, type PhysicalLayout } from '../../core/layouts/index.ts';
+import { keysInBox, moveKeys, type Box } from '../../core/layouts/selection.ts';
 
 const SNAP = 25;
 const MARGIN = 150;
@@ -72,29 +73,43 @@ export function RotationField({ value, onChange }: { value: number; onChange: (v
   return <LiveNumberField label="Rotation (°)" value={value} step={1} scale={1} min={-360} max={360} onChange={onChange} />;
 }
 
+/**
+ * Keys to move around. Click selects a key; Ctrl/Shift/⌘-click adds or removes
+ * keys; dragging on an empty spot selects every key the box touches. Dragging
+ * a selected key or pressing the arrow keys moves the whole selection.
+ */
 export function DesignerCanvas({
   layout,
   labels,
-  selected,
-  onSelect,
+  selection,
+  onSelectionChange,
   onChange,
+  onDelete,
   flagged,
 }: {
   layout: PhysicalLayout;
   labels: string[];
-  selected: number | null;
-  onSelect: (index: number) => void;
+  /** Selected key indices. */
+  selection: number[];
+  onSelectionChange: (indices: number[]) => void;
   onChange: (layout: PhysicalLayout) => void;
+  /** Delete/Backspace removes the selected keys, when the caller allows it. */
+  onDelete?: (indices: number[]) => void;
   flagged?: Set<number>;
 }) {
   const svg = useRef<SVGSVGElement>(null);
-  const drag = useRef<{ index: number; startX: number; startY: number; key: PhysicalKey } | null>(null);
+  // Keys being dragged, with the layout as it was when the drag started.
+  const drag = useRef<{ indices: number[]; startX: number; startY: number; keys: PhysicalKey[] } | null>(null);
+  // A pointer press on a key is handled there; the focus it causes must not change the selection again.
+  const pressing = useRef(false);
+  const [marquee, setMarquee] = useState<{ box: Box; additive: boolean } | null>(null);
   // The view box is fixed while dragging so the canvas doesn't rescale under the pointer.
   const [frozenBox, setFrozenBox] = useState<string | null>(null);
   const bounds = layoutBounds(layout);
   const minX = Math.min(0, ...layout.keys.map((k) => k.x)) - MARGIN;
   const minY = Math.min(0, ...layout.keys.map((k) => k.y)) - MARGIN;
   const box = frozenBox ?? `${minX} ${minY} ${bounds.width - minX + MARGIN} ${bounds.height - minY + MARGIN}`;
+  const selected = new Set(selection);
 
   const toSvg = (event: PointerEvent) => {
     // getScreenCTM is missing outside real browsers (e.g. jsdom in tests).
@@ -107,22 +122,35 @@ export function DesignerCanvas({
     return point.matrixTransform(matrix);
   };
 
-  const moveKey = (index: number, dx: number, dy: number) => {
-    const key = layout.keys[index];
-    if (!key) return;
-    const moved = { ...key, x: key.x + dx, y: key.y + dy };
-    // A rotated key's origin moves with it.
-    if (key.r) Object.assign(moved, { rx: key.rx + dx, ry: key.ry + dy });
-    onChange({ ...layout, keys: layout.keys.map((k, i) => (i === index ? moved : k)) });
-  };
-
   const onKeyDown = (event: KeyboardEvent, index: number) => {
+    const moving = selected.has(index) ? selection : [index];
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      onSelectionChange([]);
+      return;
+    }
+    if ((event.key === 'Delete' || event.key === 'Backspace') && onDelete) {
+      event.preventDefault();
+      onDelete(moving);
+      return;
+    }
     const step = event.shiftKey ? 100 : SNAP;
     const moves: Record<string, [number, number]> = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
     const move = moves[event.key];
     if (!move) return;
     event.preventDefault();
-    moveKey(index, move[0], move[1]);
+    onChange({ ...layout, keys: moveKeys(layout.keys, moving, move[0], move[1]) });
+  };
+
+  const endPointer = () => {
+    if (marquee) {
+      const hits = keysInBox(layout.keys, marquee.box);
+      onSelectionChange(marquee.additive ? [...new Set([...selection, ...hits])] : hits);
+    }
+    drag.current = null;
+    pressing.current = false;
+    setMarquee(null);
+    setFrozenBox(null);
   };
 
   return (
@@ -132,18 +160,33 @@ export function DesignerCanvas({
       viewBox={box}
       role="group"
       aria-label="Layout canvas"
+      onPointerDown={(event) => {
+        // Only presses on the empty canvas start a selection box; keys handle their own.
+        if (event.target !== event.currentTarget) return;
+        const p = toSvg(event);
+        if (!p) {
+          if (!event.ctrlKey && !event.metaKey && !event.shiftKey) onSelectionChange([]);
+          return;
+        }
+        event.currentTarget.setPointerCapture?.(event.pointerId);
+        setMarquee({ box: { x1: p.x, y1: p.y, x2: p.x, y2: p.y }, additive: event.ctrlKey || event.metaKey || event.shiftKey });
+        setFrozenBox(box);
+      }}
       onPointerMove={(event) => {
+        const p = (drag.current || marquee) && toSvg(event);
+        if (!p) return;
+        if (marquee) {
+          setMarquee({ ...marquee, box: { ...marquee.box, x2: p.x, y2: p.y } });
+          return;
+        }
         const d = drag.current;
-        const p = d && toSvg(event);
-        if (!d || !p) return;
-        const dx = snap(p.x - d.startX) - (layout.keys[d.index]?.x ?? 0) + d.key.x;
-        const dy = snap(p.y - d.startY) - (layout.keys[d.index]?.y ?? 0) + d.key.y;
-        if (dx || dy) moveKey(d.index, dx, dy);
+        if (!d) return;
+        const dx = snap(p.x - d.startX);
+        const dy = snap(p.y - d.startY);
+        onChange({ ...layout, keys: moveKeys(d.keys, d.indices, dx, dy) });
       }}
-      onPointerUp={() => {
-        drag.current = null;
-        setFrozenBox(null);
-      }}
+      onPointerUp={endPointer}
+      onPointerCancel={endPointer}
     >
       {layout.keys.map((key, index) => (
         <g
@@ -151,18 +194,30 @@ export function DesignerCanvas({
           role="button"
           tabIndex={0}
           aria-label={`Key ${index}: ${labels[index] ?? ''}`}
-          aria-pressed={selected === index}
-          className={`designer-key${selected === index ? ' selected' : ''}${flagged?.has(index) ? ' flagged' : ''}`}
+          aria-pressed={selected.has(index)}
+          className={`designer-key${selected.has(index) ? ' selected' : ''}${flagged?.has(index) ? ' flagged' : ''}`}
           transform={key.r ? `rotate(${key.r} ${key.rx} ${key.ry})` : undefined}
-          onFocus={() => onSelect(index)}
+          onFocus={() => {
+            // Tabbing to a key selects it; a click already chose the selection.
+            if (!pressing.current && !selected.has(index)) onSelectionChange([index]);
+          }}
           onKeyDown={(e) => onKeyDown(e, index)}
           onPointerDown={(event) => {
-            onSelect(index);
+            pressing.current = true;
+            if (event.ctrlKey || event.metaKey || event.shiftKey) {
+              onSelectionChange(selected.has(index) ? selection.filter((i) => i !== index) : [...selection, index]);
+              return;
+            }
+            const moving = selected.has(index) ? selection : [index];
+            if (!selected.has(index)) onSelectionChange(moving);
             const p = toSvg(event);
             if (!p) return;
             (event.target as Element).setPointerCapture?.(event.pointerId);
-            drag.current = { index, startX: p.x, startY: p.y, key: { ...key } };
+            drag.current = { indices: moving, startX: p.x, startY: p.y, keys: layout.keys };
             setFrozenBox(box);
+          }}
+          onPointerUp={() => {
+            if (!drag.current) pressing.current = false;
           }}
         >
           <rect x={key.x + 4} y={key.y + 4} width={key.w - 8} height={key.h - 8} rx={10} />
@@ -174,6 +229,15 @@ export function DesignerCanvas({
           </text>
         </g>
       ))}
+      {marquee && (
+        <rect
+          className="designer-marquee"
+          x={Math.min(marquee.box.x1, marquee.box.x2)}
+          y={Math.min(marquee.box.y1, marquee.box.y2)}
+          width={Math.abs(marquee.box.x2 - marquee.box.x1)}
+          height={Math.abs(marquee.box.y2 - marquee.box.y1)}
+        />
+      )}
     </svg>
   );
 }

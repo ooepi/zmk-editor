@@ -32,7 +32,7 @@ export function hardwareName(displayName: string): string {
 }
 
 /** Key units between the halves. */
-const GAP = 2;
+const GAP = 4;
 
 /** A rows × columns keyboard (per half), each key on its own matrix position or input, no pins picked yet. */
 export function gridHardware(b: HardwareBasics): KeyboardHardware {

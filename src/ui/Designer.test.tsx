@@ -21,6 +21,21 @@ async function openDesigner(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('Layout designer', () => {
+  it('moves several selected keys together', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await openDesigner(user);
+    await user.click(within(screen.getByRole('group', { name: 'Layout canvas' })).getByRole('button', { name: /^Key 0:/ }));
+    await user.keyboard('{Control>}');
+    await user.click(within(screen.getByRole('group', { name: 'Layout canvas' })).getByRole('button', { name: /^Key 1:/ }));
+    await user.keyboard('{/Control}');
+    expect(screen.getByText(/2 keys selected/)).toBeTruthy();
+    const before = [rect(0)?.getAttribute('y'), rect(1)?.getAttribute('y')].map(Number);
+    within(screen.getByRole('group', { name: 'Layout canvas' })).getByRole('button', { name: /^Key 0:/ }).focus();
+    await user.keyboard('{ArrowDown}');
+    expect([rect(0)?.getAttribute('y'), rect(1)?.getAttribute('y')].map(Number)).toEqual(before.map((y) => y + 25));
+  });
+
   it('starts from the current layout with every key', async () => {
     const user = userEvent.setup();
     render(<App />);
