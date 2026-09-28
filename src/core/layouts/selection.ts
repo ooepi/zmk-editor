@@ -1,4 +1,4 @@
-import type { PhysicalKey } from './types.ts';
+import { keyBounds, type PhysicalKey } from './types.ts';
 
 /** A rectangle given by two opposite corners, in either order (1/100 key units). */
 export interface Box {
@@ -6,25 +6,6 @@ export interface Box {
   y1: number;
   x2: number;
   y2: number;
-}
-
-/** The axis-aligned outline of a key, rotated around (rx, ry) when it has a rotation. */
-function keyBounds(k: PhysicalKey): { left: number; top: number; right: number; bottom: number } {
-  const corners = [
-    [k.x, k.y],
-    [k.x + k.w, k.y],
-    [k.x, k.y + k.h],
-    [k.x + k.w, k.y + k.h],
-  ].map(([x = 0, y = 0]) => {
-    if (!k.r) return [x, y] as const;
-    const a = (k.r * Math.PI) / 180;
-    const dx = x - k.rx;
-    const dy = y - k.ry;
-    return [k.rx + dx * Math.cos(a) - dy * Math.sin(a), k.ry + dx * Math.sin(a) + dy * Math.cos(a)] as const;
-  });
-  const xs = corners.map(([x]) => x);
-  const ys = corners.map(([, y]) => y);
-  return { left: Math.min(...xs), top: Math.min(...ys), right: Math.max(...xs), bottom: Math.max(...ys) };
 }
 
 /** Indices of the keys whose outline overlaps the box. */

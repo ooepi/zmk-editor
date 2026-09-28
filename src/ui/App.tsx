@@ -20,6 +20,8 @@ import { LayoutDesigner } from './components/LayoutDesigner.tsx';
 import { LayerBar } from './components/LayerBar.tsx';
 import { PrintView } from './components/PrintView.tsx';
 import { SelectionPanel } from './components/SelectionPanel.tsx';
+import { ThemeToggle } from './components/ThemeToggle.tsx';
+import { Icon } from './components/Icon.tsx';
 import { ModulesView } from './components/ModulesView.tsx';
 import { SettingsView } from './components/SettingsView.tsx';
 import { Toolbar } from './components/Toolbar.tsx';
@@ -202,14 +204,13 @@ export function App() {
             canUndo={state.past.length > 0}
             canRedo={state.future.length > 0}
             locked={view === 'newKeyboard' || view === 'editHardware'}
-            theme={theme}
-            onToggleTheme={toggleTheme}
             onPrint={() => setView('print')}
             dispatch={dispatch}
           />
           <div className="topbar-end">
+            <ThemeToggle theme={theme} onToggle={toggleTheme} />
             <button type="button" className="button help-button" aria-label="Open help" title="Help" onClick={() => openHelp()}>
-              ?
+              <Icon name="help" size={18} />
             </button>
             <a className="coffee-link" href="https://www.buymeacoffee.com/gristone" target="_blank" rel="noopener noreferrer">
               <span aria-hidden="true">☕</span> Buy me a coffee

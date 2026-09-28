@@ -6,9 +6,9 @@ import { generateKeymap } from '../../core/keymap/generator.ts';
 import { textLayoutFor } from '../../core/layouts/index.ts';
 import type { PublicRepo } from '../../core/github/publicRepo.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
+import { Icon } from './Icon.tsx';
 import { OpenFromGitHub } from './OpenFromGitHub.tsx';
 import { demoConfig } from '../state/demo.ts';
-import type { Theme } from '../useTheme.ts';
 
 interface ToolbarProps {
   config: ZmkConfig;
@@ -16,8 +16,6 @@ interface ToolbarProps {
   canRedo: boolean;
   /** True while the keyboard wizard has a draft of `config` open; undo, redo, opening files and resetting to the demo would change it behind the wizard's back. */
   locked?: boolean;
-  theme: Theme;
-  onToggleTheme: () => void;
   /** Opens the printable cheat sheet. */
   onPrint: () => void;
   dispatch: Dispatch<EditorAction>;
@@ -56,7 +54,7 @@ async function filesToConfig(files: File[], current: ZmkConfig): Promise<{ confi
   return importConfig(repo, keyboard);
 }
 
-export function Toolbar({ config, canUndo, canRedo, locked, theme, onToggleTheme, onPrint, dispatch }: ToolbarProps) {
+export function Toolbar({ config, canUndo, canRedo, locked, onPrint, dispatch }: ToolbarProps) {
   const fileInput = useRef<HTMLInputElement>(null);
   const lockedTitle = 'Finish or cancel the keyboard wizard first.';
 
@@ -109,6 +107,7 @@ export function Toolbar({ config, canUndo, canRedo, locked, theme, onToggleTheme
         onClick={() => dispatch({ type: 'undo' })}
         title={locked ? lockedTitle : 'Undo (Ctrl+Z)'}
       >
+        <Icon name="undo" />
         Undo
       </button>
       <button
@@ -118,6 +117,7 @@ export function Toolbar({ config, canUndo, canRedo, locked, theme, onToggleTheme
         onClick={() => dispatch({ type: 'redo' })}
         title={locked ? lockedTitle : 'Redo (Ctrl+Shift+Z)'}
       >
+        <Icon name="redo" />
         Redo
       </button>
       <span className="toolbar-sep" />
@@ -128,6 +128,7 @@ export function Toolbar({ config, canUndo, canRedo, locked, theme, onToggleTheme
         onClick={() => fileInput.current?.click()}
         title={locked ? lockedTitle : 'Pick your .keymap, and optionally its .conf, west.yml, build.yaml and .editor.json'}
       >
+        <Icon name="open" />
         Open files
       </button>
       <input
@@ -145,20 +146,20 @@ export function Toolbar({ config, canUndo, canRedo, locked, theme, onToggleTheme
       />
       <OpenFromGitHub disabled={locked} title={locked ? lockedTitle : undefined} onOpened={openRepo} />
       <button type="button" className="button" onClick={downloadKeymap}>
+        <Icon name="download" />
         Download .keymap
       </button>
       <button type="button" className="button" onClick={downloadZip} title="Keymap, .conf, west.yml, build.yaml and the build workflow">
+        <Icon name="archive" />
         Download config (.zip)
       </button>
       <button type="button" className="button" disabled={locked} onClick={onPrint} title={locked ? lockedTitle : 'A cheat sheet of every layer, to print or save as PDF'}>
+        <Icon name="print" />
         Print keymap
       </button>
       <button type="button" className="button" disabled={locked} onClick={resetDemo} title={locked ? lockedTitle : undefined}>
+        <Icon name="reset" />
         Reset to demo
-      </button>
-      <span className="toolbar-sep" />
-      <button type="button" className="button" onClick={onToggleTheme}>
-        {theme === 'dark' ? 'Light theme' : 'Dark theme'}
       </button>
     </div>
   );

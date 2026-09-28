@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { GitHubClient } from '../../core/github/client.ts';
 import { openPublicRepo, parseRepoInput, type PublicRepo } from '../../core/github/publicRepo.ts';
+import { Icon } from './Icon.tsx';
 
 interface OpenFromGitHubProps {
   disabled?: boolean | undefined;
@@ -52,6 +53,7 @@ export function OpenFromGitHub({ disabled, title, onOpened }: OpenFromGitHubProp
         title={title ?? 'Open a public zmk-config repository without logging in'}
         onClick={() => (open ? close() : setOpen(true))}
       >
+        <Icon name="github" />
         Open from GitHub
       </button>
       {open && (

@@ -1,7 +1,7 @@
 import { useMemo, useState, type CSSProperties, type PointerEvent } from 'react';
 import { describeBinding, displayContext } from '../../core/keymap/display.ts';
 import type { KeymapModel } from '../../core/keymap/model.ts';
-import { layoutBounds, type PhysicalLayout } from '../../core/layouts/index.ts';
+import { layoutExtent, type PhysicalLayout } from '../../core/layouts/index.ts';
 import { keysInBox, type Box } from '../../core/layouts/selection.ts';
 import { Keycap, type KeyDropHandlers } from './Keycap.tsx';
 
@@ -42,9 +42,13 @@ export function KeyboardCanvas({
   }, [keymap, layer]);
   const selected = new Set(selection);
 
-  const bounds = layoutBounds(layout);
-  const width = bounds.width + 2 * MARGIN;
-  const height = bounds.height + 2 * MARGIN;
+  // Keys can sit left of or above 0 (rotated thumb keys, moved keys): draw from the real extent.
+  const extent = layoutExtent(layout);
+  const width = extent.width + 2 * MARGIN;
+  const height = extent.height + 2 * MARGIN;
+  /** Where layout x/y = 0 is on the canvas, in layout units. */
+  const originX = MARGIN - extent.left;
+  const originY = MARGIN - extent.top;
   const style = {
     aspectRatio: `${width} / ${height}`,
     '--ratio': width / height,
@@ -55,8 +59,8 @@ export function KeyboardCanvas({
   const toLayout = (event: PointerEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
     return {
-      x: ((event.clientX - rect.left) / rect.width) * width - MARGIN,
-      y: ((event.clientY - rect.top) / rect.height) * height - MARGIN,
+      x: ((event.clientX - rect.left) / rect.width) * width - originX,
+      y: ((event.clientY - rect.top) / rect.height) * height - originY,
     };
   };
 
@@ -91,8 +95,8 @@ export function KeyboardCanvas({
         const label = labels[index];
         if (!label) return null;
         const keyStyle: CSSProperties = {
-          left: `${((key.x + MARGIN) / width) * 100}%`,
-          top: `${((key.y + MARGIN) / height) * 100}%`,
+          left: `${((key.x + originX) / width) * 100}%`,
+          top: `${((key.y + originY) / height) * 100}%`,
           width: `${(key.w / width) * 100}%`,
           height: `${(key.h / height) * 100}%`,
         };
@@ -118,8 +122,8 @@ export function KeyboardCanvas({
           className="select-box"
           aria-hidden="true"
           style={{
-            left: `${((Math.min(marquee.box.x1, marquee.box.x2) + MARGIN) / width) * 100}%`,
-            top: `${((Math.min(marquee.box.y1, marquee.box.y2) + MARGIN) / height) * 100}%`,
+            left: `${((Math.min(marquee.box.x1, marquee.box.x2) + originX) / width) * 100}%`,
+            top: `${((Math.min(marquee.box.y1, marquee.box.y2) + originY) / height) * 100}%`,
             width: `${(Math.abs(marquee.box.x2 - marquee.box.x1) / width) * 100}%`,
             height: `${(Math.abs(marquee.box.y2 - marquee.box.y1) / height) * 100}%`,
           }}
