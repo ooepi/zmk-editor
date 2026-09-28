@@ -2,6 +2,8 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { generateConfig, importConfig } from '../src/core/config.ts';
 import { newHardwareConfig } from '../src/core/hardware/config.ts';
+import { addLayer } from '../src/core/keymap/edit.ts';
+import { setSensorBinding } from '../src/core/keymap/sensorEdit.ts';
 import { DEFAULT_BASICS, gridHardware } from '../src/core/hardware/grid.ts';
 import type { KeyboardHardware } from '../src/core/hardware/types.ts';
 import { validateHardware } from '../src/core/hardware/validate.ts';
@@ -48,9 +50,20 @@ const duo: KeyboardHardware = {
   rightEncoders: [],
 };
 
+/**
+ * The split also gets a Nav layer without encoder bindings (they fall through)
+ * and an Fn layer binding only the first encoder: real ZMK must accept both,
+ * as &trans can't be listed in sensor-bindings.
+ */
+function withLayers(config: ReturnType<typeof newHardwareConfig>): ReturnType<typeof newHardwareConfig> {
+  if (config.keyboard !== 'editor_split') return config;
+  const layers = addLayer(addLayer(config.keymap, 'Nav'), 'Fn');
+  return { ...config, keymap: setSensorBinding(layers, 2, 0, { behavior: 'inc_dec_kp', params: ['PG_UP', 'PG_DN'] }) };
+}
+
 // Built with ZMK in CI (.github/workflows/firmware.yml). Update with `npx vitest run -u`.
 describe.each([split, numpad, duo])('designed keyboard $name', (hw) => {
-  const config = newHardwareConfig(hw, 'v0.3');
+  const config = withLayers(newHardwareConfig(hw, 'v0.3'));
 
   it('is valid and round-trips', () => {
     expect(validateHardware(hw).filter((i) => i.level === 'error')).toEqual([]);

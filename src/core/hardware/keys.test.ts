@@ -63,10 +63,14 @@ describe('remapSensors', () => {
   const pages = { behavior: 'inc_dec_kp', params: ['PG_UP', 'PG_DN'] };
   const model = { ...starterKeymap(pad), layers: [{ name: 'default_layer', bindings: [], properties: [], sensorBindings: [pages] }, { name: 'nav', bindings: [], properties: [] }] };
 
-  it('keeps bindings of kept encoders, gives new ones volume on the base layer and &trans elsewhere', () => {
+  it('keeps bindings of kept encoders, gives new ones volume on the base layer, and leaves other layers falling through', () => {
     const next = remapSensors(model, [undefined, 0]);
     expect(next.layers[0]?.sensorBindings).toEqual([volume, pages]);
-    expect(next.layers[1]?.sensorBindings).toEqual([{ behavior: 'trans', params: [] }, { behavior: 'trans', params: [] }]);
+    // ZMK can't list &trans in sensor-bindings; a layer without them falls through.
+    expect(next.layers[1]?.sensorBindings).toBeUndefined();
+    const withNav = { ...model, layers: model.layers.map((l, i) => (i === 1 ? { ...l, sensorBindings: [pages] } : l)) };
+    // A new encoder on a layer with its own bindings falls through there (a trailing entry is left out).
+    expect(remapSensors(withNav, [0, undefined]).layers[1]?.sensorBindings).toEqual([pages]);
   });
 
   it('removes sensor bindings when there are no encoders left', () => {

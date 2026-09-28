@@ -73,6 +73,8 @@ describe('layers', () => {
     expect(next.layers).toHaveLength(5);
     expect(next.layers[4]).toMatchObject({ name: 'nav_2', displayName: 'Nav' });
     expect(layerBindings(next, 4)).toEqual(['&trans', '&trans', '&trans', '&trans']);
+    // Encoders fall through on a new layer: ZMK can't list &trans in sensor-bindings.
+    expect(next.layers[4]?.sensorBindings).toBeUndefined();
   });
 
   it('renames a layer and its node name', () => {
