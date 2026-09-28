@@ -2,7 +2,7 @@ import { useMemo, type CSSProperties } from 'react';
 import { describeBinding, displayContext } from '../../core/keymap/display.ts';
 import type { KeymapModel } from '../../core/keymap/model.ts';
 import { layoutBounds, type PhysicalLayout } from '../../core/layouts/index.ts';
-import { Keycap } from './Keycap.tsx';
+import { Keycap, type KeyDropHandlers } from './Keycap.tsx';
 
 interface KeyboardCanvasProps {
   keymap: KeymapModel;
@@ -12,12 +12,14 @@ interface KeyboardCanvasProps {
   onSelectKey: (index: number) => void;
   /** Keys to mark, e.g. the keys of the selected combo. */
   highlighted?: ReadonlySet<number>;
+  /** Enables dragging keys and dropping palette tiles on them. */
+  drop?: KeyDropHandlers | undefined;
 }
 
 /** Margin around the keys (in layout units) so rotated thumb keys aren't clipped. */
 const MARGIN = 40;
 
-export function KeyboardCanvas({ keymap, layout, layer, selectedKey, onSelectKey, highlighted }: KeyboardCanvasProps) {
+export function KeyboardCanvas({ keymap, layout, layer, selectedKey, onSelectKey, highlighted, drop }: KeyboardCanvasProps) {
   const labels = useMemo(() => {
     const ctx = displayContext(keymap);
     return (keymap.layers[layer]?.bindings ?? []).map((binding) => describeBinding(binding, ctx));
@@ -52,6 +54,7 @@ export function KeyboardCanvas({ keymap, layout, layer, selectedKey, onSelectKey
             highlighted={highlighted?.has(index) ?? false}
             style={keyStyle}
             onSelect={onSelectKey}
+            drop={drop}
           />
         );
       })}

@@ -3,8 +3,9 @@ import {
   BEHAVIOR_GROUPS,
   behaviorCatalog,
   findBehavior,
+  offeredIn,
   type BehaviorDef,
-  type BehaviorGroup,
+  type BindingContext,
   type ParamType,
 } from '../../core/catalog/behaviors.ts';
 import { keyExpressionLabel } from '../../core/catalog/keycodes.ts';
@@ -14,15 +15,6 @@ import { changeBehavior } from '../../core/keymap/edit.ts';
 import type { Binding, KeymapModel } from '../../core/keymap/model.ts';
 import { KeycodePicker } from './KeycodePicker.tsx';
 import { UnicodePicker } from './UnicodePicker.tsx';
-
-/** Where a binding is used; decides which behaviors are offered. */
-export type BindingContext = 'key' | 'macro' | 'sensor';
-
-const CONTEXT_GROUPS: Record<BindingContext, (group: BehaviorGroup, ref: string) => boolean> = {
-  key: (group) => group !== 'macro' && group !== 'sensor',
-  macro: (group) => group !== 'sensor',
-  sensor: (group, ref) => group === 'sensor' || ref === 'trans' || ref === 'none',
-};
 
 const PARAM_NAMES: Record<string, string[]> = {
   mt: ['Hold (modifier)', 'Tap'],
@@ -51,7 +43,7 @@ interface BindingEditorProps {
 export function BindingEditor({ binding, keymap, context, onChange, label, shortcuts = false }: BindingEditorProps) {
   const catalog = useMemo(() => behaviorCatalog(keymap), [keymap]);
   const def = findBehavior(catalog, binding.behavior);
-  const offered = catalog.filter((d) => CONTEXT_GROUPS[context](d.group, d.ref));
+  const offered = catalog.filter((d) => offeredIn(context, d));
   const setParam = (index: number, token: string) => onChange({ ...binding, params: binding.params.with(index, token) });
   const keycodeParams = def ? def.params.flatMap((p, i) => (p.kind === 'keycode' ? [i] : [])) : [];
   const prefix = label ? `${label}: ` : '';
