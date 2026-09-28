@@ -19,6 +19,35 @@ describe('editorReducer', () => {
     expect(binding(state, 1, 5)).toBe('&kp X');
   });
 
+  it('places palette items on a key of the current layer and selects it', () => {
+    let state = run(start(), { type: 'selectLayer', index: 1 });
+    const before = binding(state, 1, 5);
+    state = run(state, { type: 'placeOnKey', index: 5, item: { kind: 'keycode', token: 'X' } });
+    expect(binding(state, 1, 5)).toBe('&kp X');
+    expect(state.key).toBe(5);
+    state = run(state, { type: 'placeOnKey', index: 5, item: { kind: 'binding', binding: { behavior: 'mo', params: ['2'] } } });
+    expect(binding(state, 1, 5)).toBe('&mo 2');
+    state = run(state, { type: 'undo' }, { type: 'undo' });
+    expect(binding(state, 1, 5)).toBe(before);
+  });
+
+  it('swaps and copies keys as single undo steps', () => {
+    const a = binding(start(), 0, 0);
+    const b = binding(start(), 0, 1);
+    let state = run(start(), { type: 'swapKeys', from: 0, to: 1 });
+    expect([binding(state, 0, 0), binding(state, 0, 1)]).toEqual([b, a]);
+    expect(state.key).toBe(1);
+    state = run(state, { type: 'undo' }, { type: 'copyKey', from: 0, to: 1 });
+    expect([binding(state, 0, 0), binding(state, 0, 1)]).toEqual([a, a]);
+    state = run(state, { type: 'undo' });
+    expect([binding(state, 0, 0), binding(state, 0, 1)]).toEqual([a, b]);
+  });
+
+  it('ignores a key dropped on itself', () => {
+    const state = start();
+    expect(run(state, { type: 'swapKeys', from: 2, to: 2 }).past).toHaveLength(0);
+  });
+
   it('ignores setBinding without a selected key', () => {
     const state = start();
     expect(run(state, { type: 'setBinding', binding: { behavior: 'kp', params: ['X'] } })).toBe(state);

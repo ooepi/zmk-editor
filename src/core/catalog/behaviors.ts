@@ -46,6 +46,20 @@ export const BEHAVIOR_GROUPS: { id: BehaviorGroup; label: string }[] = [
   { id: 'sensor', label: 'Encoder' },
 ];
 
+/** Where a binding is used; decides which behaviors are offered. */
+export type BindingContext = 'key' | 'macro' | 'sensor';
+
+const CONTEXT_GROUPS: Record<BindingContext, (group: BehaviorGroup, ref: string) => boolean> = {
+  key: (group) => group !== 'macro' && group !== 'sensor',
+  macro: (group) => group !== 'sensor',
+  sensor: (group, ref) => group === 'sensor' || ref === 'trans' || ref === 'none',
+};
+
+/** Whether a behavior can be used in a context (macro controls only in macros, …). */
+export function offeredIn(context: BindingContext, def: BehaviorDef): boolean {
+  return CONTEXT_GROUPS[context](def.group, def.ref);
+}
+
 export interface BehaviorDef {
   /** What bindings reference: `kp` for `&kp`. */
   ref: string;

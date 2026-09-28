@@ -1,5 +1,6 @@
 import type { ZmkConfig } from '../../core/config.ts';
-import { addLayer, deleteLayer, moveLayer, renameLayer, setBinding } from '../../core/keymap/edit.ts';
+import { addLayer, copyBinding, deleteLayer, moveLayer, renameLayer, setBinding, swapBindings } from '../../core/keymap/edit.ts';
+import { applyPaletteItem, type PaletteItem } from '../../core/keymap/palette.ts';
 import { setSensorBinding } from '../../core/keymap/sensorEdit.ts';
 import type { Binding, KeymapModel } from '../../core/keymap/model.ts';
 
@@ -27,6 +28,11 @@ export type EditorAction =
   | { type: 'selectSensor'; index: number | null }
   | { type: 'setBinding'; binding: Binding }
   | { type: 'setSensorBinding'; binding: Binding }
+  /** Drops a palette item on a key of the current layer and selects it. */
+  | { type: 'placeOnKey'; index: number; item: PaletteItem }
+  /** Key → key drag on the current layer; selects `to`. */
+  | { type: 'swapKeys'; from: number; to: number }
+  | { type: 'copyKey'; from: number; to: number }
   /** Any other keymap change (behaviors, combos, macros), recorded for undo. */
   | { type: 'edit'; keymap: KeymapModel; notice?: string }
   /** Changes beyond the keymap (modules, ZMK version), recorded for undo. */
@@ -73,6 +79,18 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
     case 'setBinding':
       if (state.key === null) return state;
       return commit(state, setBinding(keymap, state.layer, state.key, action.binding));
+    case 'placeOnKey': {
+      const current = keymap.layers[state.layer]?.bindings[action.index];
+      if (!current) return state;
+      const next = applyPaletteItem(current, action.item, keymap);
+      return commit(state, setBinding(keymap, state.layer, action.index, next), { key: action.index, sensor: null });
+    }
+    case 'swapKeys':
+    case 'copyKey': {
+      if (action.from === action.to) return state;
+      const edit = action.type === 'swapKeys' ? swapBindings : copyBinding;
+      return commit(state, edit(keymap, state.layer, action.from, action.to), { key: action.to, sensor: null });
+    }
     case 'setSensorBinding':
       if (state.sensor === null) return state;
       return commit(state, setSensorBinding(keymap, state.layer, state.sensor, action.binding));

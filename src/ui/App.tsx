@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { customLayout } from '../core/config.ts';
 import { toggleComboKey, replaceCombo } from '../core/keymap/comboEdit.ts';
 import { behaviorKind } from '../core/keymap/model.ts';
+import type { PaletteItem } from '../core/keymap/palette.ts';
 import { findKeyboard } from '../core/catalog/keyboards.ts';
 import { physicalLayoutFor } from '../core/layouts/index.ts';
 import { BehaviorsView } from './components/BehaviorsView.tsx';
@@ -14,6 +15,7 @@ import { EncoderStrip } from './components/EncoderStrip.tsx';
 import { HardwareWizard } from './components/HardwareWizard.tsx';
 import { KeyboardCanvas } from './components/KeyboardCanvas.tsx';
 import { KeyboardView } from './components/KeyboardView.tsx';
+import { KeyPalette } from './components/KeyPalette.tsx';
 import { LayoutDesigner } from './components/LayoutDesigner.tsx';
 import { LayerBar } from './components/LayerBar.tsx';
 import { ModulesView } from './components/ModulesView.tsx';
@@ -38,6 +40,8 @@ export function App() {
   const [combo, setCombo] = useState<string | null>(null);
   const [behavior, setBehavior] = useState<string | null>(null);
   const [macro, setMacro] = useState<string | null>(null);
+  /** A palette tile placed on each clicked key, until Esc. */
+  const [armed, setArmed] = useState<PaletteItem | null>(null);
   const { config, layer, key, sensor } = state;
   const { keymap } = config;
   const keyCount = keymap.layers[0]?.bindings.length ?? 0;
@@ -59,6 +63,7 @@ export function App() {
         event.preventDefault();
         dispatch({ type: 'redo' });
       } else if (event.key === 'Escape') {
+        setArmed(null);
         dispatch({ type: 'selectKey', index: null });
       } else if ((event.key === 'Delete' || event.key === 'Backspace') && key !== null && view === 'keymap') {
         event.preventDefault();
@@ -88,7 +93,23 @@ export function App() {
       }
       return;
     }
+    if (armed) {
+      dispatch({ type: 'placeOnKey', index, item: armed });
+      return;
+    }
     dispatch({ type: 'selectKey', index: index === key ? null : index });
+  };
+
+  // With a key selected a tile goes straight onto it; otherwise the tile is armed for clicking keys.
+  const onPaletteClick = (item: PaletteItem) => {
+    if (armed) setArmed(JSON.stringify(armed) === JSON.stringify(item) ? null : item);
+    else if (key !== null) dispatch({ type: 'placeOnKey', index: key, item });
+    else setArmed(item);
+  };
+
+  const keyDrop = {
+    onDropItem: (index: number, item: PaletteItem) => dispatch({ type: 'placeOnKey', index, item }),
+    onDropKey: (from: number, to: number, copy: boolean) => dispatch({ type: copy ? 'copyKey' : 'swapKeys', from, to }),
   };
 
   return (
@@ -200,6 +221,7 @@ export function App() {
                 selectedKey={view === 'keymap' ? key : null}
                 highlighted={view === 'combos' && selectedCombo ? new Set(selectedCombo.keyPositions.map(Number)) : undefined}
                 onSelectKey={onKeyClick}
+                drop={view === 'keymap' ? keyDrop : undefined}
               />
               {view === 'keymap' && (
                 <EncoderStrip
@@ -210,6 +232,7 @@ export function App() {
                 />
               )}
             </div>
+            {view === 'keymap' && <KeyPalette keymap={keymap} armed={armed} selectedKey={key} onPick={onPaletteClick} />}
           </section>
           <aside className="panel" aria-label="Details">
             {view === 'combos' ? (
@@ -235,9 +258,13 @@ function Overview({ warnings }: { warnings: string[] }) {
   return (
     <div>
       <h2 className="panel-title">Details</h2>
-      <p className="muted">Select a key or an encoder to edit it. Double-click a layer tab to rename it.</p>
+      <p className="muted">
+        Select a key or an encoder to edit it, or drag keys from the palette below the keyboard. Double-click a layer
+        tab to rename it.
+      </p>
       <p className="muted small">
-        Shortcuts: Ctrl+Z undo · Ctrl+Shift+Z redo · Delete makes the key transparent · Esc deselects
+        Shortcuts: Ctrl+Z undo · Ctrl+Shift+Z redo · Delete makes the key transparent · Esc deselects · Drag a key
+        onto another to swap them, hold Alt to copy
       </p>
       {warnings.length > 0 && (
         <>

@@ -12,6 +12,24 @@ export function setBinding(model: KeymapModel, layerIndex: number, keyIndex: num
   return ensureInclude({ ...model, layers }, findBuiltinBehavior(binding.behavior)?.include);
 }
 
+/** Swaps two keys' bindings on a layer. */
+export function swapBindings(model: KeymapModel, layerIndex: number, a: number, b: number): KeymapModel {
+  const bindings = model.layers[layerIndex]?.bindings;
+  const first = bindings?.[a];
+  const second = bindings?.[b];
+  if (!first || !second) throw new Error('No such key');
+  if (a === b) return model;
+  return setBinding(setBinding(model, layerIndex, a, second), layerIndex, b, first);
+}
+
+/** Copies one key's binding onto another key on the same layer. */
+export function copyBinding(model: KeymapModel, layerIndex: number, from: number, to: number): KeymapModel {
+  const binding = model.layers[layerIndex]?.bindings[from];
+  if (!binding) throw new Error('No such key');
+  if (from === to) return model;
+  return setBinding(model, layerIndex, to, binding);
+}
+
 /** Adds `#include <path>` after the last include, unless it is already there. */
 export function ensureInclude(model: KeymapModel, path: string | undefined): KeymapModel {
   if (!path || model.topLevel.some((i) => i.kind === 'include' && i.path === path)) return model;
@@ -71,7 +89,7 @@ export function changeBehavior(binding: Binding, ref: string, model: KeymapModel
 }
 
 /** Param indices with the tap param before the hold param. */
-function paramOrder(def: BehaviorDef): number[] {
+export function paramOrder(def: BehaviorDef): number[] {
   const indices = def.params.map((_, i) => i);
   return def.holdParam === undefined ? indices : [...indices.filter((i) => i !== def.holdParam), def.holdParam];
 }
