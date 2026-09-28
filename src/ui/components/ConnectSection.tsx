@@ -5,6 +5,7 @@ import { isConfigFile, loadRepoFiles } from '../../core/github/repo.ts';
 import { loadGitHubSettings, saveGitHubSettings } from '../state/github.ts';
 import { authConfig, beginLogin, clearTokens, completeLogin, isLoginCallback, loadTokens, saveTokens } from '../state/githubLogin.ts';
 import { HelpLink } from '../help/HelpLink.tsx';
+import { httpsUrl } from '../../core/url.ts';
 
 export interface Connection {
   client: GitHubClient;
@@ -41,7 +42,7 @@ export function ConnectSection({ connection, onConnected, onDisconnect, onLoad }
         <h2 className="panel-title">Repository</h2>
         <p>
           Connected to{' '}
-          <a href={connection.repoUrl} target="_blank" rel="noreferrer" className="mono">
+          <a href={httpsUrl(connection.repoUrl)} target="_blank" rel="noreferrer" className="mono">
             {connection.ref.owner}/{connection.ref.repo}
           </a>{' '}
           on <span className="mono">{connection.ref.branch}</span> at <span className="mono">{connection.headSha.slice(0, 7)}</span>.

@@ -7,6 +7,7 @@ import { addCustomModule, parseModuleRepo } from '../../core/modules.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
 import { loadGitHubSettings } from '../state/github.ts';
 import { loadTokens } from '../state/githubLogin.ts';
+import { httpsUrl } from '../../core/url.ts';
 
 interface ModuleFinderProps {
   config: ZmkConfig;
@@ -146,7 +147,7 @@ export function ModuleFinder({ config, dispatch }: ModuleFinderProps) {
               return (
                 <li key={`${r.owner}/${r.repo}`} className="finder-result">
                   <div className="grow">
-                    <a className="mono" href={r.url} target="_blank" rel="noreferrer">
+                    <a className="mono" href={httpsUrl(r.url)} target="_blank" rel="noreferrer">
                       {r.owner}/{r.repo}
                     </a>{' '}
                     <span className="muted small">
@@ -217,7 +218,7 @@ function ModuleDetails({ inspect, installed, onClose, onAdd }: ModuleDetailsProp
       <header className="module-head">
         <div>
           <h3>{m.repo}</h3>
-          <a className="mono small" href={m.url} target="_blank" rel="noreferrer">
+          <a className="mono small" href={httpsUrl(m.url)} target="_blank" rel="noreferrer">
             {m.owner}/{m.repo}
           </a>
         </div>
@@ -263,7 +264,7 @@ function ModuleDetails({ inspect, installed, onClose, onAdd }: ModuleDetailsProp
         <button type="button" className="button primary" disabled={installed} onClick={() => onAdd(m, includes)}>
           {installed ? 'Already in west.yml' : 'Add to west.yml'}
         </button>
-        <a className="button" href={m.url} target="_blank" rel="noreferrer">
+        <a className="button" href={httpsUrl(m.url)} target="_blank" rel="noreferrer">
           Read its README
         </a>
       </div>

@@ -14,6 +14,7 @@ import type { EditorAction } from '../state/editorReducer.ts';
 import { setPreferences, usePreferences } from '../state/preferences.ts';
 import { LayoutPreview } from './LayoutPreview.tsx';
 import { HelpLink } from '../help/HelpLink.tsx';
+import { httpsUrl } from '../../core/url.ts';
 
 interface KeyboardViewProps {
   config: ZmkConfig;
@@ -43,7 +44,7 @@ export function KeyboardView({ config, dispatch, onCreated, onDesign, onNewKeybo
             <>
               {' '}
               ·{' '}
-              <a href={current.url} target="_blank" rel="noreferrer">
+              <a href={httpsUrl(current.url)} target="_blank" rel="noreferrer">
                 keyboard page
               </a>
             </>
@@ -203,7 +204,7 @@ function KeyboardDetails({ keyboard, config, dispatch, onCreated }: KeyboardView
         {keyboard.url && (
           <>
             {' · '}
-            <a href={keyboard.url} target="_blank" rel="noreferrer">
+            <a href={httpsUrl(keyboard.url)} target="_blank" rel="noreferrer">
               keyboard page
             </a>
           </>
