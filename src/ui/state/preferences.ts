@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import type { PaletteItem } from '../../core/keymap/palette.ts';
 
 /** Per-browser preferences shared across components. */
 export interface Preferences {
@@ -8,15 +9,29 @@ export interface Preferences {
   layouts: Record<string, string>;
   /** How each Pro Micro diagram is drawn (key: 'left', 'right' or 'one'); wiring plans are often drawn from below. */
   pinoutViews: Record<string, 'top' | 'bottom'>;
+  /** Palette items placed most recently, newest first. */
+  recent: PaletteItem[];
 }
 
 const STORAGE_KEY = 'zmk-editor.preferences.v1';
-const DEFAULTS: Preferences = { unicodeLanguages: [], layouts: {}, pinoutViews: {} };
+const DEFAULTS: Preferences = { unicodeLanguages: [], layouts: {}, pinoutViews: {}, recent: [] };
+
+/** Drops recent items that aren't shaped like palette items (hand-edited or older storage). */
+function validRecent(items: unknown): PaletteItem[] {
+  if (!Array.isArray(items)) return [];
+  return items.filter((item: Partial<PaletteItem> | null): item is PaletteItem => {
+    if (item?.kind === 'keycode') return typeof item.token === 'string';
+    if (item?.kind === 'binding') return typeof item.binding?.behavior === 'string' && Array.isArray(item.binding.params);
+    return false;
+  });
+}
 
 function load(): Preferences {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? { ...DEFAULTS, ...(JSON.parse(raw) as Partial<Preferences>) } : DEFAULTS;
+    if (!raw) return DEFAULTS;
+    const stored = JSON.parse(raw) as Partial<Preferences>;
+    return { ...DEFAULTS, ...stored, recent: validRecent(stored.recent) };
   } catch {
     return DEFAULTS;
   }

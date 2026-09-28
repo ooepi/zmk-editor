@@ -6,6 +6,7 @@ import { generateConfig } from '../core/config.ts';
 import { newHardwareConfig } from '../core/hardware/config.ts';
 import { testPad } from '../core/hardware/testFixtures.ts';
 import { App } from './App.tsx';
+import { chooseBehavior } from './testUtils.ts';
 import { reloadPreferences } from './state/preferences.ts';
 
 beforeEach(() => {
@@ -28,7 +29,7 @@ describe('modules and unicode', () => {
     const user = userEvent.setup();
     render(<App />);
     await user.click(screen.getByRole('button', { name: 'Key 0: Esc' }));
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Behavior' }), 'uc');
+    await chooseBehavior(user, 'uc');
     await user.type(screen.getByRole('searchbox', { name: 'Search characters' }), 'å{Enter}');
     expect(screen.getByRole('button', { name: 'Key 0: å (Å)' })).toBeTruthy();
 
@@ -43,7 +44,7 @@ describe('modules and unicode', () => {
     await user.click(screen.getByRole('button', { name: /Finnish\/Swedish preset/ }));
     await user.click(screen.getByRole('button', { name: 'Keymap' }));
     await user.click(screen.getByRole('button', { name: 'Key 0: Esc' }));
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Behavior' }), 'uc');
+    await chooseBehavior(user, 'uc');
     await user.type(screen.getByRole('searchbox', { name: 'Search characters' }), 'ä');
     const first = within(screen.getByRole('listbox', { name: 'Characters' })).getAllByRole('option')[0];
     expect(first?.textContent).toContain('UC_SV_AE');
@@ -85,7 +86,7 @@ describe('modules and unicode', () => {
     await user.click(within(screen.getByRole('article', { name: 'Auto layer (num-word)' })).getByRole('button', { name: 'Add' }));
     await user.click(screen.getByRole('button', { name: 'Keymap' }));
     await user.click(screen.getByRole('button', { name: 'Key 0: Esc' }));
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Behavior' }), 'num_word');
+    await chooseBehavior(user, 'num_word');
     expect(screen.getByRole('button', { name: 'Key 0: NAV (num_word)' })).toBeTruthy();
   });
 

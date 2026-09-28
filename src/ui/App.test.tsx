@@ -3,6 +3,7 @@ import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App.tsx';
+import { chooseBehavior } from './testUtils.ts';
 
 beforeEach(() => localStorage.clear());
 afterEach(() => {
@@ -43,7 +44,7 @@ describe('App', () => {
     const user = userEvent.setup();
     render(<App />);
     await user.click(screen.getByRole('button', { name: 'Key 54: Space' }));
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Behavior' }), 'lt');
+    await chooseBehavior(user, 'lt');
     expect(screen.getByRole('button', { name: 'Key 54: Space (NAV)' })).toBeTruthy();
     await user.selectOptions(screen.getByRole('combobox', { name: 'Hold (layer)' }), '4');
     expect(screen.getByRole('button', { name: 'Key 54: Space (NUM)' })).toBeTruthy();

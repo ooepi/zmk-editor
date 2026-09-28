@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { customLayout } from '../core/config.ts';
 import { toggleComboKey, replaceCombo } from '../core/keymap/comboEdit.ts';
 import { behaviorKind } from '../core/keymap/model.ts';
-import type { PaletteItem } from '../core/keymap/palette.ts';
+import { applyToEncoder, pushRecent, type EncoderDirection, type PaletteItem } from '../core/keymap/palette.ts';
 import { findKeyboard } from '../core/catalog/keyboards.ts';
 import { physicalLayoutFor } from '../core/layouts/index.ts';
 import { BehaviorsView } from './components/BehaviorsView.tsx';
@@ -26,7 +26,7 @@ import { VersionSelect } from './components/VersionSelect.tsx';
 import type { KeyRef } from './dnd.ts';
 import { useEditor } from './state/useEditor.ts';
 import { isLoginCallback } from './state/githubLogin.ts';
-import { usePreferences } from './state/preferences.ts';
+import { setPreferences, usePreferences } from './state/preferences.ts';
 import { useTheme } from './useTheme.ts';
 
 type View = 'keymap' | 'combos' | 'behaviors' | 'macros' | 'modules' | 'settings' | 'build' | 'keyboard' | 'designer' | 'newKeyboard' | 'editHardware';
@@ -47,8 +47,11 @@ export function App() {
   const { config, layer, key, selection, clipboard, sensor } = state;
   const { keymap } = config;
   const keyCount = keymap.layers[0]?.bindings.length ?? 0;
-  const { layouts } = usePreferences();
+  const { layouts, recent } = usePreferences();
   const layout = physicalLayoutFor(config.keyboard, keyCount, layouts[config.keyboard], customLayout(config));
+
+  /** Remembers a palette item placed from the palette for its Recent row. */
+  const remember = (item: PaletteItem) => setPreferences({ recent: pushRecent(recent, item) });
 
   const hasSelection = selection.length > 0;
   const hasClipboard = clipboard !== null;
@@ -112,6 +115,7 @@ export function App() {
     }
     if (armed) {
       dispatch({ type: 'placeOnKey', index, item: armed });
+      remember(armed);
       return;
     }
     if (additive) dispatch({ type: 'toggleKey', index });
@@ -121,13 +125,18 @@ export function App() {
   // With keys selected a tile goes straight onto them; otherwise the tile is armed for clicking keys.
   const onPaletteClick = (item: PaletteItem) => {
     if (armed) setArmed(JSON.stringify(armed) === JSON.stringify(item) ? null : item);
-    else if (hasSelection) dispatch({ type: 'placeOnSelection', item });
-    else setArmed(item);
+    else if (hasSelection) {
+      dispatch({ type: 'placeOnSelection', item });
+      remember(item);
+    } else setArmed(item);
   };
 
   const keyDrop = {
     layer,
-    onDropItem: (index: number, item: PaletteItem) => dispatch({ type: 'placeOnKey', index, item }),
+    onDropItem: (index: number, item: PaletteItem) => {
+      dispatch({ type: 'placeOnKey', index, item });
+      remember(item);
+    },
     // A key dragged in from another layer is copied; on the same layer keys swap unless Alt/Ctrl copies.
     onDropKey: (from: KeyRef, to: number, copy: boolean) =>
       dispatch(
@@ -257,6 +266,10 @@ export function App() {
                   layer={layer}
                   selected={sensor}
                   onSelect={(index) => dispatch({ type: 'selectSensor', index: index === sensor ? null : index })}
+                  onDropItem={(index: number, direction: EncoderDirection, item: PaletteItem) => {
+                    dispatch({ type: 'placeOnEncoder', index, direction, item });
+                    if (applyToEncoder({ behavior: 'trans', params: [] }, item, direction)) remember(item);
+                  }}
                 />
               )}
             </div>

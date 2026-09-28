@@ -432,6 +432,75 @@ select {
   margin: 0;
 }
 
+/* Searchable behavior field */
+
+.behavior-select {
+  position: relative;
+}
+
+.behavior-list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 320px;
+  margin: 0;
+  padding: 4px;
+  overflow: auto;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 25%);
+}
+
+.behavior-list ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.behavior-group-title {
+  padding: 6px 8px 2px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.behavior-option {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.behavior-option.active {
+  background: var(--accent-soft);
+}
+
+.behavior-option.current .behavior-option-name {
+  color: var(--accent);
+}
+
+.behavior-option-name {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.behavior-option-description {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.behavior-empty {
+  padding: 6px 8px;
+}
+
 /* Key palette */
 
 .palette {
@@ -585,6 +654,31 @@ select {
 .palette-tile.kind-none .palette-tile-main {
   color: var(--key-dim);
   font-weight: 400;
+}
+
+.palette-recent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.palette-recent-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.palette-recent-tiles {
+  flex: 1;
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+}
+
+.palette-recent-tiles .palette-tile {
+  flex: 0 0 56px;
 }
 
 .palette-groups {
@@ -857,9 +951,17 @@ select {
 }
 
 .encoder-dir {
+  padding: 2px 6px;
+  border: 1px dashed transparent;
+  border-radius: 6px;
   font-weight: 600;
   font-size: 13px;
   white-space: nowrap;
+}
+
+.encoder-dir.drop-target {
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .encoder-name {
