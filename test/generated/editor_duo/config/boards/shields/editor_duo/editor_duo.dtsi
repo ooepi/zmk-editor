@@ -26,8 +26,8 @@ RC(0,3)  RC(0,4)  RC(0,5)  RC(0,11) RC(0,10) RC(0,9)
 
     left_encoder_0: encoder_left_0 {
         compatible = "alps,ec11";
-        a-gpios = <&pro_micro  8 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
-        b-gpios = <&pro_micro  9 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+        a-gpios = <&pro_micro 10 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+        b-gpios = <&pro_micro 16 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
         steps = <80>;
         status = "disabled";
     };

@@ -41,3 +41,11 @@ describe('hardware definition without encoders', () => {
   });
 });
 
+describe('hardware definition with displays', () => {
+  it('round-trips displays and leaves them out when there are none', () => {
+    const withDisplays = { ...hw, displays: { left: 'nice_view' as const, right: 'oled_128x64' as const } };
+    expect(parseHardware(serializeHardware(withDisplays))).toEqual(withDisplays);
+    expect(serializeHardware(hw)).not.toContain('displays');
+    expect(() => parseHardware(serializeHardware(withDisplays).replace('"oled_128x64"', '"crt"'))).toThrow('displays.right must be one of nice_view, oled_128x32, oled_128x64');
+  });
+});

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_BASICS, gridHardware } from './grid.ts';
 import type { KeyboardHardware } from './types.ts';
+import { setDisplay } from './displays.ts';
 import { hasErrors, validateBasics, validateHardware } from './validate.ts';
 
 const basics = { ...DEFAULT_BASICS, name: 'test_split', displayName: 'Test Split', rows: 2, cols: 3 };
@@ -97,6 +98,15 @@ describe('validateHardware', () => {
     const right = { ...hw, wiring: { ...hw.wiring, right: { rows: [4, 5], cols: [6, 7, 8] } }, rightEncoders: [{ a: 6, b: 9 }] } as KeyboardHardware;
     expect(messages(right)).toEqual(['D6 is used for both Column 0 and Encoder 0 A on the right half.']);
     expect(validateHardware({ ...hw, encoders: [{ a: 10, b: 14 }] })).toEqual([]);
+  });
+  it('checks display pins against the other pins of their half', () => {
+    const hw = wired(); // rows [4, 5], cols [6, 7, 8]
+    expect(messages(setDisplay(hw, 'left', 'oled_128x32'))).toEqual([]);
+    const clash = { ...hw, encoders: [{ a: 2, b: 9 }] };
+    expect(messages(setDisplay(clash, 'left', 'oled_128x32'))).toEqual(['D2 is used for both Encoder 0 A and Display SDA on the left half.']);
+    // A mirrored right half is still checked when it has a display of its own.
+    const rightOnly = { ...hw, wiring: { kind: 'matrix' as const, diodeDirection: 'col2row' as const, rows: [1, 5], cols: [6, 7, 8] } };
+    expect(messages(setDisplay(rightOnly, 'right', 'nice_view'))).toEqual(['D1 is used for both Row 0 and Display CS on the right half.']);
   });
 });
 

@@ -1,5 +1,6 @@
 import { isRecord } from '../files/yaml-util.ts';
-import type { DirectWiring, Encoder, HardwareKey, KeyboardHardware, MatrixWiring, Pin, Wiring } from './types.ts';
+import { DISPLAY_KINDS } from './displays.ts';
+import type { DirectWiring, DisplayKind, Encoder, HardwareKey, KeyboardHardware, MatrixWiring, Pin, Wiring } from './types.ts';
 
 const VERSION = 1;
 
@@ -26,6 +27,7 @@ export function serializeHardware(hw: KeyboardHardware): string {
       ...(hw.rightEncoders && (hw.rightEncoders.length > 0 || (hw.encoders?.length ?? 0) > 0)
         ? { rightEncoders: hw.rightEncoders.map(({ a, b }) => ({ a, b })) }
         : {}),
+      ...(hw.displays ? { displays: { ...(hw.displays.left ? { left: hw.displays.left } : {}), ...(hw.displays.right ? { right: hw.displays.right } : {}) } } : {}),
       keys: [],
     },
     null,
@@ -99,5 +101,16 @@ export function parseHardware(text: string): KeyboardHardware {
   };
   if (data.encoders !== undefined) hardware.encoders = encoders(data.encoders, 'encoders');
   if (data.rightEncoders !== undefined) hardware.rightEncoders = encoders(data.rightEncoders, 'rightEncoders');
+  if (data.displays !== undefined) {
+    if (!isRecord(data.displays)) throw new Error('displays must be an object');
+    const kind = (value: unknown, what: string): DisplayKind => {
+      if (typeof value !== 'string' || !(DISPLAY_KINDS as string[]).includes(value)) throw new Error(`${what} must be one of ${DISPLAY_KINDS.join(', ')}`);
+      return value as DisplayKind;
+    };
+    const displays: { left?: DisplayKind; right?: DisplayKind } = {};
+    if (data.displays.left !== undefined) displays.left = kind(data.displays.left, 'displays.left');
+    if (data.displays.right !== undefined) displays.right = kind(data.displays.right, 'displays.right');
+    hardware.displays = displays;
+  }
   return hardware;
 }

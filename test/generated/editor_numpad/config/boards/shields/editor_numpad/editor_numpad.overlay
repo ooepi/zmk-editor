@@ -15,18 +15,18 @@
         diode-direction = "row2col";
 
         row-gpios
-            = <&pro_micro  2 GPIO_ACTIVE_HIGH>
-            , <&pro_micro  3 GPIO_ACTIVE_HIGH>
-            , <&pro_micro  4 GPIO_ACTIVE_HIGH>
+            = <&pro_micro  4 GPIO_ACTIVE_HIGH>
             , <&pro_micro  5 GPIO_ACTIVE_HIGH>
             , <&pro_micro  6 GPIO_ACTIVE_HIGH>
+            , <&pro_micro  7 GPIO_ACTIVE_HIGH>
+            , <&pro_micro  8 GPIO_ACTIVE_HIGH>
             ;
 
         col-gpios
-            = <&pro_micro  7 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
-            , <&pro_micro  8 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
-            , <&pro_micro  9 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            = <&pro_micro  9 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
             , <&pro_micro 10 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&pro_micro 14 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
+            , <&pro_micro 15 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>
             ;
     };
 
@@ -45,8 +45,8 @@ RC(4,0) RC(4,1) RC(4,2) RC(4,3)
 
     encoder_0: encoder_0 {
         compatible = "alps,ec11";
-        a-gpios = <&pro_micro 14 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
-        b-gpios = <&pro_micro 15 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+        a-gpios = <&pro_micro 16 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+        b-gpios = <&pro_micro 18 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
         steps = <80>;
     };
 
@@ -83,5 +83,28 @@ RC(4,0) RC(4,1) RC(4,2) RC(4,3)
             , <&key_physical_attrs 100 100  200  400      0    0    0>
             , <&key_physical_attrs 100 100  300  400      0    0    0>
             ;
+    };
+};
+
+&pro_micro_i2c {
+    status = "okay";
+
+    oled: ssd1306@3c {
+        compatible = "solomon,ssd1306fb";
+        reg = <0x3c>;
+        width = <128>;
+        height = <64>;
+        segment-offset = <0>;
+        page-offset = <0>;
+        display-offset = <0>;
+        multiplex-ratio = <63>;
+        prechargep = <0x22>;
+        inversion-on;
+    };
+};
+
+/ {
+    chosen {
+        zephyr,display = &oled;
     };
 };

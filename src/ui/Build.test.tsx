@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { generateConfig } from '../core/config.ts';
 import { FakeGitHub } from '../core/github/fakeGitHub.ts';
 import { newHardwareConfig } from '../core/hardware/config.ts';
+import { setDisplay } from '../core/hardware/displays.ts';
 import { testPad } from '../core/hardware/testFixtures.ts';
 import { findSetting, writeSetting } from '../core/catalog/settings.ts';
 import { App } from './App.tsx';
@@ -156,6 +157,31 @@ describe('Build tab with a designed keyboard', () => {
     expect(await screen.findByText(/test_pad\.overlay was changed outside the editor/)).toBeTruthy();
     expect(screen.getByLabelText('Replace my changes to the shield files')).toHaveProperty('checked', false);
     expect(screen.getByRole('button', { name: 'Commit & build' })).toHaveProperty('disabled', true);
+  });
+});
+
+describe('Build tab after removing a display', () => {
+  it('deletes the display’s shield .conf the editor generated earlier', async () => {
+    const withOled = newHardwareConfig(setDisplay(testPad, 'left', 'oled_128x32'), 'v0.3');
+    const conf = 'config/boards/shields/test_pad/test_pad.conf';
+    const files = generateConfig(withOled);
+    expect(files[conf]).toContain('CONFIG_ZMK_DISPLAY=y');
+    fake = new FakeGitHub(files);
+    fake.onCommit = () => undefined;
+    vi.stubGlobal('fetch', fake.fetch);
+    localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config: newHardwareConfig(testPad, 'v0.3') }));
+
+    const user = userEvent.setup();
+    render(<App />);
+    await connect(user);
+    const changes = await screen.findByRole('region', { name: 'Changes' });
+    expect(within(changes).getByRole('button', { name: /test_pad\.conf.*deleted/ })).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'Commit & build' }));
+    await screen.findByText(/Waiting for the build to start/);
+    const head = fake.commits.get(fake.headSha);
+    expect(Object.keys(fake.trees.get(head?.tree ?? '') ?? {})).not.toContain(conf);
+    expect(within(changes).queryByRole('button', { name: /test_pad\.conf/ })).toBeNull();
   });
 });
 

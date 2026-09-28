@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { PRO_MICRO_PINS, pinLabel } from '../../core/hardware/controllers.ts';
-import type { KeyboardHardware, Pin, Side } from '../../core/hardware/types.ts';
+import { DISPLAYS, DISPLAY_KINDS, halfDisplay, setDisplay } from '../../core/hardware/displays.ts';
+import type { DisplayKind, KeyboardHardware, Pin, Side } from '../../core/hardware/types.ts';
 import type { HardwareIssue } from '../../core/hardware/validate.ts';
 import {
   directInputUsed,
@@ -99,6 +100,39 @@ export function HardwareWiringStep({ hw, issues, onChange, onAddEncoder, onRemov
           </section>
         ))}
       </div>
+      <fieldset className="fieldset">
+        <legend>Displays</legend>
+        <div className="pin-grid">
+          {(hw.split ? (['left', 'right'] as const) : [undefined]).map((side) => {
+            const id = `display-${side ?? 'one'}`;
+            return (
+              <div key={id} className="field">
+                <label className="field-label" htmlFor={id}>
+                  {side === 'left' ? 'Left display' : side === 'right' ? 'Right display' : 'Display'}
+                </label>
+                <select
+                  id={id}
+                  className="input"
+                  aria-describedby="hw-display-help"
+                  value={halfDisplay(hw, side) ?? ''}
+                  onChange={(e) => onChange(setDisplay(hw, side, e.target.value === '' ? undefined : (e.target.value as DisplayKind)))}
+                >
+                  <option value="">None</option>
+                  {DISPLAY_KINDS.map((kind) => (
+                    <option key={kind} value={kind}>
+                      {DISPLAYS[kind].label} ({DISPLAYS[kind].pins.map((p) => `D${p.pin}`).join(', ')})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            );
+          })}
+        </div>
+        <p id="hw-display-help" className="muted small">
+          Displays use fixed pins: a nice!view D1, D2 and D3, an OLED D2 (SDA) and D3 (SCL). They can’t be used for rows,
+          columns or encoders on that half.
+        </p>
+      </fieldset>
       <HardwareIssueList issues={issues} />
     </div>
   );

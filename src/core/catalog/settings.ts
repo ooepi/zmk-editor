@@ -1,5 +1,6 @@
 import type { ZmkConfig } from '../config.ts';
 import { readKconfigValue, writeKconfigValue, type KconfigModel } from '../files/kconfig.ts';
+import { hasDisplay } from '../hardware/displays.ts';
 import { sensorOrder } from '../hardware/encoders.ts';
 import type { Binding } from '../keymap/model.ts';
 
@@ -267,7 +268,7 @@ export function unsupportedHardwareSettings(config: ZmkConfig): UnsupportedSetti
 export function lacksHardwareFor(config: ZmkConfig, name: string): boolean {
   if (!config.hardware || !HARDWARE_FEATURES.some((f) => f.name === name)) return false;
   if (name === 'EC11') return sensorOrder(config.hardware).length === 0;
-  return name !== 'ZMK_DISPLAY' || !hasDisplayShield(config);
+  return name !== 'ZMK_DISPLAY' || !(hasDisplayShield(config) || hasDisplay(config.hardware));
 }
 
 function hasDisplayShield(config: ZmkConfig): boolean {
@@ -281,6 +282,7 @@ export function settingWarnings(config: ZmkConfig): SettingWarning[] {
     if (!def) return undefined;
     const set = readSetting(config.kconfig, def);
     if (set === undefined && name === 'EC11' && config.hardware && sensorOrder(config.hardware).length > 0) return true;
+    if (set === undefined && name === 'ZMK_DISPLAY' && config.hardware && hasDisplay(config.hardware)) return true;
     return set ?? def.default;
   };
   const { keys, sensors } = usedBehaviors(config);
@@ -298,6 +300,9 @@ export function settingWarnings(config: ZmkConfig): SettingWarning[] {
   }
   if (sensors && value('EC11') !== true && canUse('EC11')) {
     warnings.push({ message: 'The keymap uses an encoder, but EC11 encoder support isn’t turned on here (most keyboards need it).', fix: { name: 'EC11', value: true } });
+  }
+  if (config.hardware && hasDisplay(config.hardware) && value('ZMK_DISPLAY') === false) {
+    warnings.push({ message: `${config.hardware.displayName} has a screen, but Display is off in Settings, so it stays dark.`, fix: { name: 'ZMK_DISPLAY', value: true } });
   }
   const idle = value('ZMK_IDLE_TIMEOUT');
   const sleep = value('ZMK_IDLE_SLEEP_TIMEOUT');

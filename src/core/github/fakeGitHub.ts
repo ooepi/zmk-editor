@@ -93,8 +93,12 @@ export class FakeGitHub {
     }
     if (rest === '/git/trees' && method === 'POST') {
       const base = this.trees.get(body.base_tree) ?? {};
-      const next = { ...base };
-      for (const entry of body.tree) next[entry.path] = entry.content;
+      const merged = new Map(Object.entries(base));
+      for (const entry of body.tree) {
+        if (entry.sha === null) merged.delete(entry.path);
+        else merged.set(entry.path, entry.content);
+      }
+      const next: Record<string, string> = Object.fromEntries(merged);
       const same = JSON.stringify(Object.entries(next).sort()) === JSON.stringify(Object.entries(base).sort());
       const sha = same ? body.base_tree : `tree-${++this.counter}`;
       this.trees.set(sha, next);

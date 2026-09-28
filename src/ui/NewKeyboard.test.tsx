@@ -489,3 +489,25 @@ describe('Starting over after picking encoder pins', () => {
   });
 });
 
+describe('Displays in the wizard', () => {
+  it('adds a nice!view to one half, reserves its pins, and builds that half with the adapter', async () => {
+    localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config: newHardwareConfig(testSplit, 'v0.3') }));
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Test Split ▾' }));
+    await user.click(screen.getByRole('button', { name: 'Edit hardware' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+
+    await user.selectOptions(screen.getByLabelText('Left display'), 'nice_view');
+    expect(screen.getByRole('button', { name: 'D1: Display CS' })).toBeTruthy();
+    await user.selectOptions(screen.getByLabelText('Right display'), 'oled_128x32');
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByLabelText('config/boards/shields/test_split/test_split_right.overlay').textContent).toContain('ssd1306@3c');
+    await user.click(screen.getByRole('button', { name: 'Save hardware' }));
+
+    const saved = stored();
+    expect(saved.hardware.displays).toEqual({ left: 'nice_view', right: 'oled_128x32' });
+    expect(saved.build.include.map((t: { shield: string }) => t.shield)).toEqual(['test_split_left nice_view_adapter nice_view', 'test_split_right']);
+  });
+});
