@@ -25,13 +25,15 @@ export function VersionSelect({ config, dispatch }: VersionSelectProps) {
     });
   };
   return (
-    <label className="version-select" title="ZMK version for the firmware, its modules and the build">
-      <span className="sr-only">ZMK version</span>
-      <select value={version} onChange={(e) => change(e.target.value)} aria-label="ZMK version">
-        {!ZMK_VERSIONS.includes(version) && <option value={version}>ZMK {version}</option>}
+    <label className="top-field" title="ZMK version for the firmware, its modules and the build">
+      <span className="top-field-label" aria-hidden="true">
+        ZMK
+      </span>
+      <select className="top-select" value={version} onChange={(e) => change(e.target.value)} aria-label="ZMK version">
+        {!ZMK_VERSIONS.includes(version) && <option value={version}>{version}</option>}
         {ZMK_VERSIONS.map((v) => (
           <option key={v} value={v}>
-            ZMK {v}
+            {v}
           </option>
         ))}
       </select>

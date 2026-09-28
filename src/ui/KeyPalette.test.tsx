@@ -123,3 +123,31 @@ describe('key palette', () => {
     expect(keyButton('Key 0: Esc').getAttribute('draggable')).toBeNull();
   });
 });
+
+describe('palette layout', () => {
+  it('groups keys by category until a category or search narrows them', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    expect(palette().getByRole('heading', { name: 'Letters' })).toBeTruthy();
+    expect(within(palette().getByRole('group', { name: 'Numbers' })).getByRole('button', { name: 'Place 1 (N1)' })).toBeTruthy();
+
+    await user.click(within(palette().getByRole('group', { name: 'Palette key categories' })).getByRole('button', { name: 'Numbers' }));
+    expect(palette().queryByRole('heading', { name: 'Letters' })).toBeNull();
+    expect(within(palette().getByRole('group', { name: 'Keys' })).getByRole('button', { name: 'Place 1 (N1)' })).toBeTruthy();
+  });
+
+  it('keeps the modifiers in their own labelled group', () => {
+    render(<App />);
+    const mods = palette().getByRole('group', { name: 'Hold with placed keys:' });
+    expect(within(mods).getAllByRole('button')).toHaveLength(8);
+  });
+});
+
+describe('top bar', () => {
+  it('links to Buy me a coffee in a new tab', () => {
+    render(<App />);
+    const link = screen.getByRole('link', { name: 'Buy me a coffee' });
+    expect(link.getAttribute('href')).toBe('https://www.buymeacoffee.com/gristone');
+    expect(link.getAttribute('target')).toBe('_blank');
+  });
+});

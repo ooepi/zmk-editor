@@ -6,6 +6,8 @@ A visual editor for [ZMK](https://zmk.dev) keyboard configs, in the browser. Edi
 
 Nothing to install. Your work stays in your browser until you commit it.
 
+<a href="https://www.buymeacoffee.com/gristone"><img src="https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=gristone&button_colour=5F7FFF&font_colour=ffffff&font_family=Lato&outline_colour=000000&coffee_colour=FFDD00" alt="Buy me a coffee" /></a>
+
 ![The keymap view: the keyboard, the key palette underneath and the side panel editing one key](docs/images/keymap.png)
 
 ## What it does
