@@ -59,6 +59,14 @@ export const START: HelpSection[] = [
             requests an hour without logging in, so opening many repositories in a row can hit that limit for a while.
           </p>
         </Sub>
+        <Sub id="print" title="Printing a cheat sheet">
+          <p>
+            <Ui>Print keymap</Ui> in the top bar shows every layer as a keyboard diagram, plus your combos, ready to print.
+            Untick layers or combos you don't want, then press <Ui>Print</Ui>. To get a PDF instead of paper, choose
+            “Save as PDF” in the print dialog. The sheet prints on plain white, with no backgrounds, so it only uses ink for the key outlines and labels,
+            two layers to a page.
+          </p>
+        </Sub>
         <Sub id="saving" title="What is saved where">
           <ul>
             <li>

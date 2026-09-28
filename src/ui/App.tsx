@@ -18,6 +18,7 @@ import { KeyboardView } from './components/KeyboardView.tsx';
 import { KeyPalette } from './components/KeyPalette.tsx';
 import { LayoutDesigner } from './components/LayoutDesigner.tsx';
 import { LayerBar } from './components/LayerBar.tsx';
+import { PrintView } from './components/PrintView.tsx';
 import { SelectionPanel } from './components/SelectionPanel.tsx';
 import { ModulesView } from './components/ModulesView.tsx';
 import { SettingsView } from './components/SettingsView.tsx';
@@ -42,6 +43,7 @@ type View =
   | 'settings'
   | 'build'
   | 'help'
+  | 'print'
   | 'keyboard'
   | 'designer'
   | 'newKeyboard'
@@ -202,6 +204,7 @@ export function App() {
             locked={view === 'newKeyboard' || view === 'editHardware'}
             theme={theme}
             onToggleTheme={toggleTheme}
+            onPrint={() => setView('print')}
             dispatch={dispatch}
           />
           <div className="topbar-end">
@@ -267,6 +270,10 @@ export function App() {
         ) : view === 'build' ? (
           <main className="workspace single">
             <BuildView config={config} dispatch={dispatch} />
+          </main>
+        ) : view === 'print' ? (
+          <main className="workspace single">
+            <PrintView config={config} layout={layout} onClose={() => setView('keymap')} />
           </main>
         ) : view === 'help' ? (
           <main className="workspace single">

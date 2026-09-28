@@ -21,6 +21,7 @@ Nothing to install. Your work stays in your browser until you commit it.
 - **Settings.** Sleep, Bluetooth, battery, RGB, backlight, display and more, explained in plain words and written to your `.conf`. It warns when a setting doesn't match your keymap or hardware.
 - **Build and flash.** Log in with GitHub (or use a token), review the changes, and commit. The editor follows the GitHub Actions build and hands you the `.uf2`. In Chrome and Edge it can write the file straight onto the keyboard.
 - **Any ZMK keyboard, or your own.** Start from ZMK's default keymap for any of its keyboards (Corne, Sofle, Kyria, Lily58…). Adjust how keys are drawn in the layout designer. Or describe a handwired or PCB keyboard (Pro Micro nRF52840, matrix or direct wiring, split or one piece, encoders, nice!view or OLED), and the editor writes its ZMK shield files.
+- **Print a cheat sheet.** Every layer as a clean diagram, plus your combos, to print or save as PDF, handy while you learn a new layout.
 - **Undo everything.** Every change, including modules and version switches, can be undone.
 
 | Several keys at once | Hold-tap settings | Layout designer |
