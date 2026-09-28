@@ -31,23 +31,29 @@ const split: KeyboardHardware = (() => {
     keys,
     // One encoder per half; the right one mirrors it (A and B swapped).
     encoders: [{ a: 8, b: 9 }],
+    // A nice!view on both halves (ZMK's adapter shields, on D1-D3).
+    displays: { left: 'nice_view', right: 'nice_view' },
   };
 })();
 
-/** A 5×4 numpad, ROW2COL, one piece, with one encoder. */
+/** A 5×4 numpad, ROW2COL, one piece, with one encoder and a 128×64 OLED. */
 const numpad: KeyboardHardware = {
   ...gridHardware({ ...DEFAULT_BASICS, name: 'editor_numpad', displayName: 'Editor Numpad', controller: 'puchi_ble_v1', split: false, rows: 5, cols: 4, diodeDirection: 'row2col' }),
-  wiring: { kind: 'matrix', diodeDirection: 'row2col', rows: [2, 3, 4, 5, 6], cols: [7, 8, 9, 10] },
-  encoders: [{ a: 14, b: 15 }],
+  wiring: { kind: 'matrix', diodeDirection: 'row2col', rows: [4, 5, 6, 7, 8], cols: [9, 10, 14, 15] },
+  encoders: [{ a: 16, b: 18 }],
+  // A 128x64 OLED on the I2C pins D2/D3 (the Kyria's node).
+  displays: { left: 'oled_128x64' },
 };
 
 /** A 2×3 direct-wired split whose right half has its own pins. */
 const duo: KeyboardHardware = {
   ...gridHardware({ ...DEFAULT_BASICS, name: 'editor_duo', displayName: 'Editor Duo', controller: 'bluemicro840_v1', wiring: 'direct', rows: 2, cols: 3 }),
-  wiring: { kind: 'direct', pins: [2, 3, 4, 5, 6, 7], right: [21, 20, 19, 18, 15, 14] },
+  wiring: { kind: 'direct', pins: [4, 5, 6, 7, 8, 9], right: [21, 20, 19, 18, 15, 14] },
   // An encoder on the left half only: the right half has its own (empty) list.
-  encoders: [{ a: 8, b: 9 }],
+  encoders: [{ a: 10, b: 16 }],
   rightEncoders: [],
+  // A 128x32 OLED on the left half only (the Corne's node).
+  displays: { left: 'oled_128x32' },
 };
 
 /**

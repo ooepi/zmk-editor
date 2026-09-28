@@ -7,12 +7,12 @@
   "wiring": {
     "kind": "direct",
     "pins": [
-      2,
-      3,
       4,
       5,
       6,
-      7
+      7,
+      8,
+      9
     ],
     "right": [
       21,
@@ -25,11 +25,14 @@
   },
   "encoders": [
     {
-      "a": 8,
-      "b": 9
+      "a": 10,
+      "b": 16
     }
   ],
   "rightEncoders": [],
+  "displays": {
+    "left": "oled_128x32"
+  },
   "keys": [
     {"x":0,"y":0,"w":100,"h":100,"r":0,"rx":0,"ry":0,"row":0,"col":0,"side":"left"},
     {"x":100,"y":0,"w":100,"h":100,"r":0,"rx":0,"ry":0,"row":0,"col":1,"side":"left"},
