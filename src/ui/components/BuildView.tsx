@@ -1,4 +1,5 @@
 import { useMemo, useState, type Dispatch } from 'react';
+import { unsupportedHardwareSettings } from '../../core/catalog/settings.ts';
 import { configPaths, generateConfig, importConfig, type ZmkConfig } from '../../core/config.ts';
 import {
   ArtifactDownloadError,
@@ -68,6 +69,7 @@ export function BuildView({ config, dispatch }: BuildViewProps) {
     [connection, config.keyboard, changes],
   );
   const hardwareErrors = useMemo(() => (config.hardware ? validateHardware(config.hardware).filter((i) => i.level === 'error') : []), [config.hardware]);
+  const unsupported = useMemo(() => unsupportedHardwareSettings(config), [config]);
   const handEditKey = connection
     ? `${connectionSeq}:${connection.ref.owner}/${connection.ref.repo}@${connection.headSha}:${handEdited.join('|')}`
     : '';
@@ -195,6 +197,18 @@ export function BuildView({ config, dispatch }: BuildViewProps) {
               <HardwareIssueList issues={hardwareErrors} />
             </div>
           )}
+          {unsupported.length > 0 && (
+            <div className="field">
+              <p className="field-error">Turn these off in Settings before committing:</p>
+              <ul className="notes" aria-label="Unsupported settings">
+                {unsupported.map((u) => (
+                  <li key={u.name} className="field-error">
+                    {u.message}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="row wrap">
             <input
               className="input grow"
@@ -206,7 +220,7 @@ export function BuildView({ config, dispatch }: BuildViewProps) {
               type="button"
               className="button primary"
               disabled={
-                busy || changes.length === 0 || !commitMessage.trim() || (handEdited.length > 0 && !replaceHandEdits) || hardwareErrors.length > 0
+                busy || changes.length === 0 || !commitMessage.trim() || (handEdited.length > 0 && !replaceHandEdits) || hardwareErrors.length > 0 || unsupported.length > 0
               }
               onClick={() => void commitAndBuild()}
             >

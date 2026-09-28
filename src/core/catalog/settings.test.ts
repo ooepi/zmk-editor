@@ -3,7 +3,9 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { importConfig } from '../config.ts';
 import { generateKconfig, parseKconfig } from '../files/kconfig.ts';
-import { findSetting, readSetting, SETTINGS, settingWarnings, writeSetting } from './settings.ts';
+import { newHardwareConfig } from '../hardware/config.ts';
+import { testSplit } from '../hardware/testFixtures.ts';
+import { findSetting, readSetting, SETTINGS, settingWarnings, unsupportedHardwareSettings, writeSetting } from './settings.ts';
 
 const fixture = (name: string) => readFileSync(join(import.meta.dirname, '../../../test/fixtures/lily58', name), 'utf8');
 const load = () =>
@@ -90,5 +92,49 @@ describe('settingWarnings', () => {
     const config = load();
     const kconfig = writeSetting(config.kconfig, setting('ZMK_IDLE_SLEEP_TIMEOUT'), 1000);
     expect(settingWarnings({ ...config, kconfig }).map((w) => w.message)).toEqual([expect.stringMatching(/sleep.*before.*idle/i)]);
+  });
+});
+
+describe('settings a designed keyboard has no hardware for', () => {
+  const designed = newHardwareConfig(testSplit, 'v0.3');
+  const turnOn = (name: string) => {
+    const def = findSetting(name);
+    if (!def) throw new Error(name);
+    return { ...designed, kconfig: writeSetting(designed.kconfig, def, true) };
+  };
+
+  it('flags the display, underglow, backlight and encoders when they are on', () => {
+    expect(unsupportedHardwareSettings(designed)).toEqual([]);
+    expect(unsupportedHardwareSettings(turnOn('ZMK_DISPLAY'))).toEqual([
+      { name: 'ZMK_DISPLAY', message: 'Display is on, but Test Split has no screen yet, so the firmware won’t build.' },
+    ]);
+    expect(unsupportedHardwareSettings(turnOn('ZMK_RGB_UNDERGLOW')).map((s) => s.name)).toEqual(['ZMK_RGB_UNDERGLOW']);
+    expect(unsupportedHardwareSettings(turnOn('ZMK_BACKLIGHT')).map((s) => s.name)).toEqual(['ZMK_BACKLIGHT']);
+    expect(unsupportedHardwareSettings(turnOn('EC11')).map((s) => s.name)).toEqual(['EC11']);
+  });
+
+  it('allows the display when a display shield is built with the keyboard', () => {
+    const withView = { ...turnOn('ZMK_DISPLAY'), build: { include: designed.build.include.map((t) => ({ ...t, shield: `${t.shield} nice_view_adapter nice_view` })) } };
+    expect(unsupportedHardwareSettings(withView)).toEqual([]);
+  });
+
+  it('never flags catalog keyboards, whose shields bring their own hardware', () => {
+    const lily = load();
+    const def = findSetting('ZMK_RGB_UNDERGLOW');
+    if (!def) throw new Error('setting');
+    expect(unsupportedHardwareSettings({ ...lily, kconfig: writeSetting(lily.kconfig, def, true) })).toEqual([]);
+  });
+
+  it('offers turning it off instead of suggesting to turn it on', () => {
+    const def = findSetting('ZMK_RGB_UNDERGLOW');
+    if (!def) throw new Error('setting');
+    const keymap = { ...designed.keymap, layers: designed.keymap.layers.map((l, i) => (i === 0 ? { ...l, bindings: [{ behavior: 'rgb_ug', params: ['RGB_TOG'] }, ...l.bindings.slice(1)] } : l)) };
+    // The keymap uses &rgb_ug, but the keyboard has no LED strip: no "turn on" nudge.
+    expect(settingWarnings({ ...designed, keymap }).some((w) => w.fix?.name === 'ZMK_RGB_UNDERGLOW')).toBe(false);
+    const on = { ...designed, keymap, kconfig: writeSetting(designed.kconfig, def, true) };
+    expect(settingWarnings(on)).toContainEqual({
+      message: 'RGB underglow is on, but Test Split has no LED strip yet, so the firmware won’t build.',
+      fix: { name: 'ZMK_RGB_UNDERGLOW', value: false },
+    });
   });
 });

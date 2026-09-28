@@ -230,6 +230,48 @@ function usedBehaviors(config: ZmkConfig): { keys: Set<string>; sensors: boolean
   return { keys, sensors };
 }
 
+/**
+ * Settings that need hardware a keyboard designed in the editor doesn't have
+ * yet (its shield defines keys only). ZMK builds these features against
+ * devicetree nodes, so turning one on fails the build. Catalog keyboards'
+ * shields bring their own hardware and are never flagged.
+ */
+const HARDWARE_FEATURES: { name: string; label: string; part: string }[] = [
+  { name: 'ZMK_DISPLAY', label: 'Display', part: 'screen' },
+  { name: 'ZMK_RGB_UNDERGLOW', label: 'RGB underglow', part: 'LED strip' },
+  { name: 'ZMK_BACKLIGHT', label: 'Backlight', part: 'backlight LEDs' },
+  { name: 'EC11', label: 'Rotary encoders (EC11)', part: 'encoders' },
+];
+
+/** Shields that add a screen to any Pro Micro keyboard, so the display setting is fine with them. */
+const DISPLAY_SHIELDS = ['nice_view', 'nice_view_gem', 'nice_oled'];
+
+export interface UnsupportedSetting {
+  name: string;
+  message: string;
+}
+
+/** Hardware settings turned on for a designed keyboard that has no such hardware. */
+export function unsupportedHardwareSettings(config: ZmkConfig): UnsupportedSetting[] {
+  const hw = config.hardware;
+  if (!hw) return [];
+  return HARDWARE_FEATURES.flatMap(({ name, label, part }) => {
+    const def = findSetting(name);
+    if (!def || readSetting(config.kconfig, def) !== true || !lacksHardwareFor(config, name)) return [];
+    return [{ name, message: `${label} is on, but ${hw.displayName} has no ${part} yet, so the firmware won’t build.` }];
+  });
+}
+
+/** Whether a setting needs hardware this designed keyboard doesn't have (always false for catalog keyboards). */
+export function lacksHardwareFor(config: ZmkConfig, name: string): boolean {
+  if (!config.hardware || !HARDWARE_FEATURES.some((f) => f.name === name)) return false;
+  return name !== 'ZMK_DISPLAY' || !hasDisplayShield(config);
+}
+
+function hasDisplayShield(config: ZmkConfig): boolean {
+  return config.build.include.some((t) => (t.shield ?? '').split(/\s+/).some((s) => DISPLAY_SHIELDS.includes(s)));
+}
+
 /** Settings that don't fit the keymap, each with a one-click fix where there is one. */
 export function settingWarnings(config: ZmkConfig): SettingWarning[] {
   const value = (name: string) => {
@@ -237,17 +279,19 @@ export function settingWarnings(config: ZmkConfig): SettingWarning[] {
     return def ? (readSetting(config.kconfig, def) ?? def.default) : undefined;
   };
   const { keys, sensors } = usedBehaviors(config);
-  const warnings: SettingWarning[] = [];
+  const warnings: SettingWarning[] = unsupportedHardwareSettings(config).map(({ name, message }) => ({ message, fix: { name, value: false } }));
+  // Don't suggest turning on something the keyboard has no hardware for.
+  const canUse = (name: string) => !lacksHardwareFor(config, name);
   if (['mkp', 'mmv', 'msc'].some((b) => keys.has(b)) && value('ZMK_POINTING') !== true) {
     warnings.push({ message: 'The keymap has mouse keys, but mouse keys are off, so they won’t work.', fix: { name: 'ZMK_POINTING', value: true } });
   }
-  if (keys.has('rgb_ug') && value('ZMK_RGB_UNDERGLOW') !== true) {
+  if (keys.has('rgb_ug') && value('ZMK_RGB_UNDERGLOW') !== true && canUse('ZMK_RGB_UNDERGLOW')) {
     warnings.push({ message: 'The keymap has &rgb_ug keys, but RGB underglow is off.', fix: { name: 'ZMK_RGB_UNDERGLOW', value: true } });
   }
-  if (keys.has('bl') && value('ZMK_BACKLIGHT') !== true) {
+  if (keys.has('bl') && value('ZMK_BACKLIGHT') !== true && canUse('ZMK_BACKLIGHT')) {
     warnings.push({ message: 'The keymap has &bl keys, but the backlight is off.', fix: { name: 'ZMK_BACKLIGHT', value: true } });
   }
-  if (sensors && value('EC11') !== true) {
+  if (sensors && value('EC11') !== true && canUse('EC11')) {
     warnings.push({ message: 'The keymap uses an encoder, but EC11 encoder support isn’t turned on here (most keyboards need it).', fix: { name: 'EC11', value: true } });
   }
   const idle = value('ZMK_IDLE_TIMEOUT');
