@@ -33,15 +33,15 @@ RC(0,3)  RC(0,4)  RC(0,5)  RC(0,11) RC(0,10) RC(0,9)
             = <&key_physical_attrs 100 100    0    0      0    0    0>
             , <&key_physical_attrs 100 100  100    0      0    0    0>
             , <&key_physical_attrs 100 100  200    0      0    0    0>
-            , <&key_physical_attrs 100 100  500    0      0    0    0>
-            , <&key_physical_attrs 100 100  600    0      0    0    0>
             , <&key_physical_attrs 100 100  700    0      0    0    0>
+            , <&key_physical_attrs 100 100  800    0      0    0    0>
+            , <&key_physical_attrs 100 100  900    0      0    0    0>
             , <&key_physical_attrs 100 100    0  100      0    0    0>
             , <&key_physical_attrs 100 100  100  100      0    0    0>
             , <&key_physical_attrs 100 100  200  100      0    0    0>
-            , <&key_physical_attrs 100 100  500  100      0    0    0>
-            , <&key_physical_attrs 100 100  600  100      0    0    0>
             , <&key_physical_attrs 100 100  700  100      0    0    0>
+            , <&key_physical_attrs 100 100  800  100      0    0    0>
+            , <&key_physical_attrs 100 100  900  100      0    0    0>
             ;
     };
 };

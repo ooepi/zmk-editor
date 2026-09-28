@@ -4,7 +4,7 @@ import { createCombo } from '../keymap/comboEdit.ts';
 import { generateKeymap } from '../keymap/generator.ts';
 import { importKeymap } from '../keymap/importer.ts';
 import { DEFAULT_BASICS, gridHardware } from './grid.ts';
-import { addKey, deleteKey, remapKeyPositions } from './keys.ts';
+import { addKey, deleteKey, deleteKeys, remapKeyPositions } from './keys.ts';
 import { starterKeymap } from './starter.ts';
 
 const pad = { ...gridHardware({ ...DEFAULT_BASICS, name: 'test_pad', displayName: 'Test Pad', split: false, rows: 1, cols: 3 }) };
@@ -40,7 +40,7 @@ describe('addKey / deleteKey', () => {
     const split = gridHardware({ ...DEFAULT_BASICS, rows: 1, cols: 2 });
     const without = deleteKey(split, 2); // the right half's first key (row 0, column 0)
     const next = addKey(without, 'right');
-    expect(next.keys.at(-1)).toMatchObject({ row: 0, col: 0, side: 'right', x: 600, y: 0 });
+    expect(next.keys.at(-1)).toMatchObject({ row: 0, col: 0, side: 'right', x: 800, y: 0 });
   });
 
   it('adds a direct input for a new direct-wired key', () => {
@@ -48,5 +48,12 @@ describe('addKey / deleteKey', () => {
     const next = addKey(direct);
     expect(next.wiring).toEqual({ kind: 'direct', pins: [null, null, null] });
     expect(next.keys.at(-1)).toMatchObject({ row: 0, col: 2, x: 200 });
+  });
+});
+
+describe('deleteKeys', () => {
+  it('removes several keys at once', () => {
+    const hw = gridHardware({ ...DEFAULT_BASICS, split: false, rows: 1, cols: 4 });
+    expect(deleteKeys(hw, [0, 2]).keys.map((k) => k.col)).toEqual([1, 3]);
   });
 });

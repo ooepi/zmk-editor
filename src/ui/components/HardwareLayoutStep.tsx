@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { addKey, deleteKey } from '../../core/hardware/keys.ts';
+import { addKey, deleteKeys } from '../../core/hardware/keys.ts';
 import { hardwareLayout, type HardwareKey, type KeyboardHardware, type Side } from '../../core/hardware/types.ts';
 import type { HardwareIssue } from '../../core/hardware/validate.ts';
 import { DesignerCanvas, LiveNumberField, RotationField, UnitField } from './DesignerCanvas.tsx';
@@ -14,7 +14,8 @@ interface Props {
 
 export function HardwareLayoutStep({ draft, issues, onChange }: Props) {
   const { hw } = draft;
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selection, setSelection] = useState<number[]>([]);
+  const selected = selection.length === 1 ? (selection[0] ?? null) : null;
   const direct = hw.wiring.kind === 'direct';
   const labels = hw.keys.map((k) => (direct ? `in ${k.col}` : `${k.row},${k.col}`));
   const flagged = new Set(issues.filter((i) => i.level === 'error').flatMap((i) => i.keys ?? []));
@@ -23,11 +24,12 @@ export function HardwareLayoutStep({ draft, issues, onChange }: Props) {
     setHw({ ...hw, keys: hw.keys.map((k, i) => (i === index ? { ...k, ...patch } : k)) });
   const add = (side?: Side) => {
     onChange({ hw: addKey(hw, side), origins: [...draft.origins, undefined] });
-    setSelected(hw.keys.length);
+    setSelection([hw.keys.length]);
   };
-  const remove = (index: number) => {
-    onChange({ hw: deleteKey(hw, index), origins: draft.origins.filter((_, i) => i !== index) });
-    setSelected(null);
+  const remove = (indices: number[]) => {
+    const gone = new Set(indices);
+    onChange({ hw: deleteKeys(hw, indices), origins: draft.origins.filter((_, i) => !gone.has(i)) });
+    setSelection([]);
   };
   const key = selected === null ? undefined : hw.keys[selected];
 
@@ -35,15 +37,17 @@ export function HardwareLayoutStep({ draft, issues, onChange }: Props) {
     <div className="designer">
       <div className="designer-main">
         <p className="muted small">
-          Drag keys to where they are on your keyboard (arrows nudge, Shift: 1 key). Each key shows its matrix
+          Drag keys to where they are on your keyboard (arrows nudge, Shift: 1 key). Ctrl/Shift-click or drag a box on an
+          empty spot to select several keys and move them together. Each key shows its matrix
           {direct ? ' input' : ' row,column'}; select one to change it. Keys are numbered in keymap order.
         </p>
         <DesignerCanvas
           layout={hardwareLayout(hw)}
           labels={labels}
-          selected={selected}
+          selection={selection}
           flagged={flagged}
-          onSelect={setSelected}
+          onSelectionChange={setSelection}
+          onDelete={remove}
           onChange={(layout) => setHw({ ...hw, keys: hw.keys.map((k, i) => ({ ...k, ...layout.keys[i] })) })}
         />
         <HardwareIssueList issues={issues} />
@@ -90,8 +94,17 @@ export function HardwareLayoutStep({ draft, issues, onChange }: Props) {
                 onChange={(r) => updateKey(selected, { r, ...(key.r === 0 && key.rx === 0 && key.ry === 0 ? { rx: key.x + key.w / 2, ry: key.y + key.h / 2 } : {}) })}
               />
             </div>
-            <button type="button" className="button danger" onClick={() => remove(selected)}>Delete key</button>
+            <button type="button" className="button danger" onClick={() => remove([selected])}>Delete key</button>
           </fieldset>
+        ) : selection.length > 1 ? (
+          <div className="stack">
+            <p className="muted small">
+              {selection.length} keys selected. Drag them or use the arrow keys to move them together; Esc clears the selection.
+            </p>
+            <button type="button" className="button danger" onClick={() => remove(selection)}>
+              Delete {selection.length} keys
+            </button>
+          </div>
         ) : (
           <p className="muted small">Select a key to edit it.</p>
         )}

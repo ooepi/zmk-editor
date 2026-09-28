@@ -20,14 +20,14 @@ describe('gridHardware', () => {
     expect(hw.wiring).toEqual({ kind: 'matrix', diodeDirection: 'col2row', rows: [null, null], cols: [null, null] });
   });
 
-  it('puts the right half two keys to the right; its outer column shares the left outer column pin', () => {
+  it('puts the right half four keys to the right; its outer column shares the left outer column pin', () => {
     const hw = gridHardware({ ...DEFAULT_BASICS, rows: 1, cols: 3 });
     expect(hw.keys.map((k) => [k.x, k.col, k.side])).toEqual([
       [0, 0, 'left'], [100, 1, 'left'], [200, 2, 'left'],
-      [500, 0, 'right'], [600, 1, 'right'], [700, 2, 'right'],
+      [700, 0, 'right'], [800, 1, 'right'], [900, 2, 'right'],
     ]);
     const wired = { ...hw, wiring: { kind: 'matrix' as const, diodeDirection: 'col2row' as const, rows: [4], cols: [6, 7, 8] } };
-    // Left outer = column 0 (x 0); right outer = column 2 (x 700): both use D6.
+    // Left outer = column 0 (x 0); right outer = column 2 (x 900): both use D6.
     expect(matrixPins(wired.wiring, 'right').cols[2]).toBe(6);
   });
 

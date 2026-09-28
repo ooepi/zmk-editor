@@ -228,3 +228,117 @@ describe('Edit hardware', () => {
     expect(stored().hardware.keys).toHaveLength(3);
   });
 });
+
+describe('Wizard layout and navigation', () => {
+  const canvas = () => screen.getByRole('group', { name: 'Layout canvas' });
+  const rectX = (index: number) => Number(canvasKey(index).querySelector('rect')?.getAttribute('x'));
+
+  async function openLayoutStep(user: ReturnType<typeof userEvent.setup>) {
+    await openWizard(user);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+  }
+
+  it('jumps back to an earlier step from the step list', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await openWizard(user);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(within(screen.getByRole('list', { name: 'Steps' })).getByRole('button', { name: '1. Basics' }));
+    expect(screen.getByLabelText('Keyboard name')).toBeTruthy();
+    // Later steps can't be jumped to.
+    expect(within(screen.getByRole('list', { name: 'Steps' })).queryByRole('button', { name: '3. Layout' })).toBeNull();
+  });
+
+  it('gives each half its own pinout when the right half is wired differently', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await openWizard(user);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getAllByRole('figure')).toHaveLength(1);
+
+    await user.click(screen.getByLabelText('The right half is wired differently'));
+    const left = screen.getByRole('figure', { name: 'Pro Micro pinout (left half)' });
+    const right = screen.getByRole('figure', { name: 'Pro Micro pinout (right half)' });
+
+    await user.click(screen.getByLabelText('Right row 0'));
+    // The left pinout doesn't fill a right-half field.
+    await user.click(within(left).getByRole('button', { name: 'D4' }));
+    expect(screen.getByLabelText('Right row 0')).toHaveProperty('value', '');
+    await user.click(within(right).getByRole('button', { name: 'D5' }));
+    expect(screen.getByLabelText('Right row 0')).toHaveProperty('value', '5');
+    expect(screen.getByLabelText('Left row 0')).toHaveProperty('value', '');
+  });
+
+  it('starts the halves four keys apart', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await openLayoutStep(user);
+    // 3×6 per half: key 6 is the right half's first key, 6 + 4 key widths from the left edge.
+    expect(rectX(6) - rectX(0)).toBe(1000);
+  });
+
+  it('selects several keys with Ctrl-click, moves and deletes them together, and Esc clears', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await openLayoutStep(user);
+
+    await user.click(canvasKey(0));
+    await user.keyboard('{Control>}');
+    await user.click(canvasKey(1));
+    await user.keyboard('{/Control}');
+    expect(canvasKey(0).getAttribute('aria-pressed')).toBe('true');
+    expect(canvasKey(1).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByText(/2 keys selected/)).toBeTruthy();
+
+    const before = [rectX(0), rectX(1), rectX(2)];
+    canvasKey(1).focus();
+    await user.keyboard('{ArrowRight}');
+    expect([rectX(0), rectX(1), rectX(2)]).toEqual(before.map((x, i) => (i < 2 ? x + 25 : x)));
+
+    await user.keyboard('{Escape}');
+    expect(canvasKey(0).getAttribute('aria-pressed')).toBe('false');
+
+    await user.click(canvasKey(0));
+    await user.keyboard('{Shift>}');
+    await user.click(canvasKey(2));
+    await user.keyboard('{/Shift}');
+    const count = within(canvas()).getAllByRole('button').length;
+    await user.click(screen.getByRole('button', { name: 'Delete 2 keys' }));
+    expect(within(canvas()).getAllByRole('button')).toHaveLength(count - 2);
+  });
+
+  it('selects the keys inside a box dragged on an empty spot', async () => {
+    // jsdom has no SVG geometry: map screen coordinates 1:1 to canvas coordinates.
+    const proto = SVGElement.prototype as unknown as Record<string, unknown>;
+    proto.getScreenCTM = () => ({ inverse: () => ({}) });
+    proto.createSVGPoint = () => ({ x: 0, y: 0, matrixTransform(this: { x: number; y: number }) { return { x: this.x, y: this.y }; } });
+    try {
+      const user = userEvent.setup();
+      render(<App />);
+      await openLayoutStep(user);
+      fireEvent.pointerDown(canvas(), { clientX: -50, clientY: -50, pointerId: 1 });
+      fireEvent.pointerMove(canvas(), { clientX: 150, clientY: 50, pointerId: 1 });
+      fireEvent.pointerUp(canvas(), { clientX: 150, clientY: 50, pointerId: 1 });
+      expect(screen.getByText(/2 keys selected/)).toBeTruthy();
+      expect(canvasKey(0).getAttribute('aria-pressed')).toBe('true');
+      expect(canvasKey(1).getAttribute('aria-pressed')).toBe('true');
+      expect(canvasKey(2).getAttribute('aria-pressed')).toBe('false');
+    } finally {
+      delete proto.getScreenCTM;
+      delete proto.createSVGPoint;
+    }
+  });
+});
+
+describe('Wizard problem list', () => {
+  it('sums up pins that aren’t picked yet in one line', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await openWizard(user);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    // A fresh 3×6 split: 3 rows + 6 columns without a pin.
+    expect(screen.getByText('9 pin fields don’t have a pin yet.')).toBeTruthy();
+    expect(screen.queryByText('Row 0 on the left half has no pin.')).toBeNull();
+  });
+});
