@@ -18,7 +18,7 @@ export function CategoryRail({ entries, current, onJump }: CategoryRailProps) {
     <nav className="palette-rail" aria-label="Palette categories">
       {entries.map((entry, index) => (
         <div key={entry.id} className="palette-rail-item">
-          {entry.kind !== 'Recent' && entry.kind !== entries[index - 1]?.kind && (
+          {entry.kind !== 'Recent' && entry.kind !== entries[index - 1]?.kind && entry.title !== entry.kind && (
             <span className="palette-rail-heading" aria-hidden="true">
               {entry.kind}
             </span>

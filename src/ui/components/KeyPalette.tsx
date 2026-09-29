@@ -87,7 +87,7 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm }: KeyPa
   };
 
   const toggleMod = (mod: ModifierFunction) =>
-    setMods(mods.includes(mod) ? mods.filter((m) => m !== mod) : [...mods, mod]);
+    setMods((held) => (held.includes(mod) ? held.filter((m) => m !== mod) : [...held, mod]));
 
   const tile = (item: PaletteItem, label: Pick<KeycapLabel, 'main' | 'sub'>, name: string, title: string, kind = 'key') => {
     const active = sameItem(armed, item);
