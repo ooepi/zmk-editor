@@ -14,16 +14,16 @@
 }
 
 .layer-rail {
+  position: relative;
+  z-index: 2;
   align-self: center;
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
-  max-height: calc(100% - 2 * var(--s-4));
-  padding: var(--s-2);
+  padding: 6px;
   border-radius: var(--r-lg);
   background: var(--surface);
   box-shadow: var(--shadow-float);
-  overflow-y: auto;
 }
 
 .layer-rail-list {
@@ -43,10 +43,10 @@
 
 /* The tab and its rename and delete buttons share one pill. */
 .layer-pill {
+  position: relative;
   display: flex;
   align-items: center;
-  min-width: 148px;
-  padding-right: 3px;
+  min-width: 92px;
   border: 1px solid transparent;
   border-radius: var(--r-pill);
   background: var(--surface-2);
@@ -79,9 +79,26 @@
   opacity: 1;
 }
 
+/*
+ * The actions extend the hovered pill to the right, over the canvas, so the rail
+ * only needs room for the names.
+ */
 .layer-row-actions {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  left: calc(100% - var(--s-5));
   display: flex;
+  align-items: center;
   gap: 2px;
+  padding: 0 3px 0 var(--s-5);
+  border-radius: 0 var(--r-pill) var(--r-pill) 0;
+  background: inherit;
+  pointer-events: none;
+}
+
+.layer-row:is(:hover, :focus-within) .layer-row-actions {
+  pointer-events: auto;
 }
 
 .layer-row-actions .icon-button {

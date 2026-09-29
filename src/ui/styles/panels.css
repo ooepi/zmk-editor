@@ -177,4 +177,10 @@
   .layer-row-actions {
     opacity: 1;
   }
+
+  .layer-row-actions {
+    position: static;
+    padding: 0 3px 0 0;
+    pointer-events: auto;
+  }
 }
