@@ -371,7 +371,7 @@ input[type='radio'] {
 /* Notices: a tinted card with a coloured bar on the left. */
 
 .notice {
-  margin: var(--s-2) var(--s-4) 0;
+  margin: var(--s-3) 0;
   padding: var(--s-3) var(--s-4);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
@@ -381,7 +381,6 @@ input[type='radio'] {
 }
 
 .notice.warn {
-  margin: var(--s-3) 0;
   box-shadow: inset 4px 0 0 var(--danger);
 }
 
@@ -391,7 +390,8 @@ input[type='radio'] {
   bottom: var(--s-6);
   left: 50%;
   z-index: 50;
-  max-width: min(640px, 90vw);
+  width: max-content;
+  max-width: min(640px, calc(100vw - 2 * var(--s-4)));
   margin: 0;
   transform: translateX(-50%);
   box-shadow:

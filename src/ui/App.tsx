@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { customLayout } from '../core/config.ts';
 import { toggleComboKey, replaceCombo } from '../core/keymap/comboEdit.ts';
 import { behaviorKind } from '../core/keymap/model.ts';
@@ -53,11 +53,36 @@ type View =
   | 'newKeyboard'
   | 'editHardware';
 
+/** The living design-system reference, loaded only when someone opens /#design. */
+const DesignSystemPage = lazy(() => import('./designSystem/DesignSystemPage.tsx'));
+
+function useHash(): string {
+  const [hash, setHash] = useState(() => window.location.hash);
+  useEffect(() => {
+    const onChange = () => setHash(window.location.hash);
+    window.addEventListener('hashchange', onChange);
+    return () => window.removeEventListener('hashchange', onChange);
+  }, []);
+  return hash;
+}
+
+export function App() {
+  const hash = useHash();
+  if (hash === '#design') {
+    return (
+      <Suspense fallback={null}>
+        <DesignSystemPage />
+      </Suspense>
+    );
+  }
+  return <Editor />;
+}
+
 function isTyping(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|SELECT|TEXTAREA)$/.test(target.tagName));
 }
 
-export function App() {
+function Editor() {
   const [theme, toggleTheme] = useTheme();
   const [state, dispatch] = useEditor();
   const [view, setView] = useState<View>(() => (isLoginCallback() ? 'build' : 'keymap'));
