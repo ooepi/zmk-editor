@@ -27,11 +27,7 @@ const shots: { name: string; setup: (page: Page) => Promise<void> }[] = [
       for (const key of ['Key 53: MOUS (mo)', 'Key 54: Space', 'Key 55: PROG (mo)']) {
         await page.getByRole('button', { name: key }).click({ modifiers: ['Control'] });
       }
-      await page
-        .getByRole('region', { name: 'Key palette' })
-        .getByRole('navigation', { name: 'Palette categories' })
-        .getByRole('button', { name: 'Layers' })
-        .click();
+      await page.getByRole('region', { name: 'Key palette' }).getByRole('button', { name: 'Behaviors' }).click();
     },
   },
   {

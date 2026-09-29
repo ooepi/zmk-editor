@@ -181,11 +181,19 @@
     grid-template-columns: 1fr;
   }
 
+  .palette-side {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .palette-halves {
+    align-self: flex-start;
+    min-width: 220px;
+  }
+
   .palette-rail {
     flex-direction: row;
     overflow-x: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
   }
 
   .palette-rail-heading {

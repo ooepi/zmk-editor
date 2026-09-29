@@ -42,6 +42,7 @@ describe('recently used', () => {
     expect(palette().queryByRole('group', { name: 'Recently used' })).toBeNull();
 
     drag(palette().getByRole('button', { name: 'Place Tab (TAB)' }), keyButton('Key 0: Esc'));
+    await user.click(palette().getByRole('button', { name: 'Behaviors' }));
     drag(palette().getByRole('button', { name: 'Place NUM (mo)' }), keyButton('Key 1: 1'));
 
     const recent = within(palette().getByRole('group', { name: 'Recently used' }));
@@ -118,8 +119,10 @@ describe('encoder drops', () => {
     expect(screen.getByRole('heading', { name: /Encoder 1/ })).toBeTruthy();
   });
 
-  it('explains that layer behaviors cannot go on an encoder', () => {
+  it('explains that layer behaviors cannot go on an encoder', async () => {
+    const user = userEvent.setup();
     render(<App />);
+    await user.click(palette().getByRole('button', { name: 'Behaviors' }));
     drag(palette().getByRole('button', { name: 'Place NUM (mo)' }), within(encoder()).getByText(/↺/));
     expect(screen.getByRole('status').textContent).toMatch(/Only keys, Transparent and None/);
   });

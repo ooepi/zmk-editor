@@ -60,15 +60,33 @@
   min-height: 0;
 }
 
+/* The left column: the Keys / Behaviors toggle, then that half's categories. */
+.palette-side {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--border);
+}
+
+.palette-halves {
+  display: flex;
+  margin: var(--s-2) var(--s-2) var(--s-1);
+}
+
+.palette-halves .segment {
+  flex: 1;
+  padding: 0 var(--s-2);
+}
+
 /* The category rail: a table of contents that jumps to a section. */
 .palette-rail {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-height: 0;
   padding: var(--s-2);
   overflow-y: auto;
-  border-right: 1px solid var(--border);
 }
 
 .palette-rail-item {

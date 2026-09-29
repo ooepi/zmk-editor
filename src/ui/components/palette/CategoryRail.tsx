@@ -10,15 +10,17 @@ interface CategoryRailProps {
   /** The section in view, highlighted. */
   current: string | null;
   onJump: (id: string) => void;
+  /** Show Keys / Behaviors headings between the kinds (while a search lists both). */
+  headings: boolean;
 }
 
 /** The palette's table of contents: jumps to a section instead of hiding the others. */
-export function CategoryRail({ entries, current, onJump }: CategoryRailProps) {
+export function CategoryRail({ entries, current, onJump, headings }: CategoryRailProps) {
   return (
     <nav className="palette-rail" aria-label="Palette categories">
       {entries.map((entry, index) => (
         <div key={entry.id} className="palette-rail-item">
-          {entry.kind !== 'Recent' && entry.kind !== entries[index - 1]?.kind && entry.title !== entry.kind && (
+          {headings && entry.kind !== 'Recent' && entry.kind !== entries[index - 1]?.kind && entry.title !== entry.kind && (
             <span className="palette-rail-heading" aria-hidden="true">
               {entry.kind}
             </span>

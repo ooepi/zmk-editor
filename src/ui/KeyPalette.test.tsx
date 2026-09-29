@@ -66,8 +66,10 @@ describe('key palette', () => {
     expect(keyButton('Key 0: Ctl+C')).toBeTruthy();
   });
 
-  it('drops behaviors and transparent', () => {
+  it('drops behaviors and transparent', async () => {
+    const user = userEvent.setup();
     render(<App />);
+    await user.click(palette().getByRole('button', { name: 'Behaviors' }));
     drag(palette().getByRole('button', { name: 'Place NUM (mo)' }), keyButton('Key 0: Esc'));
     expect(keyButton('Key 0: NUM (mo)')).toBeTruthy();
     drag(palette().getByRole('button', { name: 'Place Transparent' }), keyButton('Key 1: 1'));
@@ -135,7 +137,6 @@ describe('palette layout', () => {
     const user = userEvent.setup();
     render(<App />);
     expect(palette().getByRole('heading', { name: 'Letters' })).toBeTruthy();
-    expect(within(palette().getByRole('group', { name: 'Layers' })).getByRole('button', { name: 'Place NUM (mo)' })).toBeTruthy();
     const rail = within(palette().getByRole('navigation', { name: 'Palette categories' }));
     await user.click(rail.getByRole('button', { name: 'Numbers' }));
     expect(scrolled).toHaveBeenLastCalledWith('palette-keys-numbers');
@@ -202,6 +203,37 @@ describe('modifiers on palette tiles', () => {
   });
 });
 
+describe('keys and behaviors toggle', () => {
+  const rail = () => within(palette().getByRole('navigation', { name: 'Palette categories' }));
+
+  it('browses keys first, and the rail lists only their categories', () => {
+    render(<App />);
+    expect(palette().getByRole('button', { name: 'Keys' }).getAttribute('aria-pressed')).toBe('true');
+    expect(palette().getByRole('heading', { name: 'Letters' })).toBeTruthy();
+    expect(palette().queryByRole('group', { name: 'Layers' })).toBeNull();
+    expect(rail().queryByRole('button', { name: 'Layers' })).toBeNull();
+  });
+
+  it('switches the list and the rail to behaviors, keeping the special tiles', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(palette().getByRole('button', { name: 'Behaviors' }));
+    expect(palette().getByRole('button', { name: 'Behaviors' }).getAttribute('aria-pressed')).toBe('true');
+    expect(within(palette().getByRole('group', { name: 'Layers' })).getByRole('button', { name: 'Place NUM (mo)' })).toBeTruthy();
+    expect(palette().queryByRole('heading', { name: 'Letters' })).toBeNull();
+    expect(rail().getByRole('button', { name: 'Layers' })).toBeTruthy();
+    expect(rail().queryByRole('button', { name: 'Letters' })).toBeNull();
+    expect(palette().getByRole('group', { name: 'Special' })).toBeTruthy();
+  });
+
+  it('searches keys and behaviors together, whichever is selected', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.type(palette().getByRole('searchbox', { name: 'Search the palette' }), 'bluetooth');
+    expect(palette().getByRole('group', { name: 'Bluetooth & output' })).toBeTruthy();
+  });
+});
+
 describe('palette search', () => {
   it('starts a search at the top of the list and clears the highlighted category', async () => {
     Element.prototype.scrollIntoView = () => undefined;
@@ -211,7 +243,7 @@ describe('palette search', () => {
     let top = 0;
     Object.defineProperty(list, 'scrollTop', { get: () => top, set: (v: number) => (top = v), configurable: true });
     const rail = within(palette().getByRole('navigation', { name: 'Palette categories' }));
-    await user.click(rail.getByRole('button', { name: 'Layers' }));
+    await user.click(rail.getByRole('button', { name: 'Numbers' }));
     top = 1500;
     await user.type(palette().getByRole('searchbox', { name: 'Search the palette' }), 'a');
     expect(top).toBe(0);
@@ -241,6 +273,7 @@ describe('armed tile names', () => {
   it('includes the small line, so a Shift hold-tap is not just "A"', async () => {
     const user = userEvent.setup();
     render(<App />);
+await user.click(palette().getByRole('button', { name: 'Behaviors' }));
     await user.click(palette().getByRole('button', { name: 'Place NUM (mo)' }));
     expect(palette().getByText(/Placing NUM \(mo\): click keys/)).toBeTruthy();
   });
@@ -272,7 +305,9 @@ describe('modifier bar', () => {
     await user.click(palette().getByRole('button', { name: 'Hold Left Ctrl with placed keys' }));
     await user.click(palette().getByRole('button', { name: 'Hold Left Shift with placed keys' }));
     expect(palette().getByText('Key tiles will send Ctl+Sft with the key.')).toBeTruthy();
+    await user.click(palette().getByRole('button', { name: 'Behaviors' }));
     expect(palette().getByRole('button', { name: 'Place NUM (mo)' })).toBeTruthy();
+    await user.click(palette().getByRole('button', { name: 'Keys' }));
     await user.click(palette().getByRole('button', { name: 'Clear modifiers' }));
     expect(palette().getByRole('button', { name: 'Place A (A)' })).toBeTruthy();
   });

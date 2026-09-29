@@ -48,11 +48,13 @@ const JUMP_SETTLE_MS = 800;
 /** Keys and behaviors laid out as tiles in one list: drag one onto a key, or click it and then keys. */
 export function KeyPalette({ keymap, armed, selection, onPick, onDisarm }: KeyPaletteProps) {
   const [query, setQuery] = useState('');
+  /** Which half of the palette is browsed; a search shows both. */
+  const [half, setHalf] = useState<'keys' | 'behaviors'>('keys');
   const [mods, setMods] = useState<ModifierFunction[]>([]);
   const [current, setCurrent] = useState<string | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
-  /** The section last jumped to from the rail, and until when its smooth scroll is left alone. */
-  const jumped = useRef<{ id: string; until: number } | null>(null);
+  /** The section last jumped to from the rail; while `settling`, its smooth scroll is left alone. */
+  const jumped = useRef<{ id: string; settling: boolean } | null>(null);
   const { recent, paletteCollapsed: collapsed } = usePreferences();
   const hasEncoders = sensorCount(keymap) > 0;
   const searching = query.trim() !== '';
@@ -76,13 +78,17 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm }: KeyPa
   }, [recent, keymap]);
   const showRecent = recentTiles.length > 0 && !searching;
 
+  const shown = searching ? sections : sections.filter((s) => s.kind === half);
   const railEntries: RailEntry[] = [
     ...(showRecent ? [{ id: 'recent', title: 'Recent', kind: 'Recent' as const }] : []),
-    ...sections.map((s) => ({ id: s.id, title: s.title, kind: s.kind === 'keys' ? ('Keys' as const) : ('Behaviors' as const) })),
+    ...shown.map((s) => ({ id: s.id, title: s.title, kind: s.kind === 'keys' ? ('Keys' as const) : ('Behaviors' as const) })),
   ];
 
   const jump = (id: string) => {
-    jumped.current = { id, until: performance.now() + JUMP_SETTLE_MS };
+    const target = { id, settling: true };
+    jumped.current = target;
+    // scrollend isn't everywhere yet; stop waiting for it after a while.
+    window.setTimeout(() => (target.settling = false), JUMP_SETTLE_MS);
     scroller.current?.querySelector(`[data-section="${id}"]`)?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
     setCurrent(id);
   };
@@ -90,7 +96,7 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm }: KeyPa
   // Highlight the section at the top of the list while scrolling, but not while a jump is still scrolling there.
   const onScroll = () => {
     const box = scroller.current;
-    if (!box || (jumped.current && performance.now() < jumped.current.until)) return;
+    if (!box || jumped.current?.settling) return;
     const tops = [...box.querySelectorAll<HTMLElement>('[data-section]')].map((el) => ({
       id: el.dataset.section ?? '',
       top: el.getBoundingClientRect().top,
@@ -99,12 +105,24 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm }: KeyPa
     setCurrent(sectionInView(tops, box.getBoundingClientRect().top, atBottom, jumped.current?.id ?? null));
   };
 
-  // A new search starts at the top of the list, with no category highlighted.
-  const search = (text: string) => {
-    setQuery(text);
+  const toTop = () => {
     setCurrent(null);
     jumped.current = null;
     if (scroller.current) scroller.current.scrollTop = 0;
+  };
+
+  // A new search starts at the top of the list, with no category highlighted.
+  const search = (text: string) => {
+    setQuery(text);
+    toTop();
+  };
+
+  // Browsing, the toggle swaps the list; while searching (both halves shown) it jumps to that half's results.
+  const chooseHalf = (next: 'keys' | 'behaviors') => {
+    setHalf(next);
+    const first = sections.find((s) => s.kind === next);
+    if (searching && first) jump(first.id);
+    else toTop();
   };
 
   const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
@@ -171,7 +189,22 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm }: KeyPa
       </div>
       {!collapsed && (
         <div className="palette-body">
-          <CategoryRail entries={railEntries} current={current} onJump={jump} />
+          <div className="palette-side">
+            <div className="segmented palette-halves" role="group" aria-label="Palette sections">
+              {(['keys', 'behaviors'] as const).map((h) => (
+                <button
+                  key={h}
+                  type="button"
+                  className={`segment${half === h ? ' active' : ''}`}
+                  aria-pressed={half === h}
+                  onClick={() => chooseHalf(h)}
+                >
+                  {h === 'keys' ? 'Keys' : 'Behaviors'}
+                </button>
+              ))}
+            </div>
+            <CategoryRail entries={railEntries} current={current} onJump={jump} headings={searching} />
+          </div>
           <div className="palette-main">
             <div className="palette-tools">
               <input
@@ -184,7 +217,7 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm }: KeyPa
               />
               <ModifierBar mods={mods} onToggle={toggleMod} onClear={() => setMods([])} />
             </div>
-            <div className="palette-scroll" role="region" aria-label="Palette tiles" ref={scroller} onScroll={onScroll}>
+            <div className="palette-scroll" role="region" aria-label="Palette tiles" ref={scroller} onScroll={onScroll} onScrollEnd={() => jumped.current && (jumped.current.settling = false)}>
               {specials.length > 0 && (
                 <div className="palette-special" role="group" aria-label="Special">
                   {specials.map((s) => tile(s.item, s.label, s.name, s.title, s.kind))}
@@ -203,7 +236,7 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm }: KeyPa
                   </div>
                 </div>
               )}
-              {sections.map((section) => (
+              {shown.map((section) => (
                 <div key={section.id} className="palette-group" id={`palette-${section.id}`} data-section={section.id}>
                   <h3 className="palette-group-title">{section.title}</h3>
                   <div className="palette-tiles" role="group" aria-label={section.title}>
