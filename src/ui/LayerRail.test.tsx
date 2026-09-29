@@ -40,6 +40,26 @@ describe('layer rail', () => {
     expect(tabNames()[1]).toBe('1Arrows');
   });
 
+  it('renames in the pill, with save and cancel in place of rename and delete', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(rail().getByRole('button', { name: 'Rename layer NAV' }));
+    const input = screen.getByRole('textbox', { name: 'Layer name' }) as HTMLInputElement;
+    expect(input.selectionStart).toBe(0);
+    expect(input.selectionEnd).toBe(3);
+    expect(rail().queryByRole('button', { name: 'Delete layer NAV' })).toBeNull();
+
+    // Typing replaces the selected name (user.type would click and drop the selection).
+    await user.keyboard('Arrows');
+    await user.click(rail().getByRole('button', { name: 'Cancel rename' }));
+    expect(tabNames()[1]).toBe('1NAV');
+
+    await user.click(rail().getByRole('button', { name: 'Rename layer NAV' }));
+    await user.keyboard('Arrows');
+    await user.click(rail().getByRole('button', { name: 'Save layer name' }));
+    expect(tabNames()[1]).toBe('1Arrows');
+  });
+
   it('moves the focused layer with Alt+Arrow keys', async () => {
     const user = userEvent.setup();
     render(<App />);

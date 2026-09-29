@@ -25,7 +25,7 @@ const canvasKey = (index: number) =>
   within(screen.getByRole('group', { name: 'Layout canvas' })).getByRole('button', { name: new RegExp(`^Key ${index}:`) });
 
 async function openWizard(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole('button', { name: 'Lily58 ▾' }));
+  await user.click(screen.getByRole('button', { name: 'Change keyboard: Lily58' }));
   await user.click(screen.getByRole('button', { name: 'Design your own keyboard' }));
 }
 
@@ -68,7 +68,7 @@ describe('Design your own keyboard', () => {
     expect(screen.getByText('config/boards/shields/test_pad/test_pad.overlay')).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Create keyboard' }));
 
-    expect(screen.getByRole('button', { name: 'Test Pad ▾' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Change keyboard: Test Pad' })).toBeTruthy();
     const config = stored();
     expect(config.hardware.wiring).toEqual({ kind: 'direct', pins: [4, 5, 6] });
     expect(config.build.include).toEqual([{ board: 'nice_nano_v2', shield: 'test_pad' }]);
@@ -108,7 +108,7 @@ describe('Design your own keyboard', () => {
 
     const user = userEvent.setup();
     render(<App />);
-    await user.click(screen.getByRole('button', { name: 'Direct18 ▾' }));
+    await user.click(screen.getByRole('button', { name: 'Change keyboard: Direct18' }));
     await user.click(screen.getByRole('button', { name: 'Edit hardware' }));
     expect(screen.getByText('18 inputs. Add or remove keys on the Layout step.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Next' })).toHaveProperty('disabled', false);
@@ -123,7 +123,7 @@ describe('Design your own keyboard', () => {
     await user.click(within(screen.getByRole('group', { name: 'Keyboard layout' })).getByRole('button', { name: /^Key 0:/ }));
     await user.keyboard('{Delete}');
 
-    await user.click(screen.getByRole('button', { name: 'Test Pad ▾' }));
+    await user.click(screen.getByRole('button', { name: 'Change keyboard: Test Pad' }));
     await user.click(screen.getByRole('button', { name: 'Edit hardware' }));
     await user.click(screen.getByRole('button', { name: 'Next' }));
 
@@ -218,7 +218,7 @@ describe('Edit hardware', () => {
 
     const user = userEvent.setup();
     render(<App />);
-    await user.click(screen.getByRole('button', { name: 'Test Pad ▾' }));
+    await user.click(screen.getByRole('button', { name: 'Change keyboard: Test Pad' }));
     await user.click(screen.getByRole('button', { name: 'Edit hardware' }));
     expect(screen.getByLabelText('Id')).toHaveProperty('disabled', true);
     await user.click(screen.getByRole('button', { name: 'Next' }));
@@ -428,7 +428,7 @@ describe('Encoders in the wizard', () => {
 
     const user = userEvent.setup();
     render(<App />);
-    await user.click(screen.getByRole('button', { name: 'Test Split ▾' }));
+    await user.click(screen.getByRole('button', { name: 'Change keyboard: Test Split' }));
     await user.click(screen.getByRole('button', { name: 'Edit hardware' }));
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await user.click(screen.getByRole('button', { name: 'Add encoder' }));
@@ -454,7 +454,7 @@ describe('Encoders on keyboards made before encoders existed', () => {
     localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config: newHardwareConfig(hw, 'v0.3') }));
     const user = userEvent.setup();
     render(<App />);
-    await user.click(screen.getByRole('button', { name: 'Test Split ▾' }));
+    await user.click(screen.getByRole('button', { name: 'Change keyboard: Test Split' }));
     await user.click(screen.getByRole('button', { name: 'Edit hardware' }));
     await user.click(screen.getByRole('button', { name: 'Next' }));
 
@@ -499,7 +499,7 @@ describe('Displays in the wizard', () => {
     localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config: newHardwareConfig(testSplit, 'v0.3') }));
     const user = userEvent.setup();
     render(<App />);
-    await user.click(screen.getByRole('button', { name: 'Test Split ▾' }));
+    await user.click(screen.getByRole('button', { name: 'Change keyboard: Test Split' }));
     await user.click(screen.getByRole('button', { name: 'Edit hardware' }));
     await user.click(screen.getByRole('button', { name: 'Next' }));
 

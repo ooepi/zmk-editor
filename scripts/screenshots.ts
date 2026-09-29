@@ -42,7 +42,7 @@ const shots: { name: string; setup: (page: Page) => Promise<void> }[] = [
   {
     name: 'designer',
     setup: async (page) => {
-      await page.getByRole('button', { name: /▾$/ }).click();
+      await page.getByRole('button', { name: /^Change keyboard/ }).click();
       await page.getByRole('button', { name: 'Open layout designer' }).click();
     },
   },

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
-import { customLayout } from '../core/config.ts';
+import { customLayout, type ZmkConfig } from '../core/config.ts';
 import { toggleComboKey, replaceCombo } from '../core/keymap/comboEdit.ts';
 import { behaviorKind } from '../core/keymap/model.ts';
 import { applyToEncoder, pushRecent, type EncoderDirection, type PaletteItem } from '../core/keymap/palette.ts';
@@ -254,19 +254,11 @@ function Editor() {
               </span>
               ZMK Editor
             </span>
-            <div className="top-field">
-              <span className="top-field-label" aria-hidden="true">
-                Keyboard
-              </span>
-              <button
-                type="button"
-                className={`top-select${['keyboard', 'designer', 'newKeyboard', 'editHardware'].includes(view) ? ' active' : ''}`}
-                onClick={() => setView('keyboard')}
-                title="Keyboard and layout"
-              >
-                {config.hardware?.displayName ?? findKeyboard(config.keyboard)?.name ?? config.keyboard} ▾
-              </button>
-            </div>
+            <KeyboardButton
+              config={config}
+              active={['keyboard', 'designer', 'newKeyboard', 'editHardware'].includes(view)}
+              onClick={() => setView('keyboard')}
+            />
             <VersionSelect config={config} dispatch={dispatch} />
           </div>
           <div className="topbar-actions">
@@ -475,6 +467,34 @@ function Editor() {
         )}
       </div>
     </HelpContext.Provider>
+  );
+}
+
+/** The keyboard being edited, the one button that opens the Keyboard page to change it. */
+function KeyboardButton({ config, active, onClick }: { config: ZmkConfig; active: boolean; onClick: () => void }) {
+  const catalog = findKeyboard(config.keyboard);
+  const name = config.hardware?.displayName ?? catalog?.name ?? config.keyboard;
+  const keys = config.keymap.layers[0]?.bindings.length ?? 0;
+  const split = config.hardware?.split ?? catalog?.split ?? false;
+  return (
+    <button
+      type="button"
+      className={`keyboard-button${active ? ' active' : ''}`}
+      aria-label={`Change keyboard: ${name}`}
+      title="Keyboard and layout"
+      onClick={onClick}
+    >
+      <span className="keyboard-button-icon" aria-hidden="true">
+        <Icon name="keyboard" size={18} />
+      </span>
+      <span className="keyboard-button-text">
+        <span className="keyboard-button-name">{name}</span>
+        <span className="keyboard-button-meta">
+          {keys} keys{split ? ' · split' : ''}
+        </span>
+      </span>
+      <span className="keyboard-button-change">Change</span>
+    </button>
   );
 }
 

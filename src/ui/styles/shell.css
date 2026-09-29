@@ -36,6 +36,8 @@
 }
 
 .top-field-label {
+  /* Lined up with the text inside the pill below it. */
+  padding-left: var(--s-4);
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
@@ -62,6 +64,78 @@
 
 .top-select.active {
   border-color: var(--accent-line);
+}
+
+/*
+ * The keyboard being edited: an icon, its name and size, and a quiet "Change". The lime ring
+ * marks it as the one control that switches the whole config.
+ */
+.keyboard-button {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 48px;
+  padding: 5px 6px 5px 5px;
+  border: 1.5px solid var(--accent-line);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.keyboard-button:hover,
+.keyboard-button.active {
+  background: var(--surface-2);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.keyboard-button-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.keyboard-button-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.keyboard-button-name {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.keyboard-button-meta {
+  color: var(--text-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.keyboard-button-change {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--s-3);
+  border-left: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.keyboard-button:hover .keyboard-button-change,
+.keyboard-button.active .keyboard-button-change {
+  color: var(--accent-text);
 }
 
 .topbar-end {
