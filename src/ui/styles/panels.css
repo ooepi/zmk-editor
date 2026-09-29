@@ -31,26 +31,6 @@
   background: var(--bg);
 }
 
-.palette-chips .chip {
-  padding: 4px 12px;
-  font-size: 13px;
-}
-
-/* Modifiers are toggles, not filters: their own labelled row and a square style. */
-.palette-mods {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-}
-
-.palette-mods-label {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
 .mod-toggles {
   display: flex;
   flex-wrap: wrap;
@@ -190,5 +170,33 @@
     position: static;
     padding: 0 3px 0 0;
     pointer-events: auto;
+  }
+
+  /* The palette's category rail becomes a strip of categories above the tiles. */
+  .palette {
+    margin: 0 var(--s-3) var(--s-3);
+  }
+
+  .palette-body {
+    grid-template-columns: 1fr;
+  }
+
+  .palette-side {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .palette-halves {
+    align-self: flex-start;
+    min-width: 220px;
+  }
+
+  .palette-rail {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .palette-rail-heading {
+    display: none;
   }
 }

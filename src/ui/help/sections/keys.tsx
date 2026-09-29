@@ -47,20 +47,27 @@ export const KEYS: HelpSection[] = [
             </li>
             <li>
               <strong>Click a tile with nothing selected</strong> to arm it (it lights up), then click keys to place it on
-              each. Press Esc or click the tile again to stop. This is also the way to use the palette on a touch screen.
+              each. Press Esc, or <Ui>Stop</Ui> in the line at the top of the palette, to stop. This is also the way to
+              use the palette on a touch screen.
             </li>
           </ul>
           <p>
-            <Ui>Keys</Ui> has the same search and categories as the key picker. The <Ui>+Ctl</Ui>, <Ui>+Sft</Ui>…
-            chips add modifiers to the keys you place. <Ui>Behaviors</Ui> has ready-made tiles for layer keys (one per
-            layer), Bluetooth, mouse, lighting, system keys and your own behaviors and macros, with a search box.{' '}
-            <Ui>Recent</Ui> remembers the last 16 tiles you used; <Ui>Clear</Ui> empties it.
+            The line at the top of the palette always says what clicking a tile will do right now. Keys and ready-made
+            behaviors are in one list: every key category, then layer keys (one per layer), Bluetooth, mouse, lighting,
+            system keys and your own behaviors and macros. The list of categories on the left jumps to one. One search
+            box finds keys and behaviors alike. <Ui>Transparent</Ui> and <Ui>None</Ui> are pinned at the top, and{' '}
+            <Ui>Recent</Ui> remembers the last 16 tiles you used (<Ui>Clear</Ui> empties it).
+          </p>
+          <p>
+            <Ui>Add modifiers</Ui> holds Ctrl, Shift, Alt or Gui with the keys you place: while one is on, the bar says
+            which ones the key tiles will send. <Ui>Clear modifiers</Ui> turns them off. The arrow at the top right folds
+            the palette down to its one line, to give the keyboard more room.
           </p>
           <p>
             Placing a <strong>key</strong> on a hold-tap keeps the hold and changes only the tap: a key that is Shift when
-            held and A when tapped becomes Shift/B when you drop B on it. To make it a plain key again, drop a tile from
-            the Behaviors tab first or change its behavior in the side panel. A <strong>behavior</strong> tile replaces
-            the whole key.
+            held and A when tapped becomes Shift/B when you drop B on it. To make it a plain key again, drop a behavior
+            tile on it first (such as <Ui>Key behaviors</Ui> ones) or change its behavior in the side panel. A{' '}
+            <strong>behavior</strong> tile replaces the whole key.
           </p>
         </Sub>
         <Sub id="several-keys" title="Selecting several keys">
@@ -143,8 +150,8 @@ export const KEYS: HelpSection[] = [
           To switch layers from the keyboard, put a layer key on it: <strong>Momentary layer</strong> (<code>&amp;mo</code>
           , active while held), <strong>Layer-tap</strong> (<code>&amp;lt</code>, a layer when held and a key when tapped),{' '}
           <strong>Toggle layer</strong> (<code>&amp;tog</code>), <strong>To layer</strong> (<code>&amp;to</code>) or{' '}
-          <strong>Sticky layer</strong> (<code>&amp;sl</code>). The palette's Behaviors tab has one tile per layer for
-          each. Make sure every layer has a way back to the base layer.
+          <strong>Sticky layer</strong> (<code>&amp;sl</code>). The palette's <Ui>Layers</Ui> section has one tile per
+          layer for each. Make sure every layer has a way back to the base layer.
         </p>
         <Sub id="conditional-layers" title="Conditional layers">
           <p>

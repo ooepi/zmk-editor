@@ -1,11 +1,15 @@
 // @vitest-environment jsdom
 import { cleanup, createEvent, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App.tsx';
+import { reloadPreferences } from './state/preferences.ts';
 import { chooseBehavior } from './testUtils.ts';
 
-beforeEach(() => localStorage.clear());
+beforeEach(() => {
+  localStorage.clear();
+  reloadPreferences();
+});
 afterEach(cleanup);
 
 /** jsdom has no DataTransfer; this stores data like a browser does during one drag. */
@@ -125,21 +129,65 @@ describe('key palette', () => {
 });
 
 describe('palette layout', () => {
-  it('groups keys by category until a category or search narrows them', async () => {
+  it('shows every section in one list and jumps to a category from the rail', async () => {
+    const scrolled = vi.fn();
+    Element.prototype.scrollIntoView = function (this: Element) {
+      scrolled(this.id);
+    };
     const user = userEvent.setup();
     render(<App />);
     expect(palette().getByRole('heading', { name: 'Letters' })).toBeTruthy();
-    expect(within(palette().getByRole('group', { name: 'Numbers' })).getByRole('button', { name: 'Place 1 (N1)' })).toBeTruthy();
+    const rail = within(palette().getByRole('navigation', { name: 'Palette categories' }));
+    await user.click(rail.getByRole('button', { name: 'Numbers' }));
+    expect(scrolled).toHaveBeenLastCalledWith('palette-keys-numbers');
+    expect(rail.getByRole('button', { name: 'Numbers' }).getAttribute('aria-current')).toBe('true');
+    expect(palette().getByRole('heading', { name: 'Letters' })).toBeTruthy();
+  });
 
-    await user.click(within(palette().getByRole('group', { name: 'Palette key categories' })).getByRole('button', { name: 'Numbers' }));
+  it('narrows to a Keys section while searching', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.type(palette().getByRole('searchbox', { name: 'Search the palette' }), 'N1');
     expect(palette().queryByRole('heading', { name: 'Letters' })).toBeNull();
     expect(within(palette().getByRole('group', { name: 'Keys' })).getByRole('button', { name: 'Place 1 (N1)' })).toBeTruthy();
   });
 
+  it('pins Transparent and None above the list', () => {
+    render(<App />);
+    const special = within(palette().getByRole('group', { name: 'Special' }));
+    expect(special.getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual(['Place Transparent', 'Place None']);
+  });
+
   it('keeps the modifiers in their own labelled group', () => {
     render(<App />);
-    const mods = palette().getByRole('group', { name: 'Hold with placed keys:' });
+    const mods = palette().getByRole('group', { name: 'Add modifiers' });
     expect(within(mods).getAllByRole('button')).toHaveLength(8);
+  });
+});
+
+describe('palette status', () => {
+  const status = () => within(palette().getByText(/Select a key|Click a tile|Placing/).closest('p') as HTMLElement);
+
+  it('says what a click will do in each mode', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    expect(status().getByText(/Select a key, then click a tile/)).toBeTruthy();
+    await user.click(keyButton('Key 25: A'));
+    expect(status().getByText(/Click a tile to put it on key 25, or drag a tile onto any key\./)).toBeTruthy();
+    await user.keyboard('{Control>}');
+    await user.click(keyButton('Key 26: R'));
+    await user.keyboard('{/Control}');
+    expect(status().getByText(/on the 2 selected keys/)).toBeTruthy();
+  });
+
+  it('names the armed tile and stops placing it', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const tab = palette().getByRole('button', { name: 'Place Tab (TAB)' });
+    await user.click(tab);
+    expect(status().getByText(/Placing Tab: click keys to put it on them\./)).toBeTruthy();
+    await user.click(status().getByRole('button', { name: 'Stop placing' }));
+    expect(tab.getAttribute('aria-pressed')).toBe('false');
   });
 });
 
@@ -152,6 +200,129 @@ describe('modifiers on palette tiles', () => {
     const tile = palette().getByRole('button', { name: 'Place Ctl+Sft+A (LC(LS(A)))' });
     expect(tile.querySelector('.palette-tile-main')?.textContent).toBe('A');
     expect(tile.querySelector('.palette-tile-sub')?.textContent).toBe('Ctl+Sft');
+  });
+});
+
+describe('keys and behaviors toggle', () => {
+  const rail = () => within(palette().getByRole('navigation', { name: 'Palette categories' }));
+
+  it('browses keys first, and the rail lists only their categories', () => {
+    render(<App />);
+    expect(palette().getByRole('button', { name: 'Keys' }).getAttribute('aria-pressed')).toBe('true');
+    expect(palette().getByRole('heading', { name: 'Letters' })).toBeTruthy();
+    expect(palette().queryByRole('group', { name: 'Layers' })).toBeNull();
+    expect(rail().queryByRole('button', { name: 'Layers' })).toBeNull();
+  });
+
+  it('switches the list and the rail to behaviors, keeping the special tiles', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(palette().getByRole('button', { name: 'Behaviors' }));
+    expect(palette().getByRole('button', { name: 'Behaviors' }).getAttribute('aria-pressed')).toBe('true');
+    expect(within(palette().getByRole('group', { name: 'Layers' })).getByRole('button', { name: 'Place NUM (mo)' })).toBeTruthy();
+    expect(palette().queryByRole('heading', { name: 'Letters' })).toBeNull();
+    expect(rail().getByRole('button', { name: 'Layers' })).toBeTruthy();
+    expect(rail().queryByRole('button', { name: 'Letters' })).toBeNull();
+    expect(palette().getByRole('group', { name: 'Special' })).toBeTruthy();
+  });
+
+  it('searches keys and behaviors together, whichever is selected', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.type(palette().getByRole('searchbox', { name: 'Search the palette' }), 'bluetooth');
+    expect(palette().getByRole('group', { name: 'Bluetooth & output' })).toBeTruthy();
+  });
+});
+
+describe('media keys', () => {
+  it('shows the everyday media controls with icons, and the rest under More media keys', () => {
+    render(<App />);
+    const media = within(palette().getByRole('group', { name: 'Media' }));
+    expect(media.getAllByRole('button')).toHaveLength(14);
+    const volume = media.getByRole('button', { name: 'Place Vol+ (C_VOL_UP)' });
+    expect(volume.querySelector('svg')).toBeTruthy();
+    expect(volume.querySelector('.palette-tile-sub')?.textContent).toBe('Vol+');
+    expect(media.getByRole('button', { name: 'Place Play/Pause (C_PP)' })).toBeTruthy();
+    expect(palette().getByRole('group', { name: 'More media keys' })).toBeTruthy();
+  });
+});
+
+describe('palette search', () => {
+  it('starts a search at the top of the list and clears the highlighted category', async () => {
+    Element.prototype.scrollIntoView = () => undefined;
+    const user = userEvent.setup();
+    render(<App />);
+    const list = palette().getByRole('region', { name: 'Palette tiles' });
+    let top = 0;
+    Object.defineProperty(list, 'scrollTop', { get: () => top, set: (v: number) => (top = v), configurable: true });
+    const rail = within(palette().getByRole('navigation', { name: 'Palette categories' }));
+    await user.click(rail.getByRole('button', { name: 'Numbers' }));
+    top = 1500;
+    await user.type(palette().getByRole('searchbox', { name: 'Search the palette' }), 'a');
+    expect(top).toBe(0);
+    expect(rail.queryAllByRole('button').filter((b) => b.getAttribute('aria-current') === 'true')).toEqual([]);
+  });
+
+  it('finds Transparent and None by name', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const search = palette().getByRole('searchbox', { name: 'Search the palette' });
+    await user.type(search, 'trans');
+    expect(within(palette().getByRole('group', { name: 'Special' })).getByRole('button', { name: 'Place Transparent' })).toBeTruthy();
+    await user.clear(search);
+    await user.type(search, 'esc');
+    expect(palette().queryByRole('group', { name: 'Special' })).toBeNull();
+  });
+});
+
+describe('armed tile names', () => {
+  it('names special tiles in words', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(palette().getByRole('button', { name: 'Place Transparent' }));
+    expect(palette().getByText(/Placing Transparent: click keys/)).toBeTruthy();
+  });
+
+  it('includes the small line, so a Shift hold-tap is not just "A"', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+await user.click(palette().getByRole('button', { name: 'Behaviors' }));
+    await user.click(palette().getByRole('button', { name: 'Place NUM (mo)' }));
+    expect(palette().getByText(/Placing NUM \(mo\): click keys/)).toBeTruthy();
+  });
+});
+
+describe('collapsing the palette', () => {
+  it('collapses to its status line, remembers it, and still places an armed tile', async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<App />);
+    await user.click(palette().getByRole('button', { name: 'Place Tab (TAB)' }));
+    await user.click(palette().getByRole('button', { name: 'Hide palette' }));
+    expect(palette().queryByRole('searchbox', { name: 'Search the palette' })).toBeNull();
+    expect(palette().getByText(/Placing Tab/)).toBeTruthy();
+    await user.click(keyButton('Key 0: Esc'));
+    expect(keyButton('Key 0: Tab')).toBeTruthy();
+    unmount();
+    render(<App />);
+    const show = palette().getByRole('button', { name: 'Show palette' });
+    expect(show.getAttribute('aria-expanded')).toBe('false');
+    await user.click(show);
+    expect(palette().getByRole('searchbox', { name: 'Search the palette' })).toBeTruthy();
+  });
+});
+
+describe('modifier bar', () => {
+  it('says which modifiers key tiles will carry, and clears them', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(palette().getByRole('button', { name: 'Hold Left Ctrl with placed keys' }));
+    await user.click(palette().getByRole('button', { name: 'Hold Left Shift with placed keys' }));
+    expect(palette().getByText('Key tiles will send Ctl+Sft with the key.')).toBeTruthy();
+    await user.click(palette().getByRole('button', { name: 'Behaviors' }));
+    expect(palette().getByRole('button', { name: 'Place NUM (mo)' })).toBeTruthy();
+    await user.click(palette().getByRole('button', { name: 'Keys' }));
+    await user.click(palette().getByRole('button', { name: 'Clear modifiers' }));
+    expect(palette().getByRole('button', { name: 'Place A (A)' })).toBeTruthy();
   });
 });
 

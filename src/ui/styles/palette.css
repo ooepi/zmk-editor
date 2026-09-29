@@ -1,54 +1,226 @@
-/* Key palette */
+/* Key palette: a floating drawer under the keyboard. */
 
 .palette {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 36vh;
-  min-height: 0;
   flex-shrink: 0;
-  padding: 10px 16px 12px;
-  border-top: 1px solid var(--border);
-  background: var(--surface);
-}
-
-/* Only the tiles scroll; the tabs and filters stay in view. */
-.palette > .palette-tiles,
-.palette-groups {
-  flex: 1;
+  max-height: clamp(280px, 40vh, 480px);
   min-height: 0;
-  overflow: auto;
+  margin: 0 var(--s-3) var(--s-3) var(--s-4);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
 }
 
-.palette-bar {
+.palette.collapsed {
+  max-height: none;
+}
+
+/* What a click will do, and the fold button. */
+.palette-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-1) var(--s-2) var(--s-1) var(--s-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.palette.collapsed .palette-head {
+  border-bottom: none;
+}
+
+.palette-status {
+  flex: 1;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.palette-status.armed {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.palette-status.armed::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: var(--s-2);
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  vertical-align: 1px;
+}
+
+.palette-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr);
+  min-height: 0;
+}
+
+/* The left column: the Keys / Behaviors toggle, then that half's categories. */
+.palette-side {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--border);
+}
+
+.palette-halves {
+  display: flex;
+  margin: var(--s-2) var(--s-2) var(--s-1);
+}
+
+.palette-halves .segment {
+  flex: 1;
+  padding: 0 var(--s-2);
+}
+
+/* The category rail: a table of contents that jumps to a section. */
+.palette-rail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  padding: var(--s-2);
+  overflow-y: auto;
+}
+
+.palette-rail-item {
+  display: contents;
+}
+
+.palette-rail-heading {
+  margin: var(--s-2) var(--s-3) var(--s-1);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.palette-rail-button {
+  flex-shrink: 0;
+  min-height: 30px;
+  padding: 0 var(--s-3);
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.palette-rail-button:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.palette-rail-button[aria-current='true'] {
+  background: var(--accent-soft);
+  box-shadow: inset 3px 0 0 var(--accent-line);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.palette-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.palette-tools {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 12px;
-}
-
-.palette-fixed {
-  display: flex;
-  gap: 4px;
-}
-
-.palette-fixed .palette-tile {
-  width: 44px;
-}
-
-.palette-hint {
-  flex: 1 1 240px;
-  margin: 0;
-}
-
-.palette-filters {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  gap: var(--s-2) var(--s-3);
+  padding: var(--s-3) var(--s-4) var(--s-2);
 }
 
 .palette-search {
-  max-width: 320px;
+  flex: 1 1 240px;
+  max-width: 380px;
+}
+
+/* Modifiers: a labelled row that says what it does to the key tiles while any is on. */
+.palette-mods {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-1) var(--s-2);
+  border-radius: var(--r-md);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.palette-mods.active {
+  background: var(--accent-soft);
+  box-shadow: inset 4px 0 0 var(--accent-line);
+}
+
+.palette-mods-label {
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.palette-mods .mod-toggles {
+  gap: 2px;
+}
+
+/* Compact toggles so all eight fit on one row beside the label. */
+.palette-mods .mod-toggle {
+  min-width: 36px;
+  padding: 3px 6px;
+  font-size: 11px;
+}
+
+.palette-mods-summary {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+/* Only the tiles scroll; the search and modifiers stay in view. */
+.palette-scroll {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-height: 0;
+  padding: var(--s-1) var(--s-4) var(--s-4);
+  overflow-y: auto;
+  scroll-padding-top: var(--s-2);
+}
+
+.palette-special {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.palette-special .palette-tile {
+  width: 64px;
+}
+
+.palette-group-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+}
+
+.palette-group-title {
+  margin: 0 0 var(--s-2);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .palette-tiles {
@@ -136,44 +308,4 @@
 .palette-tile.kind-none .palette-tile-main {
   color: var(--key-dim);
   font-weight: 400;
-}
-
-.palette-recent {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.palette-recent-title {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-}
-
-.palette-recent-tiles {
-  flex: 1;
-  display: flex;
-  gap: 4px;
-  overflow-x: auto;
-}
-
-.palette-recent-tiles .palette-tile {
-  flex: 0 0 56px;
-}
-
-.palette-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.palette-group-title {
-  margin: 0 0 4px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
 }

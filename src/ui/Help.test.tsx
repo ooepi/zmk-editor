@@ -41,6 +41,17 @@ describe('help', () => {
     expect(help().getByRole('cell', { name: 'Alt+↑ or Alt+↓ on a layer' })).toBeTruthy();
   });
 
+  it('describes the palette as it is', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Open help' }));
+    const text = help().getByRole('heading', { level: 3, name: 'The key palette' }).closest('.help-sub')?.textContent ?? '';
+    expect(text).toMatch(/Add modifiers/);
+    expect(text).toMatch(/categor/);
+    const all = screen.getByRole('article', { name: 'Help' }).textContent ?? '';
+    expect(all).not.toMatch(/palette's Behaviors tab|tile from the Behaviors tab|\+Ctl, \+Sft/);
+  });
+
   it('opens from the ? button', async () => {
     const user = userEvent.setup();
     render(<App />);

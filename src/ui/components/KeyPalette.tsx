@@ -1,24 +1,25 @@
-import { useMemo, useState, type DragEvent } from 'react';
-import { BEHAVIOR_GROUPS } from '../../core/catalog/behaviors.ts';
+import { useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react';
 import {
   formatKeyExpression,
-  KEYCODE_CATEGORIES,
   keyExpressionLabel,
   MODIFIER_FUNCTIONS,
   preferredName,
-  searchKeycodes,
   type Keycode,
-  type KeycodeCategory,
   type ModifierFunction,
 } from '../../core/catalog/keycodes.ts';
 import { formatBinding } from '../../core/keymap/bindings.ts';
 import { describeBinding, displayContext, type KeycapLabel } from '../../core/keymap/display.ts';
 import type { KeymapModel } from '../../core/keymap/model.ts';
-import { behaviorTiles, searchTiles, type PaletteItem } from '../../core/keymap/palette.ts';
+import { behaviorTiles, type PaletteItem } from '../../core/keymap/palette.ts';
+import { paletteSections, sectionInView } from '../../core/keymap/paletteSections.ts';
 import { sensorCount } from '../../core/keymap/sensorEdit.ts';
 import { setPaletteDrag } from '../dnd.ts';
 import { setPreferences, usePreferences } from '../state/preferences.ts';
-import { HelpLink } from '../help/HelpLink.tsx';
+import { CategoryRail, type RailEntry } from './palette/CategoryRail.tsx';
+import { ModifierBar } from './palette/ModifierBar.tsx';
+import { Icon, type IconName } from './Icon.tsx';
+import { IconButton } from './ui/IconButton.tsx';
+import { PaletteStatus } from './palette/PaletteStatus.tsx';
 
 interface KeyPaletteProps {
   keymap: KeymapModel;
@@ -27,31 +28,61 @@ interface KeyPaletteProps {
   selection: readonly number[];
   /** A tile was clicked. */
   onPick: (item: PaletteItem) => void;
+  /** Stop placing the armed tile. */
+  onDisarm: () => void;
 }
-
-type Tab = 'keys' | 'behaviors';
 
 const TRANSPARENT: PaletteItem = { kind: 'binding', binding: { behavior: 'trans', params: [] } };
 const NONE: PaletteItem = { kind: 'binding', binding: { behavior: 'none', params: [] } };
 
 const sameItem = (a: PaletteItem | null, b: PaletteItem) => a !== null && JSON.stringify(a) === JSON.stringify(b);
 
-/** Keys and behaviors laid out as tiles: drag one onto a key, or click it and then keys. */
-export function KeyPalette({ keymap, armed, selection, onPick }: KeyPaletteProps) {
-  const [tab, setTab] = useState<Tab>('keys');
-  const [query, setQuery] = useState('');
-  const [category, setCategory] = useState<KeycodeCategory | undefined>(undefined);
-  const [mods, setMods] = useState<ModifierFunction[]>([]);
-  const [behaviorQuery, setBehaviorQuery] = useState('');
-  const { recent } = usePreferences();
-  const hasEncoders = sensorCount(keymap) > 0;
+/** Transparent and None, with the words a search can find them by. */
+const SPECIALS = [
+  { item: TRANSPARENT, label: { main: '▽', sub: 'Trans' }, name: 'Transparent', words: 'transparent trans ▽ lower layer', title: 'Transparent: uses the binding of the next active layer below.', kind: 'trans' },
+  { item: NONE, label: { main: '✕', sub: 'None' }, name: 'None', words: 'none nothing ✕ blank disabled', title: 'None: does nothing.', kind: 'none' },
+];
 
-  const keycodes = useMemo(() => searchKeycodes(query, category), [query, category]);
+/** The everyday media keys get an icon, and a clearer name where the catalog's is ambiguous. */
+const MEDIA_TILES: Record<string, { icon: IconName; name?: string }> = {
+  C_PLAY_PAUSE: { icon: 'playPause', name: 'Play/Pause' },
+  C_PREVIOUS: { icon: 'skipBack' },
+  C_NEXT: { icon: 'skipForward' },
+  C_VOLUME_DOWN: { icon: 'volumeDown' },
+  C_VOLUME_UP: { icon: 'volumeUp' },
+  C_MUTE: { icon: 'volumeMute' },
+  C_PLAY: { icon: 'play' },
+  C_PAUSE: { icon: 'pause' },
+  C_STOP: { icon: 'stop' },
+  C_REWIND: { icon: 'rewind' },
+  C_FAST_FORWARD: { icon: 'fastForward' },
+  C_BRIGHTNESS_DEC: { icon: 'sunDim' },
+  C_BRIGHTNESS_INC: { icon: 'sun' },
+  C_EJECT: { icon: 'eject' },
+};
+
+/** How long a rail jump's smooth scroll may take before the scroll-spy takes over again. */
+const JUMP_SETTLE_MS = 800;
+
+/** Keys and behaviors laid out as tiles in one list: drag one onto a key, or click it and then keys. */
+export function KeyPalette({ keymap, armed, selection, onPick, onDisarm }: KeyPaletteProps) {
+  const [query, setQuery] = useState('');
+  /** Which half of the palette is browsed; a search shows both. */
+  const [half, setHalf] = useState<'keys' | 'behaviors'>('keys');
+  const [mods, setMods] = useState<ModifierFunction[]>([]);
+  const [current, setCurrent] = useState<string | null>(null);
+  const scroller = useRef<HTMLDivElement>(null);
+  /** The section last jumped to from the rail; while `settling`, its smooth scroll is left alone. */
+  const jumped = useRef<{ id: string; settling: boolean } | null>(null);
+  const { recent, paletteCollapsed: collapsed } = usePreferences();
+  const hasEncoders = sensorCount(keymap) > 0;
+  const searching = query.trim() !== '';
+
   const tiles = useMemo(
     () => behaviorTiles(keymap).filter((t) => t.binding.behavior !== 'trans' && t.binding.behavior !== 'none'),
     [keymap],
   );
-  const shownTiles = useMemo(() => searchTiles(tiles, behaviorQuery), [tiles, behaviorQuery]);
+  const sections = useMemo(() => paletteSections(query, tiles), [query, tiles]);
   const recentTiles = useMemo(() => {
     const ctx = displayContext(keymap);
     return recent.map((item) => {
@@ -64,11 +95,68 @@ export function KeyPalette({ keymap, armed, selection, onPick }: KeyPaletteProps
       return { item, label, name, title: formatBinding(item.binding), kind: label.kind };
     });
   }, [recent, keymap]);
+  const showRecent = recentTiles.length > 0 && !searching;
+
+  const shown = searching ? sections : sections.filter((s) => s.kind === half);
+  const railEntries: RailEntry[] = [
+    ...(showRecent ? [{ id: 'recent', title: 'Recent', kind: 'Recent' as const }] : []),
+    ...shown.map((s) => ({ id: s.id, title: s.title, kind: s.kind === 'keys' ? ('Keys' as const) : ('Behaviors' as const) })),
+  ];
+
+  const jump = (id: string) => {
+    const target = { id, settling: true };
+    jumped.current = target;
+    // scrollend isn't everywhere yet; stop waiting for it after a while.
+    window.setTimeout(() => (target.settling = false), JUMP_SETTLE_MS);
+    scroller.current?.querySelector(`[data-section="${id}"]`)?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+    setCurrent(id);
+  };
+
+  // Highlight the section at the top of the list while scrolling, but not while a jump is still scrolling there.
+  const onScroll = () => {
+    const box = scroller.current;
+    if (!box || jumped.current?.settling) return;
+    const tops = [...box.querySelectorAll<HTMLElement>('[data-section]')].map((el) => ({
+      id: el.dataset.section ?? '',
+      top: el.getBoundingClientRect().top,
+    }));
+    const atBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 2;
+    setCurrent(sectionInView(tops, box.getBoundingClientRect().top, atBottom, jumped.current?.id ?? null));
+  };
+
+  const toTop = () => {
+    setCurrent(null);
+    jumped.current = null;
+    if (scroller.current) scroller.current.scrollTop = 0;
+  };
+
+  // A new search starts at the top of the list, with no category highlighted.
+  const search = (text: string) => {
+    setQuery(text);
+    toTop();
+  };
+
+  // Browsing, the toggle swaps the list; while searching (both halves shown) it jumps to that half's results.
+  const chooseHalf = (next: 'keys' | 'behaviors') => {
+    setHalf(next);
+    const first = sections.find((s) => s.kind === next);
+    if (searching && first) jump(first.id);
+    else toTop();
+  };
+
+  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const specials = SPECIALS.filter((s) => words.every((w) => s.words.includes(w)));
 
   const toggleMod = (mod: ModifierFunction) =>
-    setMods(mods.includes(mod) ? mods.filter((m) => m !== mod) : [...mods, mod]);
+    setMods((held) => (held.includes(mod) ? held.filter((m) => m !== mod) : [...held, mod]));
 
-  const tile = (item: PaletteItem, label: Pick<KeycapLabel, 'main' | 'sub'>, name: string, title: string, kind = 'key') => {
+  const tile = (
+    item: PaletteItem,
+    label: { main: ReactNode; sub?: string | undefined } | Pick<KeycapLabel, 'main' | 'sub'>,
+    name: string,
+    title: string,
+    kind = 'key',
+  ) => {
     const active = sameItem(armed, item);
     return (
       <button
@@ -94,172 +182,112 @@ export function KeyPalette({ keymap, armed, selection, onPick }: KeyPaletteProps
     .join('+');
   const keyTile = (keycode: Keycode) => {
     const token = formatKeyExpression({ mods, key: preferredName(keycode) });
-    const full = mods.length > 0 ? keyExpressionLabel(token) : keycode.label;
+    // In the Media section the everyday keys show an icon, with their name on the small line.
+    const media = !searching ? MEDIA_TILES[keycode.name] : undefined;
+    const label = media?.name ?? keycode.label;
+    const full = mods.length > 0 ? keyExpressionLabel(token) : label;
     return tile(
       { kind: 'keycode', token },
-      { main: keycode.label, sub: mods.length > 0 ? modsText : token },
+      media
+        ? { main: <Icon name={media.icon} size={18} />, sub: mods.length > 0 ? modsText : label }
+        : { main: keycode.label, sub: mods.length > 0 ? modsText : token },
       `${full} (${token})`,
       `${keycode.description}: ${full} (${token})`,
       mods.length > 0 ? 'mods' : 'key',
     );
   };
-  // With no category or search, keys are shown under their category headings.
-  const grouped = !category && !query.trim();
 
-  const hint = armed
-    ? 'Click keys to place the highlighted tile · Esc or click the tile again to stop'
-    : selection.length > 1
-      ? `Click a tile to put it on the ${selection.length} selected keys, or drag it onto any key`
-      : selection.length === 1
-        ? `Click a tile to put it on key ${selection[0]}, or drag it onto any key`
-      : 'Drag a tile onto a key, or click a tile and then keys · Drag keys onto each other to swap (hold Alt to copy)' +
-        (hasEncoders ? " · Drop keys on an encoder's ↺ or ↻ side" : '');
+  const armedName = (() => {
+    if (!armed) return null;
+    if (armed.kind === 'keycode') return keyExpressionLabel(armed.token);
+    const special = SPECIALS.find((s) => sameItem(armed, s.item));
+    if (special) return special.name;
+    const label = describeBinding(armed.binding, displayContext(keymap));
+    return label.sub ? `${label.main} (${label.sub})` : label.main;
+  })();
 
   return (
-    <section className="palette" aria-label="Key palette">
-      <div className="palette-bar">
-        <div className="segmented" role="group" aria-label="Palette sections">
-          {(['keys', 'behaviors'] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              className={`segment${tab === t ? ' active' : ''}`}
-              aria-pressed={tab === t}
-              onClick={() => setTab(t)}
-            >
-              {t === 'keys' ? 'Keys' : 'Behaviors'}
-            </button>
-          ))}
-        </div>
-        <div className="palette-fixed">
-          {tile(TRANSPARENT, { main: '▽' }, 'Transparent', 'Transparent: uses the binding of the next active layer below.', 'trans')}
-          {tile(NONE, { main: '✕' }, 'None', 'None: does nothing.', 'none')}
-        </div>
-        <p className="palette-hint muted small">
-          {hint} <HelpLink to="palette" />
-        </p>
+    <section className={`palette${collapsed ? ' collapsed' : ''}`} aria-label="Key palette">
+      <div className="palette-head">
+        <PaletteStatus armed={armedName ? { name: armedName } : null} selection={selection} hasEncoders={hasEncoders} onStop={onDisarm} />
+        <IconButton
+          icon={collapsed ? 'chevronUp' : 'chevronDown'}
+          label={collapsed ? 'Show palette' : 'Hide palette'}
+          aria-expanded={!collapsed}
+          onClick={() => setPreferences({ paletteCollapsed: !collapsed })}
+        />
       </div>
-
-      {recentTiles.length > 0 && (
-        <div className="palette-recent">
-          <span className="palette-recent-title">Recent</span>
-          <div className="palette-tiles palette-recent-tiles" role="group" aria-label="Recently used">
-            {recentTiles.map((r) => tile(r.item, r.label, `recent ${r.name}`, r.title, r.kind))}
-          </div>
-          <button
-            type="button"
-            className="link-button small"
-            aria-label="Clear recently used"
-            onClick={() => setPreferences({ recent: [] })}
-          >
-            Clear
-          </button>
-        </div>
-      )}
-
-      {tab === 'keys' ? (
-        <>
-          <div className="palette-filters">
-            <input
-              className="input palette-search"
-              type="search"
-              placeholder="Search keys: a, esc, volume, !…"
-              aria-label="Search the palette"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-            <div className="chips palette-chips" role="group" aria-label="Palette key categories">
-              {KEYCODE_CATEGORIES.map((c) => (
+      {!collapsed && (
+        <div className="palette-body">
+          <div className="palette-side">
+            <div className="segmented palette-halves" role="group" aria-label="Palette sections">
+              {(['keys', 'behaviors'] as const).map((h) => (
                 <button
-                  key={c.id}
+                  key={h}
                   type="button"
-                  className={`chip${category === c.id ? ' active' : ''}`}
-                  aria-pressed={category === c.id}
-                  onClick={() => setCategory(category === c.id ? undefined : c.id)}
+                  className={`segment${half === h ? ' active' : ''}`}
+                  aria-pressed={half === h}
+                  onClick={() => chooseHalf(h)}
                 >
-                  {c.label}
+                  {h === 'keys' ? 'Keys' : 'Behaviors'}
                 </button>
               ))}
             </div>
-            <div className="palette-mods">
-              <span className="palette-mods-label" id="palette-mods-label">
-                Hold with placed keys:
-              </span>
-              <div className="mod-toggles" role="group" aria-labelledby="palette-mods-label">
-                {MODIFIER_FUNCTIONS.map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    className={`mod-toggle${mods.includes(m.id) ? ' active' : ''}`}
-                    aria-pressed={mods.includes(m.id)}
-                    aria-label={`Hold ${m.name} with placed keys`}
-                    title={`Hold ${m.name} with the placed key (${m.id})`}
-                    onClick={() => toggleMod(m.id)}
-                  >
-                    {m.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <CategoryRail entries={railEntries} current={current} onJump={jump} headings={searching} />
           </div>
-          {grouped ? (
-            <div className="palette-groups">
-              {KEYCODE_CATEGORIES.map((c) => {
-                const inCategory = keycodes.filter((k) => k.category === c.id);
-                if (inCategory.length === 0) return null;
-                return (
-                  <div key={c.id} className="palette-group">
-                    <h3 className="palette-group-title">{c.label}</h3>
-                    <div className="palette-tiles" role="group" aria-label={c.label}>
-                      {inCategory.map(keyTile)}
-                    </div>
+          <div className="palette-main">
+            <div className="palette-tools">
+              <input
+                className="input palette-search"
+                type="search"
+                placeholder="Search keys and behaviors: a, esc, volume, bluetooth…"
+                aria-label="Search the palette"
+                value={query}
+                onChange={(e) => search(e.target.value)}
+              />
+              <ModifierBar mods={mods} onToggle={toggleMod} onClear={() => setMods([])} />
+            </div>
+            <div className="palette-scroll" role="region" aria-label="Palette tiles" ref={scroller} onScroll={onScroll} onScrollEnd={() => jumped.current && (jumped.current.settling = false)}>
+              {specials.length > 0 && (
+                <div className="palette-special" role="group" aria-label="Special">
+                  {specials.map((s) => tile(s.item, s.label, s.name, s.title, s.kind))}
+                </div>
+              )}
+              {showRecent && (
+                <div className="palette-group" id="palette-recent" data-section="recent">
+                  <div className="palette-group-head">
+                    <h3 className="palette-group-title">Recent</h3>
+                    <button type="button" className="link-button small" aria-label="Clear recently used" onClick={() => setPreferences({ recent: [] })}>
+                      Clear
+                    </button>
                   </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="palette-tiles" role="group" aria-label="Keys">
-              {keycodes.map(keyTile)}
-              {keycodes.length === 0 && <p className="muted">No keys match.</p>}
-            </div>
-          )}
-        </>
-      ) : (
-        <>
-          <div className="palette-filters">
-            <input
-              className="input palette-search"
-              type="search"
-              placeholder="Search behaviors: bluetooth, nav, boot…"
-              aria-label="Search behaviors"
-              value={behaviorQuery}
-              onChange={(e) => setBehaviorQuery(e.target.value)}
-            />
-          </div>
-          <div className="palette-groups">
-            {shownTiles.length === 0 && <p className="muted">No behaviors match.</p>}
-            {BEHAVIOR_GROUPS.map((group) => {
-              const inGroup = shownTiles.filter((t) => t.group === group.id);
-              if (inGroup.length === 0) return null;
-              return (
-                <div key={group.id} className="palette-group">
-                  <h3 className="palette-group-title">{group.label}</h3>
-                  <div className="palette-tiles" role="group" aria-label={group.label}>
-                    {inGroup.map((t) =>
-                      tile(
-                        { kind: 'binding', binding: t.binding },
-                        t.label,
-                        t.label.sub ? `${t.label.main} (${t.label.sub})` : t.label.main,
-                        t.title,
-                        t.label.kind,
-                      ),
-                    )}
+                  <div className="palette-tiles" role="group" aria-label="Recently used">
+                    {recentTiles.map((r) => tile(r.item, r.label, `recent ${r.name}`, r.title, r.kind))}
                   </div>
                 </div>
-              );
-            })}
+              )}
+              {shown.map((section) => (
+                <div key={section.id} className="palette-group" id={`palette-${section.id}`} data-section={section.id}>
+                  <h3 className="palette-group-title">{section.title}</h3>
+                  <div className="palette-tiles" role="group" aria-label={section.title}>
+                    {section.kind === 'keys'
+                      ? section.keycodes.map(keyTile)
+                      : section.tiles.map((t) =>
+                          tile(
+                            { kind: 'binding', binding: t.binding },
+                            t.label,
+                            t.label.sub ? `${t.label.main} (${t.label.sub})` : t.label.main,
+                            t.title,
+                            t.label.kind,
+                          ),
+                        )}
+                  </div>
+                </div>
+              ))}
+              {searching && sections.length === 0 && specials.length === 0 && <p className="muted">Nothing matches “{query.trim()}”.</p>}
+            </div>
           </div>
-        </>
+        </div>
       )}
     </section>
   );

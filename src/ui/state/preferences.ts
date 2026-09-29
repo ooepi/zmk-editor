@@ -11,10 +11,12 @@ export interface Preferences {
   pinoutViews: Record<string, 'top' | 'bottom'>;
   /** Palette items placed most recently, newest first. */
   recent: PaletteItem[];
+  /** The key palette folded down to its status line, so the keyboard gets the room. */
+  paletteCollapsed: boolean;
 }
 
 const STORAGE_KEY = 'zmk-editor.preferences.v1';
-const DEFAULTS: Preferences = { unicodeLanguages: [], layouts: {}, pinoutViews: {}, recent: [] };
+const DEFAULTS: Preferences = { unicodeLanguages: [], layouts: {}, pinoutViews: {}, recent: [], paletteCollapsed: false };
 
 /** Drops recent items that aren't shaped like palette items (hand-edited or older storage). */
 function validRecent(items: unknown): PaletteItem[] {
@@ -31,7 +33,7 @@ function load(): Preferences {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULTS;
     const stored = JSON.parse(raw) as Partial<Preferences>;
-    return { ...DEFAULTS, ...stored, recent: validRecent(stored.recent) };
+    return { ...DEFAULTS, ...stored, recent: validRecent(stored.recent), paletteCollapsed: stored.paletteCollapsed === true };
   } catch {
     return DEFAULTS;
   }
