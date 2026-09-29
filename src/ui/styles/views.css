@@ -69,6 +69,9 @@
 
 /* Build & flash: the last step, pushed to the far end and filled so it can't be missed. */
 .viewtab.build-tab {
+  /* When the tabs scroll sideways, Build & flash stays in view at the right edge. */
+  position: sticky;
+  right: 0;
   margin-left: auto;
   min-height: 40px;
   padding: 0 var(--s-5);

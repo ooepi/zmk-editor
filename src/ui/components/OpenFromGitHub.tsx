@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { GitHubClient } from '../../core/github/client.ts';
 import { openPublicRepo, parseRepoInput, type PublicRepo } from '../../core/github/publicRepo.ts';
 import { IconButton } from './ui/IconButton.tsx';
@@ -22,6 +22,20 @@ export function OpenFromGitHub({ disabled, title, onOpened }: OpenFromGitHubProp
     setOpen(false);
     setError(null);
   };
+  const anchor = useRef<HTMLSpanElement>(null);
+
+  // A press anywhere else closes it, so it and the More menu are never open together.
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (!anchor.current?.contains(event.target as Node)) {
+        setOpen(false);
+        setError(null);
+      }
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [open]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -44,7 +58,7 @@ export function OpenFromGitHub({ disabled, title, onOpened }: OpenFromGitHubProp
   };
 
   return (
-    <span className="popover-anchor">
+    <span className="popover-anchor" ref={anchor}>
       <IconButton
         icon="github"
         label="Open from GitHub"
