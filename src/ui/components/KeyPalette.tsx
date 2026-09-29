@@ -17,6 +17,7 @@ import { setPaletteDrag } from '../dnd.ts';
 import { setPreferences, usePreferences } from '../state/preferences.ts';
 import { CategoryRail, type RailEntry } from './palette/CategoryRail.tsx';
 import { ModifierBar } from './palette/ModifierBar.tsx';
+import { IconButton } from './ui/IconButton.tsx';
 import { PaletteStatus } from './palette/PaletteStatus.tsx';
 
 interface KeyPaletteProps {
@@ -41,7 +42,7 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm }: KeyPa
   const [mods, setMods] = useState<ModifierFunction[]>([]);
   const [current, setCurrent] = useState<string | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
-  const { recent } = usePreferences();
+  const { recent, paletteCollapsed: collapsed } = usePreferences();
   const hasEncoders = sensorCount(keymap) > 0;
   const searching = query.trim() !== '';
 
@@ -127,66 +128,74 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm }: KeyPa
   const armedName = armed && (armed.kind === 'keycode' ? keyExpressionLabel(armed.token) : describeBinding(armed.binding, displayContext(keymap)).main);
 
   return (
-    <section className="palette" aria-label="Key palette">
+    <section className={`palette${collapsed ? ' collapsed' : ''}`} aria-label="Key palette">
       <div className="palette-head">
         <PaletteStatus armed={armedName ? { name: armedName } : null} selection={selection} hasEncoders={hasEncoders} onStop={onDisarm} />
+        <IconButton
+          icon={collapsed ? 'chevronUp' : 'chevronDown'}
+          label={collapsed ? 'Show palette' : 'Hide palette'}
+          aria-expanded={!collapsed}
+          onClick={() => setPreferences({ paletteCollapsed: !collapsed })}
+        />
       </div>
-      <div className="palette-body">
-        <CategoryRail entries={railEntries} current={current} onJump={jump} />
-        <div className="palette-main">
-          <div className="palette-tools">
-            <input
-              className="input palette-search"
-              type="search"
-              placeholder="Search keys and behaviors: a, esc, volume, bluetooth…"
-              aria-label="Search the palette"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-            <ModifierBar mods={mods} onToggle={toggleMod} onClear={() => setMods([])} />
-          </div>
-          <div className="palette-scroll" ref={scroller} onScroll={onScroll}>
-            {!searching && (
-              <div className="palette-special" role="group" aria-label="Special">
-                {tile(TRANSPARENT, { main: '▽', sub: 'Trans' }, 'Transparent', 'Transparent: uses the binding of the next active layer below.', 'trans')}
-                {tile(NONE, { main: '✕', sub: 'None' }, 'None', 'None: does nothing.', 'none')}
-              </div>
-            )}
-            {showRecent && (
-              <div className="palette-group" id="palette-recent" data-section="recent">
-                <div className="palette-group-head">
-                  <h3 className="palette-group-title">Recent</h3>
-                  <button type="button" className="link-button small" aria-label="Clear recently used" onClick={() => setPreferences({ recent: [] })}>
-                    Clear
-                  </button>
+      {!collapsed && (
+        <div className="palette-body">
+          <CategoryRail entries={railEntries} current={current} onJump={jump} />
+          <div className="palette-main">
+            <div className="palette-tools">
+              <input
+                className="input palette-search"
+                type="search"
+                placeholder="Search keys and behaviors: a, esc, volume, bluetooth…"
+                aria-label="Search the palette"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+              <ModifierBar mods={mods} onToggle={toggleMod} onClear={() => setMods([])} />
+            </div>
+            <div className="palette-scroll" ref={scroller} onScroll={onScroll}>
+              {!searching && (
+                <div className="palette-special" role="group" aria-label="Special">
+                  {tile(TRANSPARENT, { main: '▽', sub: 'Trans' }, 'Transparent', 'Transparent: uses the binding of the next active layer below.', 'trans')}
+                  {tile(NONE, { main: '✕', sub: 'None' }, 'None', 'None: does nothing.', 'none')}
                 </div>
-                <div className="palette-tiles" role="group" aria-label="Recently used">
-                  {recentTiles.map((r) => tile(r.item, r.label, `recent ${r.name}`, r.title, r.kind))}
+              )}
+              {showRecent && (
+                <div className="palette-group" id="palette-recent" data-section="recent">
+                  <div className="palette-group-head">
+                    <h3 className="palette-group-title">Recent</h3>
+                    <button type="button" className="link-button small" aria-label="Clear recently used" onClick={() => setPreferences({ recent: [] })}>
+                      Clear
+                    </button>
+                  </div>
+                  <div className="palette-tiles" role="group" aria-label="Recently used">
+                    {recentTiles.map((r) => tile(r.item, r.label, `recent ${r.name}`, r.title, r.kind))}
+                  </div>
                 </div>
-              </div>
-            )}
-            {sections.map((section) => (
-              <div key={section.id} className="palette-group" id={`palette-${section.id}`} data-section={section.id}>
-                <h3 className="palette-group-title">{section.title}</h3>
-                <div className="palette-tiles" role="group" aria-label={section.title}>
-                  {section.kind === 'keys'
-                    ? section.keycodes.map(keyTile)
-                    : section.tiles.map((t) =>
-                        tile(
-                          { kind: 'binding', binding: t.binding },
-                          t.label,
-                          t.label.sub ? `${t.label.main} (${t.label.sub})` : t.label.main,
-                          t.title,
-                          t.label.kind,
-                        ),
-                      )}
+              )}
+              {sections.map((section) => (
+                <div key={section.id} className="palette-group" id={`palette-${section.id}`} data-section={section.id}>
+                  <h3 className="palette-group-title">{section.title}</h3>
+                  <div className="palette-tiles" role="group" aria-label={section.title}>
+                    {section.kind === 'keys'
+                      ? section.keycodes.map(keyTile)
+                      : section.tiles.map((t) =>
+                          tile(
+                            { kind: 'binding', binding: t.binding },
+                            t.label,
+                            t.label.sub ? `${t.label.main} (${t.label.sub})` : t.label.main,
+                            t.title,
+                            t.label.kind,
+                          ),
+                        )}
+                  </div>
                 </div>
-              </div>
-            ))}
-            {searching && sections.length === 0 && <p className="muted">Nothing matches “{query.trim()}”.</p>}
+              ))}
+              {searching && sections.length === 0 && <p className="muted">Nothing matches “{query.trim()}”.</p>}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }

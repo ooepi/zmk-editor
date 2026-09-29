@@ -3,9 +3,13 @@ import { cleanup, createEvent, fireEvent, render, screen, within } from '@testin
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App.tsx';
+import { reloadPreferences } from './state/preferences.ts';
 import { chooseBehavior } from './testUtils.ts';
 
-beforeEach(() => localStorage.clear());
+beforeEach(() => {
+  localStorage.clear();
+  reloadPreferences();
+});
 afterEach(cleanup);
 
 /** jsdom has no DataTransfer; this stores data like a browser does during one drag. */
@@ -195,6 +199,25 @@ describe('modifiers on palette tiles', () => {
     const tile = palette().getByRole('button', { name: 'Place Ctl+Sft+A (LC(LS(A)))' });
     expect(tile.querySelector('.palette-tile-main')?.textContent).toBe('A');
     expect(tile.querySelector('.palette-tile-sub')?.textContent).toBe('Ctl+Sft');
+  });
+});
+
+describe('collapsing the palette', () => {
+  it('collapses to its status line, remembers it, and still places an armed tile', async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<App />);
+    await user.click(palette().getByRole('button', { name: 'Place Tab (TAB)' }));
+    await user.click(palette().getByRole('button', { name: 'Hide palette' }));
+    expect(palette().queryByRole('searchbox', { name: 'Search the palette' })).toBeNull();
+    expect(palette().getByText(/Placing Tab/)).toBeTruthy();
+    await user.click(keyButton('Key 0: Esc'));
+    expect(keyButton('Key 0: Tab')).toBeTruthy();
+    unmount();
+    render(<App />);
+    const show = palette().getByRole('button', { name: 'Show palette' });
+    expect(show.getAttribute('aria-expanded')).toBe('false');
+    await user.click(show);
+    expect(palette().getByRole('searchbox', { name: 'Search the palette' })).toBeTruthy();
   });
 });
 

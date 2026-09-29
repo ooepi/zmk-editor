@@ -70,6 +70,8 @@ const PATHS = {
   ],
   grip: ['M9 5h.01', 'M9 12h.01', 'M9 19h.01', 'M15 5h.01', 'M15 12h.01', 'M15 19h.01'],
   more: ['M12 12h.01', 'M19 12h.01', 'M5 12h.01'],
+  chevronDown: ['m6 9 6 6 6-6'],
+  chevronUp: ['m18 15-6-6-6 6'],
 } as const;
 
 export type IconName = keyof typeof PATHS;
