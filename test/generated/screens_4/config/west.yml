@@ -1,0 +1,32 @@
+manifest:
+  remotes:
+    - name: zmkfirmware
+      url-base: https://github.com/zmkfirmware
+    - name: urob
+      url-base: https://github.com/urob
+    - name: whoop-t
+      url-base: https://github.com/whoop-t
+    - name: gpeye
+      url-base: https://github.com/GPeye
+  projects:
+    - name: zmk
+      remote: zmkfirmware
+      revision: v0.3
+      import: app/west.yml
+    - name: zmk-helpers
+      remote: urob
+      revision: v0.3
+    - name: zmk-unicode
+      remote: urob
+      revision: v0.3
+    - name: nice-futurama-sus
+      remote: whoop-t
+      revision: a7483284912a8af90fdc02e4ea67317703684a5a
+    - name: mario-peripheral-animation
+      remote: gpeye
+      revision: 1aa3950d6c86b4240b3f79d06bdbb04c5d920711
+    - name: nice-luffy-wanted
+      remote: whoop-t
+      revision: 5bff523975f87f01812d9df1045bc34a90dfd756
+  self:
+    path: config

@@ -1,0 +1,34 @@
+manifest:
+  remotes:
+    - name: zmkfirmware
+      url-base: https://github.com/zmkfirmware
+    - name: urob
+      url-base: https://github.com/urob
+    - name: ziembski
+      url-base: https://github.com/Ziembski
+    - name: gpeye
+      url-base: https://github.com/GPeye
+    - name: whoop-t
+      url-base: https://github.com/whoop-t
+  projects:
+    - name: zmk
+      remote: zmkfirmware
+      revision: v0.3
+      import: app/west.yml
+    - name: zmk-helpers
+      remote: urob
+      revision: v0.3
+    - name: zmk-unicode
+      remote: urob
+      revision: v0.3
+    - name: nice-view-press-start
+      remote: ziembski
+      revision: 6892f92550d3eecd1d6c8b441f4c441b2e5ec1d4
+    - name: urchin-peripheral-animation
+      remote: gpeye
+      revision: 8b79464acfa8bb4c668e53049ad28b57889f2fe1
+    - name: nice-fry-button-miss
+      remote: whoop-t
+      revision: cd7371d49c2b3f8eaa89b066ceaf8c07bb91cac1
+  self:
+    path: config

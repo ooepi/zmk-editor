@@ -1,0 +1,14 @@
+---
+include:
+  - board: nice_nano_v2
+    shield: lily58_left nice_view_adapter nice_futurama_sus
+  - board: nice_nano_v2
+    shield: lily58_right nice_view_adapter nice_futurama_sus
+  - board: nice_nano_v2
+    shield: lily58_left nice_view_adapter nice_view_custom
+  - board: nice_nano_v2
+    shield: lily58_right nice_view_adapter nice_view_custom
+  - board: nice_nano_v2
+    shield: lily58_left nice_view_adapter nice_luffy_wanted
+  - board: nice_nano_v2
+    shield: lily58_right nice_view_adapter nice_luffy_wanted

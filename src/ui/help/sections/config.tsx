@@ -9,8 +9,8 @@ export const CONFIG: HelpSection[] = [
         <p>
           Modules add features to ZMK that aren't built in. The <Ui>Modules</Ui> tab lists tested ones: Unicode (type ä, ö,
           å and other characters), auto layer (num-word), leader key, adaptive keys, tri-state, an RGB LED status
-          widget, nice!view Gem, nice!oled widgets and ZMK helpers. Filter them by kind, or show only{' '}
-          <Ui>Installed</Ui>.
+          widget, nice!oled widgets and ZMK helpers. Filter them by kind, or show only <Ui>Installed</Ui>. nice!view
+          screens have their own tab: see <strong>nice!view screens</strong>.
         </p>
         <p>
           <Ui>Add</Ui> puts a module in <code>west.yml</code> at the release that matches your ZMK version, adds its
@@ -31,6 +31,41 @@ export const CONFIG: HelpSection[] = [
             <Ui>Find more modules on GitHub</Ui> searches repositories tagged <code>zmk-module</code>, or checks one you
             paste as <code>owner/repo</code>. <Ui>Details</Ui> shows what it provides; <Ui>Add to west.yml</Ui> adds it.
             These modules aren't checked by the editor, so only add ones you trust.
+          </p>
+        </Sub>
+      </>
+    ),
+  },
+  {
+    id: 'screens',
+    title: 'nice!view screens',
+    body: (
+      <>
+        <p>
+          The <Ui>Screens</Ui> tab changes what a nice!view shows: status screens like Gem, Battery and Elemental, or art
+          like Luffy, Futurama, Space Marine and Mario. The designs come from{' '}
+          <a href="https://github.com/whoop-t/nice-shield-collection" target="_blank" rel="noopener noreferrer">
+            whoop-t’s nice-shield-collection
+          </a>
+          , and each card names the person who made it, links to their repository and shows its license.
+        </p>
+        <p>
+          Every build with a nice!view gets a slot (<strong>Left</strong> and <strong>Right</strong> on a split). Use{' '}
+          <Ui>Both</Ui>, <Ui>Left</Ui> or <Ui>Right</Ui> on a card to choose where it goes; halves can show different
+          screens. <Ui>Back to stock</Ui> puts ZMK’s own screen back. The editor adds the screen’s module to{' '}
+          <code>west.yml</code> (pinned to a version tested with ZMK v0.3), swaps the shield in <code>build.yaml</code>{' '}
+          and removes the module again once no half uses it. Then <Ui>Build &amp; flash</Ui> puts it on the keyboard.
+        </p>
+        <Sub id="screen-options" title="Options and limits">
+          <p>
+            Click a preview to see more pictures and the screen’s options (animation speed, inverted colors…). Options
+            are saved in your <code>.conf</code>, so they apply to every half. Some screens share internal names and
+            can’t be on the same keyboard at once (for example two of the peripheral animations); the card says so and
+            the button is greyed out, but one of them can still go on every half. A few draw art only on the peripheral
+            half and look like the stock screen on the central one.
+          </p>
+          <p>
+            The screens need ZMK v0.3: the collection’s designs don’t work with ZMK’s newer display library yet.
           </p>
         </Sub>
       </>

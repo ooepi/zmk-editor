@@ -1,0 +1,37 @@
+manifest:
+  remotes:
+    - name: zmkfirmware
+      url-base: https://github.com/zmkfirmware
+    - name: urob
+      url-base: https://github.com/urob
+    - name: whoop-t
+      url-base: https://github.com/whoop-t
+    - name: kevinpastor
+      url-base: https://github.com/kevinpastor
+    - name: gpeye
+      url-base: https://github.com/GPeye
+  projects:
+    - name: zmk
+      remote: zmkfirmware
+      revision: v0.3
+      import: app/west.yml
+    - name: zmk-helpers
+      remote: urob
+      revision: v0.3
+    - name: zmk-unicode
+      remote: urob
+      revision: v0.3
+    - name: nice-adventure-time
+      remote: whoop-t
+      revision: 42f091646020f615230d1d8d5edca84b6267a9f8
+    - name: nice-view-elemental
+      remote: kevinpastor
+      revision: 69c2ecd56b0b870ddb94b79110ef5a2152ca4a3a
+    - name: hammerbeam-slideshow
+      remote: gpeye
+      revision: 9c16436efa4c87d19e2e4558927969c7ddd5851d
+    - name: nice-one-punch-ok
+      remote: whoop-t
+      revision: 46294fc3646bffaa369db8066b7195f9ebe66520
+  self:
+    path: config

@@ -18,6 +18,7 @@ Nothing to install. Your work stays in your browser until you commit it.
 - **Combos, macros and behaviors.** Combos, macros (type text and it becomes key steps), hold-taps, mod-morphs, tap-dances and encoder behaviors, all with forms instead of devicetree code.
 - **Encoders.** Set what each knob does per layer, and drop keys onto either direction.
 - **Modules.** Add Unicode (ä, ö, å…), auto layer, leader key, adaptive keys, display widgets and more. Each is pinned to the release that matches your ZMK version, or you can find others on GitHub.
+- **nice!view screens.** Pick what each half's nice!view shows from the designs in [whoop-t's nice-shield-collection](https://github.com/whoop-t/nice-shield-collection), with previews and options. Each screen is pinned to a version tested with ZMK v0.3.
 - **Settings.** Sleep, Bluetooth, battery, RGB, backlight, display and more, explained in plain words and written to your `.conf`. It warns when a setting doesn't match your keymap or hardware.
 - **Build and flash.** Log in with GitHub (or use a token), review the changes, and commit. The editor follows the GitHub Actions build and hands you the `.uf2`. In Chrome and Edge it can write the file straight onto the keyboard.
 - **Any ZMK keyboard, or your own.** Start from ZMK's default keymap for any of its keyboards (Corne, Sofle, Kyria, Lily58…). Adjust how keys are drawn in the layout designer. Or describe a handwired or PCB keyboard (Pro Micro nRF52840, matrix or direct wiring, split or one piece, encoders, nice!view or OLED), and the editor writes its ZMK shield files.
@@ -82,11 +83,38 @@ Design notes for each feature are in [`docs/specs/`](docs/specs), and their impl
   - `gen-keycodes.mjs`: generates the keycode catalog.
   - `gen-unicode.mjs`: generates the Unicode alias catalog.
   - `gen-keyboards.ts`: generates the keyboard catalog. Run it on a ZMK checkout: `node scripts/gen-keyboards.ts /path/to/zmk v0.3`.
+  - `gen-screen-previews.mjs`: makes the small preview images in `public/screens/` from each screen's repository (needs ffmpeg).
   - `screenshots.ts`: captures the README screenshots.
 - `test/fixtures/lily58/`: a real, working Lily58 config.
 - `test/generated/lily58/`: what the editor generates from that fixture.
   - The tests fail if it goes stale. Update it with `npx vitest run -u`.
   - `.github/workflows/firmware.yml` builds it with ZMK to prove it compiles.
+- `test/generated/screens_*/`: every nice!view screen, on both halves, built the same way.
+
+## Credits
+
+The nice!view screens come from [nice-shield-collection](https://github.com/whoop-t/nice-shield-collection), a list curated by [whoop-t](https://github.com/whoop-t). Each design belongs to its creator. They are all MIT licensed, and the editor bundles small preview images of each one:
+
+| Screen | Creator | License |
+| --- | --- | --- |
+| [nice!view Gem](https://github.com/M165437/nice-view-gem) | [M165437](https://github.com/M165437) | MIT, © 2024 Michael Schmidt-Voigt |
+| [nice!view Battery](https://github.com/infely/nice-view-battery) | [infely](https://github.com/infely) | MIT, © 2024 Oleksandr Vasyliev |
+| [nice!view Elemental](https://github.com/kevinpastor/nice-view-elemental) | [kevinpastor](https://github.com/kevinpastor) | MIT, © 2024 Kevin Pastor |
+| [nice!view Press Start](https://github.com/Ziembski/nice-view-press-start) | [Ziembski](https://github.com/Ziembski) | MIT, © 2025 Ziembski |
+| [Bongo Cat with FURIOUS mode](https://github.com/dsifry/nice-view-mod) | [dsifry](https://github.com/dsifry) | MIT, © 2024 GPeye |
+| [WH40K Space Marine insignia](https://github.com/Jestar342/nice-shield-spacemarine) | [Jestar342](https://github.com/Jestar342) | MIT, © 2025 whoop-t |
+| [One Punch Man OK](https://github.com/whoop-t/nice-one-punch-ok) | [whoop-t](https://github.com/whoop-t) | MIT, © 2025 whoop-t |
+| [Adventure Time](https://github.com/whoop-t/nice-adventure-time) | [whoop-t](https://github.com/whoop-t) | MIT, © 2024 Michael Schmidt-Voigt |
+| [Futurama: Fry squint](https://github.com/whoop-t/nice-futurama-sus) | [whoop-t](https://github.com/whoop-t) | MIT, © 2024 Michael Schmidt-Voigt |
+| [Futurama: Fry misses the button](https://github.com/whoop-t/nice-fry-button-miss) | [whoop-t](https://github.com/whoop-t) | MIT, © 2025 whoop-t |
+| [One Piece: Luffy wanted poster](https://github.com/whoop-t/nice-luffy-wanted) | [whoop-t](https://github.com/whoop-t) | MIT, © 2025 whoop-t |
+| [One Piece: Luffy Gear Five](https://github.com/whoop-t/nice-luffy-gear-five) | [whoop-t](https://github.com/whoop-t) | MIT, © 2025 whoop-t |
+| [Hammerbeam slideshow](https://github.com/GPeye/hammerbeam-slideshow) | [GPeye](https://github.com/GPeye) | MIT, © 2024 GPeye |
+| [Urchin corro animation](https://github.com/GPeye/urchin-peripheral-animation) | [GPeye](https://github.com/GPeye) | MIT, © 2024 GPeye |
+| [Mario animation](https://github.com/GPeye/mario-peripheral-animation) | [GPeye](https://github.com/GPeye) | MIT, © 2024 GPeye |
+| [nice!epaper](https://github.com/mctechnology17/zmk-nice-oled) | [mctechnology17](https://github.com/mctechnology17) | MIT, © 2024 Marcos Chow Castro |
+
+The icons are adapted from [Lucide](https://lucide.dev) (ISC License).
 
 ## Deploying
 

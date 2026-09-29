@@ -1,5 +1,6 @@
 import { findKeyboard } from '../catalog/keyboards.ts';
 import { MODULES } from '../catalog/modules.ts';
+import { SCREEN_SHIELDS } from '../catalog/screens.ts';
 import { HARDWARE_CONTROLLERS, PRO_MICRO_PINS } from './controllers.ts';
 import type { HardwareBasics } from './grid.ts';
 import type { KeyboardHardware, Pin } from './types.ts';
@@ -13,6 +14,7 @@ const RESERVED_IDS = new Set([
   'settings_reset',
   'studio_rpc_usb_uart',
   ...MODULES.map((m) => m.shield?.name).filter((name): name is string => name !== undefined),
+  ...SCREEN_SHIELDS,
 ]);
 
 export interface HardwareIssue {

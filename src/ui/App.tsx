@@ -23,6 +23,7 @@ import { SelectionPanel } from './components/SelectionPanel.tsx';
 import { ThemeToggle } from './components/ThemeToggle.tsx';
 import { Icon } from './components/Icon.tsx';
 import { ModulesView } from './components/ModulesView.tsx';
+import { ScreensView } from './components/ScreensView.tsx';
 import { SettingsView } from './components/SettingsView.tsx';
 import { Toolbar } from './components/Toolbar.tsx';
 import { VersionSelect } from './components/VersionSelect.tsx';
@@ -42,6 +43,7 @@ type View =
   | 'behaviors'
   | 'macros'
   | 'modules'
+  | 'screens'
   | 'settings'
   | 'build'
   | 'help'
@@ -128,6 +130,7 @@ export function App() {
     { id: 'behaviors', label: `Behaviors (${keymap.behaviors.length - macroCount})` },
     { id: 'macros', label: `Macros (${macroCount})` },
     { id: 'modules', label: `Modules (${config.west.modules.length})` },
+    { id: 'screens', label: 'Screens' },
     { id: 'settings', label: 'Settings' },
     { id: 'help', label: 'Help' },
   ];
@@ -292,7 +295,11 @@ export function App() {
           </main>
         ) : view === 'modules' ? (
           <main className="workspace single">
-            <ModulesView config={config} dispatch={dispatch} />
+            <ModulesView config={config} dispatch={dispatch} onScreens={() => setView('screens')} />
+          </main>
+        ) : view === 'screens' ? (
+          <main className="workspace single">
+            <ScreensView config={config} dispatch={dispatch} onBuild={() => setView('build')} onKeyboard={() => setView('keyboard')} />
           </main>
         ) : view === 'behaviors' || view === 'macros' ? (
           <main className="workspace single">

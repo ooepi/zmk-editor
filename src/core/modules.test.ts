@@ -131,7 +131,7 @@ describe('fixture bindings after removal', () => {
 describe('catalog modules with their own revisions', () => {
   const shields = (config: ReturnType<typeof load>) => config.build.include.map((t) => t.shield);
 
-  it('pins nice-view-gem to its release, swaps the nice!view shield and turns on the status screen', () => {
+  it('pins nice-view-gem to its release and turns on the status screen', () => {
     const config = addModule(load(), 'nice-view-gem');
     expect(config.west.modules.at(-1)).toEqual({
       name: 'nice-view-gem',
@@ -139,13 +139,17 @@ describe('catalog modules with their own revisions', () => {
       urlBase: 'https://github.com/M165437',
       revision: 'v0.3.0',
     });
-    expect(shields(config)).toEqual(['lily58_left nice_view_adapter nice_view_gem', 'lily58_right nice_view_adapter nice_view_gem']);
+    // The Screens tab picks which halves show it.
+    expect(shields(config)).toEqual(shields(load()));
     expect(readKconfigValue(config.kconfig, 'CONFIG_ZMK_DISPLAY_STATUS_SCREEN_CUSTOM')).toBe('y');
     expect(moduleVersionMismatches(config)).toEqual([]);
     expect(followZmkVersion(config, 'nice-view-gem')).toEqual(config);
+  });
 
-    const removed = removeModule(config, 'nice-view-gem').config;
-    expect(shields(removed)).toEqual(shields(load()));
+  it('puts the stock screen back when a screen module is removed', () => {
+    const config = addModule(load(), 'nice-view-gem');
+    const withGem = { ...config, build: { include: config.build.include.map((t) => ({ ...t, shield: t.shield?.replace('nice_view_adapter nice_view', 'nice_view_adapter nice_view_gem') })) } };
+    expect(shields(removeModule(withGem, 'nice-view-gem').config)).toEqual(shields(load()));
   });
 
   it('still warns about a catalog module pinned somewhere else', () => {
