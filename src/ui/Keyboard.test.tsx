@@ -30,7 +30,7 @@ describe('Keyboard page', () => {
   it('shows the current keyboard from the catalog', async () => {
     const user = userEvent.setup();
     render(<App />);
-    await user.click(screen.getByRole('button', { name: 'Lily58 ▾' }));
+    await user.click(screen.getByRole('button', { name: 'Change keyboard: Lily58' }));
     const current = screen.getByRole('region', { name: 'Current keyboard' });
     expect(current.textContent).toContain('Lily58');
     expect(current.textContent).toContain('58 keys');
@@ -40,7 +40,7 @@ describe('Keyboard page', () => {
     const user = userEvent.setup();
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     render(<App />);
-    await user.click(screen.getByRole('button', { name: 'Lily58 ▾' }));
+    await user.click(screen.getByRole('button', { name: 'Change keyboard: Lily58' }));
     await user.type(screen.getByRole('searchbox', { name: 'Search keyboards' }), 'corne');
     const list = screen.getByRole('list', { name: 'Keyboards' });
     await user.click(within(list).getByRole('button', { name: /^Corne42 keys · split/ }));
@@ -49,7 +49,7 @@ describe('Keyboard page', () => {
     await user.click(screen.getByRole('switch', { name: 'nice!view display' }));
     await user.click(screen.getByRole('button', { name: 'Create config for Corne' }));
 
-    expect(await screen.findByRole('button', { name: 'Corne ▾' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Change keyboard: Corne' })).toBeTruthy();
     expect(requested).toEqual([
       'https://raw.githubusercontent.com/zmkfirmware/zmk/v0.3/app/boards/shields/corne/corne.keymap',
       'https://raw.githubusercontent.com/zmkfirmware/zmk/v0.3/app/boards/shields/corne/corne.conf',

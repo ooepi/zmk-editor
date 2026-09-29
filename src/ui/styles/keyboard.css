@@ -57,6 +57,7 @@
 
 /* Grip, tab, and the rename and delete buttons; the extras appear on hover or focus. */
 .layer-row {
+  position: relative;
   display: grid;
   grid-template-columns: 16px 1fr;
   align-items: center;
@@ -124,6 +125,15 @@
   pointer-events: auto;
 }
 
+/*
+ * While the actions show, the pill's right end is square under them, so no sliver of
+ * its rounded corner peeks out where the two meet.
+ */
+.layer-row:is(:hover, :focus-within, .renaming) .layer-pill {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
 .layer-row-actions .icon-button {
   width: 30px;
   min-width: 30px;
@@ -182,12 +192,25 @@
   border: 1px dashed var(--accent-line);
 }
 
-.layer-row.drop-before {
-  box-shadow: 0 -2px 0 var(--accent-line);
+/* Where a dragged layer lands: one line, centred in the gap between two pills. */
+.layer-row.drop-before::before,
+.layer-row.drop-after::after {
+  content: '';
+  position: absolute;
+  left: calc(16px + var(--s-1));
+  right: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--accent-line);
+  pointer-events: none;
 }
 
-.layer-row.drop-after {
-  box-shadow: 0 2px 0 var(--accent-line);
+.layer-row.drop-before::before {
+  top: calc(var(--s-1) / -2 - 1px);
+}
+
+.layer-row.drop-after::after {
+  bottom: calc(var(--s-1) / -2 - 1px);
 }
 
 .layer-index {
@@ -195,15 +218,75 @@
   color: var(--text-muted);
 }
 
-.layer-rename {
-  width: 140px;
+/*
+ * Renaming happens in the pill itself: the name becomes a field in the same place and
+ * size, the pill and its save / cancel end share one lime outline.
+ */
+.layer-row.renaming .layer-pill,
+.layer-row.renaming .layer-row-actions {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.layer-row.renaming .layer-pill {
+  box-shadow:
+    inset 2px 0 0 var(--accent-line),
+    inset 0 2px 0 var(--accent-line),
+    inset 0 -2px 0 var(--accent-line);
+}
+
+.layer-row.renaming .layer-row-actions {
+  /* Level with the pill's inner edge, where its own outline is drawn. */
+  top: 0;
+  bottom: 0;
+  opacity: 1;
+  pointer-events: auto;
+  box-shadow:
+    inset -2px 0 0 var(--accent-line),
+    inset 0 2px 0 var(--accent-line),
+    inset 0 -2px 0 var(--accent-line);
+}
+
+.layer-row.renaming .layer-grip {
+  opacity: 0;
+}
+
+.layer-rename-field {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
   height: 38px;
-  padding: 0 var(--s-3);
-  border: 1px solid var(--accent-line);
-  border-radius: var(--r-pill);
-  background: var(--surface-2);
+  padding: 0 var(--s-2) 0 var(--s-4);
+}
+
+.layer-rename {
+  flex: 1;
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
   font-family: var(--font-mono);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md);
+  font-weight: 700;
+}
+
+.layer-rename::selection {
+  background: var(--accent-soft);
+}
+
+.layer-row-actions .icon-button.layer-rename-save {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.layer-row-actions .icon-button.layer-rename-save:hover:not(:disabled) {
+  background: var(--accent);
+  filter: brightness(1.05);
 }
 
 .layer-add {

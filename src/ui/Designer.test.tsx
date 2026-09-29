@@ -16,7 +16,7 @@ const rect = (index: number) =>
     .querySelector('rect');
 
 async function openDesigner(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole('button', { name: 'Lily58 ▾' }));
+  await user.click(screen.getByRole('button', { name: 'Change keyboard: Lily58' }));
   await user.click(screen.getByRole('button', { name: 'Open layout designer' }));
 }
 
