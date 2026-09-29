@@ -58,7 +58,7 @@
 
 .settings-layout {
   display: grid;
-  grid-template-columns: 230px minmax(0, 1fr);
+  grid-template-columns: 260px minmax(0, 1fr);
   align-items: start;
   gap: var(--s-5);
 }
@@ -290,7 +290,7 @@
 }
 
 .setting-number .input {
-  width: 120px;
+  width: 150px;
   padding-right: 34px;
 }
 
