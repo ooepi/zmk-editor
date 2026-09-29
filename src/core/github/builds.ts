@@ -43,6 +43,16 @@ export interface WaitOptions {
   /** How long to wait for it to finish. */
   maxDurationMs?: number;
   intervalMs?: number;
+  /** Stop waiting (e.g. the user disconnected): the wait rejects with `BuildWaitCancelled`. */
+  isCancelled?: () => boolean;
+}
+
+/** Thrown when a wait is called off; not an error to show. */
+export class BuildWaitCancelled extends Error {
+  constructor() {
+    super('Stopped following the build.');
+    this.name = 'BuildWaitCancelled';
+  }
 }
 
 /** Polls until the build for `sha` completes. */
@@ -51,7 +61,9 @@ export async function waitForRun(client: GitHubClient, ref: RepoRef, sha: string
   const now = options.now ?? (() => Date.now());
   const start = now();
   for (;;) {
+    if (options.isCancelled?.()) throw new BuildWaitCancelled();
     const run = await findRunForCommit(client, ref, sha);
+    if (options.isCancelled?.()) throw new BuildWaitCancelled();
     options.onUpdate?.(run);
     if (run?.status === 'completed') return run;
     const elapsed = now() - start;

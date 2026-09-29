@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { GitHubClient } from '../../core/github/client.ts';
-import { ensureFresh, getUser, listAppRepos, listBranches, type AuthConfig, type Tokens, type UserRepo } from '../../core/github/oauth.ts';
+import { getUser, listAppRepos, listBranches, type AuthConfig, type Tokens, type UserRepo } from '../../core/github/oauth.ts';
 import { createRepo } from '../../core/github/repo.ts';
 import { openRepo, type Connection } from '../state/buildSession.ts';
 import { loadGitHubSettings, saveGitHubSettings } from '../state/github.ts';
-import { authConfig, beginLogin, clearTokens, completeLogin, isLoginCallback, loadTokens, saveTokens } from '../state/githubLogin.ts';
+import { authConfig, beginLogin, clearTokens, completeLogin, freshTokens, isLoginCallback, loadTokens } from '../state/githubLogin.ts';
 import { HelpLink } from '../help/HelpLink.tsx';
 import { httpsUrl } from '../../core/url.ts';
 import { Section } from './ui/Section.tsx';
@@ -22,6 +22,8 @@ interface ConnectSectionProps {
   /** A repository was just created for this config. */
   onCreated: (connection: Connection) => void;
   onRefresh: () => void;
+  /** Why the last Refresh didn't work. */
+  refreshError: string | null;
   onDisconnect: () => void;
   onLoad: () => void;
 }
@@ -33,6 +35,7 @@ export function ConnectSection({
   onConnected,
   onCreated,
   onRefresh,
+  refreshError,
   onDisconnect,
   onLoad,
 }: ConnectSectionProps) {
@@ -83,6 +86,11 @@ export function ConnectSection({
             Disconnect
           </button>
         </div>
+        {refreshError && (
+          <p className="field-error" role="alert">
+            {refreshError}
+          </p>
+        )}
       </Section>
     );
   }
@@ -142,10 +150,8 @@ function LoginPanel({
     let cancelled = false;
     const run = async () => {
       const fromCallback = await completeLogin(config);
-      const stored = fromCallback ?? loadTokens();
-      if (!stored) return { phase: 'out' } as const;
-      const tokens = await ensureFresh(config, stored);
-      if (tokens !== stored) saveTokens(tokens);
+      if (!fromCallback && !loadTokens()) return { phase: 'out' } as const;
+      const tokens = await freshTokens(config);
       const client = new GitHubClient(tokens.accessToken);
       const [user, repos] = await Promise.all([getUser(client), listAppRepos(client)]);
       return { phase: 'in', tokens, user, repos } as const;
@@ -277,9 +283,7 @@ function RepoPicker({
   }, [repo, tokens]);
 
   const client = async () => {
-    const fresh = await ensureFresh(config, tokens);
-    if (fresh !== tokens) saveTokens(fresh);
-    return new GitHubClient(fresh.accessToken);
+    return new GitHubClient((await freshTokens(config)).accessToken);
   };
 
   const run = async (what: 'open' | 'create' | 'list', task: () => Promise<void>) => {
@@ -314,12 +318,15 @@ function RepoPicker({
     run('create', async () => {
       const gh = await client();
       const created = await createRepo(gh, { name: newName.trim(), private: newPrivate });
-      let connection: Connection;
-      try {
-        connection = await openRepo(gh, created.owner, created.repo, created.defaultBranch, true);
-      } catch {
+      // A just-created repository can take a moment to show up in the API.
+      let connection: Connection | null = null;
+      for (let attempt = 0; !connection && attempt < 4; attempt++) {
+        if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, 800 * attempt));
+        connection = await openRepo(gh, created.owner, created.repo, created.defaultBranch, true).catch(() => null);
+      }
+      if (!connection) {
         throw new Error(
-          `GitHub created ${created.owner}/${created.repo}, but the editor can’t open it yet. Add it under “Add or remove repositories”, then choose Refresh list.`,
+          `GitHub created ${created.owner}/${created.repo}, but the editor can’t open it yet. If it isn’t in the list after Refresh list, add it under “Add or remove repositories”.`,
         );
       }
       saveGitHubSettings({ token: '', owner: created.owner, repo: created.repo, branch: connection.ref.branch }, true);
@@ -408,6 +415,8 @@ function RepoPicker({
                 <input
                   className={`input mono${validName ? '' : ' invalid'}`}
                   aria-label="Repository name"
+                  aria-invalid={!validName}
+                  aria-describedby={validName ? undefined : 'new-repo-name-error'}
                   value={newName}
                   spellCheck={false}
                   onChange={(e) => setNewName(e.target.value)}
@@ -419,7 +428,11 @@ function RepoPicker({
               <span>Private</span>
             </label>
           </div>
-          {!validName && <p className="field-error">Use letters, digits, dots, dashes and underscores.</p>}
+          {!validName && (
+            <p id="new-repo-name-error" className="field-error">
+              Use letters, digits, dots, dashes and underscores.
+            </p>
+          )}
           <div className="row wrap">
             <button type="submit" className="button primary" disabled={working !== null || !validName}>
               {working === 'create' ? 'Creating…' : 'Create and build'}

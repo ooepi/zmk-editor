@@ -115,7 +115,8 @@ async function firstCommit(client: GitHubClient, ref: RepoRef, files: Record<str
   const [path, content] = first;
   const result = await client.request<{ commit: { sha: string } }>(`${repoPath(ref)}/contents/${path.split('/').map(encodeURIComponent).join('/')}`, {
     method: 'PUT',
-    body: { message, content: encodeBase64(content) },
+    // On an empty repository this creates the branch.
+    body: { message, content: encodeBase64(content), branch: ref.branch },
     what: 'the first file (does the token have Contents: read and write?)',
   });
   if (rest.length === 0) return { committed: true, sha: result.commit.sha };
@@ -141,7 +142,12 @@ export async function createRepo(client: GitHubClient, options: { name: string; 
     return { owner: repo.owner.login, repo: repo.name, defaultBranch: repo.default_branch, private: repo.private };
   } catch (error) {
     if (error instanceof GitHubError && error.status === 422) {
-      throw new GitHubError(422, `You already have a repository named ${options.name}. Pick another name, or open that one.`);
+      throw new GitHubError(
+        422,
+        /already exists/i.test(error.message)
+          ? `You already have a repository named ${options.name} on GitHub. Pick another name, or add that one under “Add or remove repositories”.`
+          : `GitHub couldn't create ${options.name}: ${error.message.replace(/^GitHub error 422 for creating a repository: /, '')}`,
+      );
     }
     if (error instanceof GitHubError && error.status === 403) {
       throw new GitHubError(

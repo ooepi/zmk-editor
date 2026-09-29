@@ -92,8 +92,9 @@ export function BuildView({ config, dispatch, session }: BuildViewProps) {
         reconnectError={session.reconnectError}
         onConnected={session.connect}
         onCreated={onCreated}
-        onRefresh={() => void session.refresh()}
-        onDisconnect={session.disconnect}
+        onRefresh={() => void session.refresh({ quiet: false })}
+        refreshError={session.refreshError}
+        onDisconnect={() => session.disconnect()}
         onLoad={() => {
           if (!connection) return;
           if (!window.confirm(`Replace the editor contents with ${connection.ref.owner}/${connection.ref.repo}?`)) return;

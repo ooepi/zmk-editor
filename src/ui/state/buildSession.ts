@@ -1,11 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArtifactDownloadError, downloadFirmware, findLatestRun, waitForRun, type WorkflowRun } from '../../core/github/builds.ts';
+import {
+  ArtifactDownloadError,
+  BuildWaitCancelled,
+  downloadFirmware,
+  findLatestRun,
+  waitForRun,
+  type WorkflowRun,
+} from '../../core/github/builds.ts';
 import { GitHubClient, type RepoRef } from '../../core/github/client.ts';
 import type { FirmwareFile } from '../../core/github/firmware.ts';
-import { ensureFresh } from '../../core/github/oauth.ts';
+import { LoginError } from '../../core/github/oauth.ts';
 import { commitFiles, isConfigFile, loadRepoFiles } from '../../core/github/repo.ts';
 import { clearGitHubSettings, loadGitHubSettings } from './github.ts';
-import { authConfig, clearTokens, isLoginCallback, loadTokens, saveTokens } from './githubLogin.ts';
+import { authConfig, clearTokens, freshTokens, isLoginCallback, loadTokens } from './githubLogin.ts';
 
 export interface Connection {
   client: GitHubClient;
@@ -38,14 +45,11 @@ export async function openRepo(client: GitHubClient, owner: string, repo: string
   return { client, ref, repoUrl: info.html_url, files, headSha, viaLogin };
 }
 
-/** A client with a live token: login tokens expire after hours and are refreshed first. */
+/** A client with a live token: a login's token is renewed (once, shared) before it runs out. */
 async function freshClient(connection: Connection): Promise<GitHubClient> {
   const config = authConfig();
-  const stored = loadTokens();
-  if (!connection.viaLogin || !config || !stored) return connection.client;
-  const tokens = await ensureFresh(config, stored);
-  if (tokens !== stored) saveTokens(tokens);
-  return tokens.accessToken === stored.accessToken ? connection.client : new GitHubClient(tokens.accessToken);
+  if (!connection.viaLogin || !config) return connection.client;
+  return new GitHubClient((await freshTokens(config)).accessToken);
 }
 
 /** The repository used last, and how to reach it again without asking. */
@@ -58,15 +62,8 @@ function savedRepo(): { owner: string; repo: string; branch: string; token: stri
 }
 
 async function reconnect(saved: NonNullable<ReturnType<typeof savedRepo>>): Promise<Connection> {
-  let token = saved.token;
-  if (saved.viaLogin) {
-    const config = authConfig();
-    const stored = loadTokens();
-    if (!config || !stored) throw new Error('Not logged in.');
-    const tokens = await ensureFresh(config, stored);
-    if (tokens !== stored) saveTokens(tokens);
-    token = tokens.accessToken;
-  }
+  const config = authConfig();
+  const token = saved.viaLogin && config ? (await freshTokens(config)).accessToken : saved.token;
   return openRepo(new GitHubClient(token), saved.owner, saved.repo, saved.branch, saved.viaLogin);
 }
 
@@ -83,26 +80,36 @@ export function useBuildSession() {
   const [connectionSeq, setConnectionSeq] = useState(0);
   const [reconnecting, setReconnecting] = useState(() => savedRepo() !== null);
   const [reconnectError, setReconnectError] = useState<string | null>(null);
+  /** Why the last Refresh the user asked for didn't work. */
+  const [refreshError, setRefreshError] = useState<string | null>(null);
   const [build, setBuild] = useState<BuildState>({ phase: 'idle' });
-  /** The connection as of the last render, for async work that outlives it. */
+  /** The connection as of the last render, for work started by a click. */
   const latest = useRef<Connection | null>(null);
   useEffect(() => {
     latest.current = connection;
   });
+  /**
+   * Bumped on every connect and disconnect. Async work notes it when it starts and drops its
+   * result if it changed, so a commit or build for a repository you've left never comes back.
+   */
+  const generation = useRef(0);
+  const current = (g: number) => generation.current === g;
 
   // Reopen the repository used last, quietly, as soon as the app starts.
   useEffect(() => {
     const saved = savedRepo();
     if (!saved) return;
+    const g = generation.current;
     let cancelled = false;
     reconnect(saved).then(
       (conn) => {
         if (cancelled) return;
-        setConnection((current) => current ?? conn);
+        if (current(g)) setConnection(conn);
         setReconnecting(false);
       },
       (error: unknown) => {
         if (cancelled) return;
+        if (error instanceof LoginError) clearTokens();
         setReconnectError(`Couldn’t reopen ${saved.owner}/${saved.repo}: ${message(error)}`);
         setReconnecting(false);
       },
@@ -113,53 +120,83 @@ export function useBuildSession() {
   }, []);
 
   const connect = (conn: Connection) => {
+    generation.current += 1;
+    latest.current = conn;
     setConnection(conn);
     setConnectionSeq((n) => n + 1);
+    setReconnecting(false);
     setReconnectError(null);
+    setRefreshError(null);
     setBuild({ phase: 'idle' });
   };
 
-  const disconnect = () => {
+  /** Leaves the repository; `why` explains it when it wasn't the user's choice. */
+  const disconnect = (why?: string) => {
+    generation.current += 1;
+    latest.current = null;
     clearGitHubSettings();
     clearTokens();
     setConnection(null);
+    setRefreshError(null);
+    setReconnectError(why ?? null);
     setBuild({ phase: 'idle' });
   };
 
-  /** Rereads the branch, e.g. when the Build tab opens, so the changes list matches GitHub. */
-  const refresh = async () => {
+  /** An expired login can't be fixed from here: log out so the Log in button shows again. */
+  const failed = (g: number, error: unknown, show: (text: string) => void) => {
+    if (!current(g) || error instanceof BuildWaitCancelled) return;
+    if (error instanceof LoginError) disconnect(error.message);
+    else show(message(error));
+  };
+
+  /**
+   * Rereads the branch, so the changes list matches GitHub. Quiet when the tab opens; when the
+   * user asks (`quiet: false`), a failure is shown.
+   */
+  const refresh = async ({ quiet = true } = {}) => {
     const conn = latest.current;
     if (!conn) return;
+    const g = generation.current;
+    if (!quiet) setRefreshError(null);
     try {
       const client = await freshClient(conn);
       const next = await openRepo(client, conn.ref.owner, conn.ref.repo, conn.ref.branch, conn.viaLogin);
-      // Keep the connection object when nothing changed, so nothing re-renders for it.
-      if (latest.current === conn) setConnection(next.headSha === conn.headSha && client === conn.client ? conn : next);
-    } catch {
-      // A failed background refresh keeps what was there; the next commit reports any real problem.
+      if (!current(g)) return;
+      // Only replace the connection it read from: a commit or reconnect in the meantime wins.
+      setConnection((now) => (now === conn && next.headSha !== conn.headSha ? next : now));
+    } catch (error) {
+      failed(g, error, (text) => {
+        if (!quiet) setRefreshError(text);
+      });
     }
   };
 
-  const fetchFirmware = async (conn: Connection, run: WorkflowRun) => {
+  const fetchFirmware = async (g: number, conn: Connection, run: WorkflowRun) => {
+    if (!current(g)) return;
     if (run.conclusion !== 'success') {
       setBuild({ phase: 'failed', message: `The build ${run.conclusion ?? 'did not finish'}. Open it on GitHub to see why.`, run });
       return;
     }
     setBuild({ phase: 'downloading', run });
     try {
-      setBuild({ phase: 'done', run, firmware: await downloadFirmware(conn.client, conn.ref, run.id) });
+      const firmware = await downloadFirmware(conn.client, conn.ref, run.id);
+      if (current(g)) setBuild({ phase: 'done', run, firmware });
     } catch (error) {
+      if (!current(g)) return;
       if (error instanceof ArtifactDownloadError) setBuild({ phase: 'blocked', run, message: error.message });
       else setBuild({ phase: 'failed', message: message(error), run });
     }
   };
 
-  const follow = async (conn: Connection, sha: string) => {
+  const follow = async (g: number, conn: Connection, sha: string) => {
     try {
-      const run = await waitForRun(conn.client, conn.ref, sha, { onUpdate: (r) => setBuild({ phase: 'waiting', sha, run: r }) });
-      await fetchFirmware(conn, run);
+      const run = await waitForRun(conn.client, conn.ref, sha, {
+        onUpdate: (r) => current(g) && setBuild({ phase: 'waiting', sha, run: r }),
+        isCancelled: () => !current(g),
+      });
+      await fetchFirmware(g, conn, run);
     } catch (error) {
-      setBuild({ phase: 'failed', message: message(error) });
+      failed(g, error, (text) => setBuild({ phase: 'failed', message: text }));
     }
   };
 
@@ -168,39 +205,44 @@ export function useBuildSession() {
    * `generated` is every file the editor writes, which the branch holds after the commit.
    */
   const commitAndBuild = async (conn: Connection, changes: [string, string | null][], generated: Record<string, string>, commitMessage: string) => {
+    const g = generation.current;
     setBuild({ phase: 'committing' });
     try {
       const client = await freshClient(conn);
       const result = await commitFiles(client, conn.ref, Object.fromEntries(changes), commitMessage);
+      if (!current(g)) return;
       const deleted = new Set(changes.filter(([, text]) => text === null).map(([path]) => path));
       const files = Object.fromEntries(Object.entries({ ...conn.files, ...generated }).filter(([path]) => !deleted.has(path)));
       const next = { ...conn, client, files, headSha: result.sha };
+      latest.current = next;
       setConnection(next);
       setBuild({ phase: 'waiting', sha: result.sha, run: null });
-      await follow(next, result.sha);
+      await follow(g, next, result.sha);
     } catch (error) {
-      setBuild({ phase: 'failed', message: message(error) });
+      failed(g, error, (text) => setBuild({ phase: 'failed', message: text }));
     }
   };
 
   const latestBuild = async () => {
     const conn = latest.current;
     if (!conn) return;
+    const g = generation.current;
     try {
       const client = await freshClient(conn);
-      const next = client === conn.client ? conn : { ...conn, client };
+      const next = { ...conn, client };
       const run = await findLatestRun(client, conn.ref);
+      if (!current(g)) return;
       if (!run) {
         setBuild({ phase: 'failed', message: 'No builds on this branch yet.' });
         return;
       }
-      if (run.status === 'completed') await fetchFirmware(next, run);
+      if (run.status === 'completed') await fetchFirmware(g, next, run);
       else {
         setBuild({ phase: 'waiting', sha: run.head_sha, run });
-        await follow(next, run.head_sha);
+        await follow(g, next, run.head_sha);
       }
     } catch (error) {
-      setBuild({ phase: 'failed', message: message(error) });
+      failed(g, error, (text) => setBuild({ phase: 'failed', message: text }));
     }
   };
 
@@ -209,6 +251,7 @@ export function useBuildSession() {
     connectionSeq,
     reconnecting,
     reconnectError,
+    refreshError,
     build,
     setBuild,
     connect,

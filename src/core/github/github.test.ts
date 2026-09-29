@@ -64,7 +64,9 @@ describe('repo files', () => {
     expect(fake.headSha).toBe(result.sha);
     expect(fake.headFiles()).toEqual({ 'config/west.yml': 'west ä', 'build.yaml': 'b' });
     // The first file goes in through the Contents API, which works on an empty repo.
-    expect(fake.requests.some((r) => r.method === 'PUT' && r.path === '/repos/me/zmk-config/contents/config/west.yml')).toBe(true);
+    const put = fake.requests.find((r) => r.method === 'PUT' && r.path === '/repos/me/zmk-config/contents/config/west.yml');
+    // On the chosen branch, not whatever the default is.
+    expect(put?.body).toMatchObject({ branch: 'main' });
   });
 
   it('makes no commit when nothing changed', async () => {
