@@ -19,7 +19,7 @@ export const START: HelpSection[] = [
               you commit.
             </li>
             <li>
-              To use your own keyboard, either open your files with <Ui>Open files</Ui> in the top bar, connect your
+              To use your own keyboard, either open your files with <Ui>Open files</Ui> in the top bar's <Ui>⋯</Ui> More menu, connect your
               repository on the <Ui>Build &amp; flash</Ui> tab and choose <Ui>Load config from repo</Ui>, or start from ZMK's default
               keymap for your keyboard on the Keyboard page (the keyboard button at the top left). To look at someone
               else's public config, use <Ui>Open from GitHub</Ui>; see <See to="open-github">below</See>.
@@ -34,7 +34,7 @@ export const START: HelpSection[] = [
         </Sub>
         <Sub id="open-files" title="Opening and downloading files">
           <p>
-            <Ui>Open files</Ui> takes your <code>.keymap</code> and, optionally, its <code>.conf</code>,{' '}
+            These live in the <Ui>⋯</Ui> More menu at the top right. <Ui>Open files</Ui> takes your <code>.keymap</code> and, optionally, its <code>.conf</code>,{' '}
             <code>west.yml</code>, <code>build.yaml</code> and <code>.editor.json</code>. Pick them together. The keyboard
             is named after the <code>.keymap</code> file. Files you don't pick keep what the editor had. Opening files
             replaces the editor's contents and clears the undo history.

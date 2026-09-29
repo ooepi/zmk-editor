@@ -119,10 +119,6 @@
   background: transparent;
 }
 
-.toolbar .icon-button.expandable {
-  width: auto;
-}
-
 .toolbar .icon-button:hover:not(:disabled) {
   border-color: transparent;
   background: var(--surface-3);

@@ -101,74 +101,78 @@ export function LayerRail({ layers, active, dispatch }: LayerRailProps) {
   };
 
   return (
-    <nav className="layer-rail" aria-label="Layers">
-      <div ref={list} className="layer-rail-list" role="tablist" aria-label="Layers" aria-orientation="vertical">
-        {layers.map((layer, index) => {
-          const name = layerName(layer);
-          const target = reorder.target(index, 'y');
-          return (
-            <div
-              key={layer.name}
-              role="presentation"
-              className={`layer-row${index === active ? ' active' : ''}${hovered === index ? ' drag-hover' : ''}${reorder.dropClass(index)}`}
-              {...target}
-              onDragEnter={(event) => onRowDragEnter(event, index)}
-              onDragLeave={(event) => {
-                target.onDragLeave(event);
-                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) stopHover();
-              }}
-              onDrop={(event) => {
-                target.onDrop(event);
-                stopHover();
-              }}
-            >
-              <span className="layer-grip" aria-hidden="true" title="Drag to reorder" {...reorder.handle(index)}>
-                <Icon name="grip" strokeWidth={3} />
-              </span>
-              <span className="layer-pill">
-                {renaming === index ? (
-                  <input
-                    className="layer-rename"
-                    aria-label="Layer name"
-                    value={draft}
-                    autoFocus
-                    onChange={(e) => setDraft(e.target.value)}
-                    onBlur={finishRename}
-                    onKeyDown={onRenameKey}
-                  />
-                ) : (
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={index === active}
-                    className="layer-tab"
-                    data-layer={layer.name}
-                    onClick={() => dispatch({ type: 'selectLayer', index })}
-                    onDoubleClick={() => startRename(index)}
-                    onKeyDown={(event) => onTabKey(event, index, layer)}
-                    title="Double-click to rename · drag or Alt+↑/↓ to reorder"
-                    {...reorder.handle(index)}
-                  >
-                    <span className="layer-index">{index}</span>
-                    {name}
-                  </button>
-                )}
-                <span className="layer-row-actions">
-                  <IconButton icon="pencil" label={`Rename layer ${name}`} onClick={() => startRename(index)} />
-                  <IconButton
-                    icon="trash"
-                    label={`Delete layer ${name}`}
-                    tone="danger"
-                    disabled={layers.length <= 1}
-                    onClick={() => deleteLayer(index)}
-                  />
+    // The scroll column is wider than the rail and lets clicks through, so a hovered
+    // row's buttons can stick out to the right without being clipped by the scrolling.
+    <div className="layer-rail-scroll">
+      <nav className="layer-rail" aria-label="Layers">
+        <div ref={list} className="layer-rail-list" role="tablist" aria-label="Layers" aria-orientation="vertical">
+          {layers.map((layer, index) => {
+            const name = layerName(layer);
+            const target = reorder.target(index, 'y');
+            return (
+              <div
+                key={layer.name}
+                role="presentation"
+                className={`layer-row${index === active ? ' active' : ''}${hovered === index ? ' drag-hover' : ''}${reorder.dropClass(index)}`}
+                {...target}
+                onDragEnter={(event) => onRowDragEnter(event, index)}
+                onDragLeave={(event) => {
+                  target.onDragLeave(event);
+                  if (!event.currentTarget.contains(event.relatedTarget as Node | null)) stopHover();
+                }}
+                onDrop={(event) => {
+                  target.onDrop(event);
+                  stopHover();
+                }}
+              >
+                <span className="layer-grip" aria-hidden="true" title="Drag to reorder" {...reorder.handle(index)}>
+                  <Icon name="grip" strokeWidth={3} />
                 </span>
-              </span>
-            </div>
-          );
-        })}
-      </div>
-      <IconButton icon="plus" label="Add layer" className="layer-add" onClick={addLayer} />
-    </nav>
+                <span className="layer-pill">
+                  {renaming === index ? (
+                    <input
+                      className="layer-rename"
+                      aria-label="Layer name"
+                      value={draft}
+                      autoFocus
+                      onChange={(e) => setDraft(e.target.value)}
+                      onBlur={finishRename}
+                      onKeyDown={onRenameKey}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={index === active}
+                      className="layer-tab"
+                      data-layer={layer.name}
+                      onClick={() => dispatch({ type: 'selectLayer', index })}
+                      onDoubleClick={() => startRename(index)}
+                      onKeyDown={(event) => onTabKey(event, index, layer)}
+                      title="Double-click to rename · drag or Alt+↑/↓ to reorder"
+                      {...reorder.handle(index)}
+                    >
+                      <span className="layer-index">{index}</span>
+                      {name}
+                    </button>
+                  )}
+                  <span className="layer-row-actions">
+                    <IconButton icon="pencil" label={`Rename layer ${name}`} onClick={() => startRename(index)} />
+                    <IconButton
+                      icon="trash"
+                      label={`Delete layer ${name}`}
+                      tone="danger"
+                      disabled={layers.length <= 1}
+                      onClick={() => deleteLayer(index)}
+                    />
+                  </span>
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        <IconButton icon="plus" label="Add layer" className="layer-add" onClick={addLayer} />
+      </nav>
+    </div>
   );
 }

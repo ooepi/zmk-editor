@@ -15,12 +15,12 @@ describe('IconButton', () => {
     expect(screen.getByRole('button').getAttribute('title')).toBe('Undo');
   });
 
-  it('shows its label as text when expandable, and keeps a given title', () => {
+  it('shows its label in a bubble when asked, and keeps a given title', () => {
     render(<IconButton icon="print" label="Print keymap" expand title="A cheat sheet of every layer" />);
     const button = screen.getByRole('button', { name: 'Print keymap' });
     expect(button.textContent).toBe('Print keymap');
     expect(button.getAttribute('title')).toBe('A cheat sheet of every layer');
-    expect(button.className).toContain('expandable');
+    expect(button.className).toContain('labelled');
   });
 
   it('can be disabled', () => {

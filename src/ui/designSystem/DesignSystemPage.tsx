@@ -118,7 +118,7 @@ export default function DesignSystemPage() {
       <section className="ds-section" aria-labelledby="ds-icon-buttons">
         <h2 id="ds-icon-buttons">Icon buttons</h2>
         <p className="muted small">
-          <code>IconButton</code>: round, named by its label. With <code>expand</code> the label slides out on hover or focus.
+          <code>IconButton</code>: round, named by its label. With <code>expand</code> the label shows in a bubble under it on hover or focus.
         </p>
         <div className="ds-row">
           <IconButton icon="undo" label="Undo" />

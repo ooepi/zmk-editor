@@ -21,9 +21,10 @@ export const SHORTCUTS: Shortcut[] = [
   { keys: 'Ctrl+click or Shift+click a key', action: 'Add the key to the selection, or remove it', where: 'Keymap' },
   { keys: 'Drag a box on empty space', action: 'Select the keys inside it (hold Ctrl to add to the selection)', where: 'Keymap, Designer' },
   { keys: 'Drag a key onto another key', action: 'Swap them (hold Alt or Ctrl while dropping to copy)', where: 'Keymap' },
-  { keys: 'Hold a drag over a layer tab', action: 'Switch to that layer, then drop on a key to copy it there', where: 'Keymap' },
-  { keys: 'Drag a layer tab', action: 'Reorder layers', where: 'Keymap' },
-  { keys: 'Double-click a layer tab', action: 'Rename the layer', where: 'Keymap' },
+  { keys: 'Hold a drag over a layer', action: 'Switch to that layer, then drop on a key to copy it there', where: 'Keymap' },
+  { keys: 'Drag a layer', action: 'Reorder layers', where: 'Keymap' },
+  { keys: 'Alt+↑ or Alt+↓ on a layer', action: 'Move the layer up or down', where: 'Keymap' },
+  { keys: 'Double-click a layer', action: 'Rename the layer', where: 'Keymap' },
   { keys: 'Enter in a key search', action: 'Pick the first result', where: 'Keycode picker, behavior field' },
   { keys: 'Arrow keys (Shift: 1 key)', action: 'Move the selected keys by ¼ key', where: 'Designer, keyboard wizard' },
 ];

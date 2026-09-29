@@ -3,9 +3,33 @@
 .canvas-row {
   flex: 1;
   display: flex;
-  gap: var(--s-3);
   min-height: 0;
   padding-left: var(--s-4);
+}
+
+/*
+ * A click-through column that scrolls the rail when there are more layers than fit.
+ * Its right padding is room for a hovered row's buttons (see .layer-row-actions);
+ * the negative margin lets the canvas start under that room, but the canvas's own
+ * padding keeps keys out of it, so the buttons never cover a key.
+ */
+.layer-rail-scroll {
+  --rail-overhang: 64px;
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+  margin-right: calc(var(--s-6) + var(--s-2) - var(--rail-overhang));
+  padding: var(--s-3) var(--rail-overhang) var(--s-3) 0;
+  overflow: hidden auto;
+  pointer-events: none;
+  scrollbar-width: none;
+}
+
+.layer-rail-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 .canvas-row > .canvas {
@@ -14,9 +38,7 @@
 }
 
 .layer-rail {
-  position: relative;
-  z-index: 2;
-  align-self: center;
+  margin-block: auto;
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
@@ -24,6 +46,7 @@
   border-radius: var(--r-lg);
   background: var(--surface);
   box-shadow: var(--shadow-float);
+  pointer-events: auto;
 }
 
 .layer-rail-list {

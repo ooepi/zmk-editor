@@ -69,32 +69,37 @@
   height: 18px;
 }
 
-/* An icon button whose label slides out on hover or keyboard focus. */
-.icon-button.expandable {
-  width: auto;
-  min-width: 36px;
-  height: 36px;
-  min-height: 36px;
-  padding: 0 9px;
-  gap: 0;
-  border-radius: var(--r-pill);
+/*
+ * An icon button that names itself in a small bubble under it on hover or keyboard
+ * focus. The bubble is out of the layout, so showing it never moves anything.
+ */
+.icon-button.labelled {
+  position: relative;
 }
 
 .icon-button-label {
-  max-width: 0;
-  overflow: hidden;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  z-index: 60;
+  padding: 3px var(--s-2);
+  border-radius: var(--r-sm);
+  background: var(--text);
+  color: var(--bg);
+  font-size: var(--fs-xs);
+  font-weight: 600;
   white-space: nowrap;
   opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -2px);
   transition:
-    max-width var(--dur-fast) var(--ease-out),
     opacity var(--dur-fast) var(--ease-out),
-    margin var(--dur-fast) var(--ease-out);
+    transform var(--dur-fast) var(--ease-out);
 }
 
-.icon-button.expandable:is(:hover, :focus-visible) .icon-button-label {
-  max-width: 180px;
-  margin-left: var(--s-2);
+.icon-button.labelled:is(:hover, :focus-visible) .icon-button-label {
   opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 .icon-button.danger {
@@ -210,7 +215,10 @@
 
 .menu-item:is(:hover, :focus-visible):not(:disabled) {
   background: var(--surface-3);
-  outline: none;
+}
+
+.menu-item:focus-visible {
+  outline-offset: -2px;
 }
 
 .menu-item .icon {

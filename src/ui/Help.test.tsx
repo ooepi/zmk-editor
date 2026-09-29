@@ -30,6 +30,17 @@ describe('help', () => {
     expect(help().getByRole('cell', { name: 'Ctrl+V' })).toBeTruthy();
   });
 
+  it('describes the layer rail and the More menu as they are', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Open help' }));
+    const text = help().getByRole('heading', { level: 2, name: 'Layers' }).closest('section')?.textContent ?? '';
+    expect(text).toMatch(/Alt\+↑/);
+    expect(text).not.toMatch(/tabs above the keyboard|deletes the shown layer/);
+    expect(help().getAllByText(/More menu/).length).toBeGreaterThan(0);
+    expect(help().getByRole('cell', { name: 'Alt+↑ or Alt+↓ on a layer' })).toBeTruthy();
+  });
+
   it('opens from the ? button', async () => {
     const user = userEvent.setup();
     render(<App />);

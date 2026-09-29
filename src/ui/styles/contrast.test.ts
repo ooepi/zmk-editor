@@ -67,3 +67,17 @@ describe('state lines', () => {
     expect(offending, 'Use var(--accent-line) for borders, outlines and rings').toEqual([]);
   });
 });
+
+describe('focus', () => {
+  const sheets = readdirSync(DIR).filter((f) => f.endsWith('.css'));
+  // Rules are flat enough here to split on braces: "selector { declarations }".
+  const RULE = /([^{}]+)\{([^{}]*)\}/g;
+
+  it.each(sheets)('%s keeps the focus ring on :focus-visible', (file) => {
+    const text = readFileSync(`${DIR}${file}`, 'utf8');
+    const offending = [...text.matchAll(RULE)]
+      .filter(([, selector = '', body = '']) => selector.includes(':focus-visible') && /outline:\s*(?:none|0)\b/.test(body))
+      .map(([, selector = '']) => selector.trim().replace(/\s+/g, ' '));
+    expect(offending, 'Keyboard users need the ring: style :hover separately').toEqual([]);
+  });
+});

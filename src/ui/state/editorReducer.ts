@@ -186,8 +186,18 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       return commit(state, renameLayer(keymap, action.index, action.name));
     case 'moveLayer': {
       if (action.to < 0 || action.to >= keymap.layers.length) return state;
-      const layer = state.layer === action.from ? action.to : state.layer;
-      return commit(state, moveLayer(keymap, action.from, action.to), { layer });
+      // Keep showing the same layer: follow it when it moves, and shift when another
+      // layer moves from one side of it to the other.
+      const { from, to } = action;
+      const layer =
+        state.layer === from
+          ? to
+          : from < state.layer && to >= state.layer
+            ? state.layer - 1
+            : from > state.layer && to <= state.layer
+              ? state.layer + 1
+              : state.layer;
+      return commit(state, moveLayer(keymap, from, to), { layer });
     }
     case 'deleteLayer': {
       if (keymap.layers.length <= 1) return state;
@@ -196,7 +206,8 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
         removedCombos.length > 0
           ? `Removed combo${removedCombos.length > 1 ? 's' : ''} ${removedCombos.join(', ')}: ${removedCombos.length > 1 ? 'they' : 'it'} only worked on the deleted layer.`
           : null;
-      const layer = Math.min(state.layer, model.layers.length - 1);
+      // Deleting a layer before the shown one shifts it down by one; keep showing it.
+      const layer = Math.min(action.index < state.layer ? state.layer - 1 : state.layer, model.layers.length - 1);
       return commit(state, model, { layer, notice });
     }
     case 'undo': {

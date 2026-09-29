@@ -122,20 +122,21 @@ export const KEYS: HelpSection[] = [
     body: (
       <>
         <p>
-          The tabs above the keyboard are your layers; layer 0 is the base layer. Click a tab to show that layer.
+          Your layers are listed beside the keyboard; layer 0 is the base layer. Click a layer to show it. Point at a
+          layer, or move to it with Tab, to show its drag handle and its <Ui>✎</Ui> and <Ui>🗑</Ui> buttons.
         </p>
         <ul>
           <li>
-            <Ui>+</Ui> adds a layer (all transparent) and lets you name it. Double-click a tab, or use <Ui>✎</Ui>, to
-            rename it.
+            <Ui>+</Ui> under the list adds a layer (all transparent) and lets you name it. Double-click a layer, or use
+            its <Ui>✎</Ui>, to rename it.
           </li>
           <li>
-            Drag a tab, or use <Ui>←</Ui> and <Ui>→</Ui>, to reorder layers. Keys that switch layers keep pointing at the
-            same layer.
+            Drag a layer by its handle, or press Alt+↑ or Alt+↓ on it, to reorder layers. Keys that switch layers keep
+            pointing at the same layer.
           </li>
           <li>
-            <Ui>🗑</Ui> deletes the shown layer. Keys that switched to it will do nothing, and combos that only worked on
-            it are removed.
+            A layer's <Ui>🗑</Ui> deletes that layer. Keys that switched to it will do nothing, and combos that only
+            worked on it are removed.
           </li>
         </ul>
         <p>

@@ -150,6 +150,25 @@ describe('editorReducer', () => {
     expect(state.config.keymap.layers).toHaveLength(6);
   });
 
+  it('stays on the same layer when another layer is moved past it', () => {
+    const shown = (state: EditorState) => state.config.keymap.layers[state.layer]?.name;
+    let state = run(start(), { type: 'selectLayer', index: 2 });
+    const before = shown(state);
+    state = run(state, { type: 'moveLayer', from: 1, to: 2 });
+    expect(shown(state)).toBe(before);
+    state = run(state, { type: 'moveLayer', from: 4, to: 0 });
+    expect(shown(state)).toBe(before);
+  });
+
+  it('stays on the same layer when a layer before it is deleted', () => {
+    const shown = (state: EditorState) => state.config.keymap.layers[state.layer]?.name;
+    let state = run(start(), { type: 'selectLayer', index: 4 });
+    const before = shown(state);
+    state = run(state, { type: 'deleteLayer', index: 1 });
+    expect(state.layer).toBe(3);
+    expect(shown(state)).toBe(before);
+  });
+
   it('never deletes the last layer', () => {
     let state = start();
     for (let i = 0; i < 6; i++) state = run(state, { type: 'deleteLayer', index: 0 });
