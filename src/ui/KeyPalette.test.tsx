@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, createEvent, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App.tsx';
 import { chooseBehavior } from './testUtils.ts';
 
@@ -62,10 +62,8 @@ describe('key palette', () => {
     expect(keyButton('Key 0: Ctl+C')).toBeTruthy();
   });
 
-  it('drops behaviors and transparent', async () => {
-    const user = userEvent.setup();
+  it('drops behaviors and transparent', () => {
     render(<App />);
-    await user.click(palette().getByRole('button', { name: 'Behaviors' }));
     drag(palette().getByRole('button', { name: 'Place NUM (mo)' }), keyButton('Key 0: Esc'));
     expect(keyButton('Key 0: NUM (mo)')).toBeTruthy();
     drag(palette().getByRole('button', { name: 'Place Transparent' }), keyButton('Key 1: 1'));
@@ -125,15 +123,34 @@ describe('key palette', () => {
 });
 
 describe('palette layout', () => {
-  it('groups keys by category until a category or search narrows them', async () => {
+  it('shows every section in one list and jumps to a category from the rail', async () => {
+    const scrolled = vi.fn();
+    Element.prototype.scrollIntoView = function (this: Element) {
+      scrolled(this.id);
+    };
     const user = userEvent.setup();
     render(<App />);
     expect(palette().getByRole('heading', { name: 'Letters' })).toBeTruthy();
-    expect(within(palette().getByRole('group', { name: 'Numbers' })).getByRole('button', { name: 'Place 1 (N1)' })).toBeTruthy();
+    expect(within(palette().getByRole('group', { name: 'Layers' })).getByRole('button', { name: 'Place NUM (mo)' })).toBeTruthy();
+    const rail = within(palette().getByRole('navigation', { name: 'Palette categories' }));
+    await user.click(rail.getByRole('button', { name: 'Numbers' }));
+    expect(scrolled).toHaveBeenLastCalledWith('palette-keys-numbers');
+    expect(rail.getByRole('button', { name: 'Numbers' }).getAttribute('aria-current')).toBe('true');
+    expect(palette().getByRole('heading', { name: 'Letters' })).toBeTruthy();
+  });
 
-    await user.click(within(palette().getByRole('group', { name: 'Palette key categories' })).getByRole('button', { name: 'Numbers' }));
+  it('narrows to a Keys section while searching', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.type(palette().getByRole('searchbox', { name: 'Search the palette' }), 'N1');
     expect(palette().queryByRole('heading', { name: 'Letters' })).toBeNull();
     expect(within(palette().getByRole('group', { name: 'Keys' })).getByRole('button', { name: 'Place 1 (N1)' })).toBeTruthy();
+  });
+
+  it('pins Transparent and None above the list', () => {
+    render(<App />);
+    const special = within(palette().getByRole('group', { name: 'Special' }));
+    expect(special.getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual(['Place Transparent', 'Place None']);
   });
 
   it('keeps the modifiers in their own labelled group', () => {
