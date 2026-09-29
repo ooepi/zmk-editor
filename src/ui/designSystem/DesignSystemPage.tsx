@@ -1,5 +1,6 @@
 import { ThemeToggle } from '../components/ThemeToggle.tsx';
 import { IconButton } from '../components/ui/IconButton.tsx';
+import { Menu } from '../components/ui/Menu.tsx';
 import { useTheme } from '../useTheme.ts';
 
 // The living reference for the design system: every token and shared control,
@@ -125,6 +126,27 @@ export default function DesignSystemPage() {
           <IconButton icon="trash" label="Delete" tone="danger" />
           <IconButton icon="redo" label="Redo (disabled)" disabled />
           <IconButton icon="more" label="More actions" />
+        </div>
+      </section>
+
+      <section className="ds-section" aria-labelledby="ds-menus">
+        <h2 id="ds-menus">Menus</h2>
+        <p className="muted small">
+          <code>Menu</code>: actions behind an icon button. Arrow keys, Home and End move; Enter runs; Esc or a click outside
+          closes.
+        </p>
+        <div className="ds-row">
+          <Menu
+            label="Sample menu"
+            align="start"
+            items={[
+              { label: 'Open files', icon: 'open', onSelect: () => undefined },
+              { label: 'Download .keymap', icon: 'download', onSelect: () => undefined },
+              { label: 'Disabled item', icon: 'archive', onSelect: () => undefined, disabled: true },
+              'separator',
+              { label: 'Reset to demo', icon: 'reset', tone: 'danger', onSelect: () => undefined },
+            ]}
+          />
         </div>
       </section>
 
