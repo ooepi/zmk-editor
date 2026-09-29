@@ -155,7 +155,7 @@ describe('palette layout', () => {
 
   it('keeps the modifiers in their own labelled group', () => {
     render(<App />);
-    const mods = palette().getByRole('group', { name: 'Hold with placed keys:' });
+    const mods = palette().getByRole('group', { name: 'Add modifiers' });
     expect(within(mods).getAllByRole('button')).toHaveLength(8);
   });
 });
@@ -195,6 +195,19 @@ describe('modifiers on palette tiles', () => {
     const tile = palette().getByRole('button', { name: 'Place Ctl+Sft+A (LC(LS(A)))' });
     expect(tile.querySelector('.palette-tile-main')?.textContent).toBe('A');
     expect(tile.querySelector('.palette-tile-sub')?.textContent).toBe('Ctl+Sft');
+  });
+});
+
+describe('modifier bar', () => {
+  it('says which modifiers key tiles will carry, and clears them', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(palette().getByRole('button', { name: 'Hold Left Ctrl with placed keys' }));
+    await user.click(palette().getByRole('button', { name: 'Hold Left Shift with placed keys' }));
+    expect(palette().getByText('Key tiles will send Ctl+Sft with the key.')).toBeTruthy();
+    expect(palette().getByRole('button', { name: 'Place NUM (mo)' })).toBeTruthy();
+    await user.click(palette().getByRole('button', { name: 'Clear modifiers' }));
+    expect(palette().getByRole('button', { name: 'Place A (A)' })).toBeTruthy();
   });
 });
 

@@ -16,6 +16,7 @@ import { sensorCount } from '../../core/keymap/sensorEdit.ts';
 import { setPaletteDrag } from '../dnd.ts';
 import { setPreferences, usePreferences } from '../state/preferences.ts';
 import { CategoryRail, type RailEntry } from './palette/CategoryRail.tsx';
+import { ModifierBar } from './palette/ModifierBar.tsx';
 import { PaletteStatus } from './palette/PaletteStatus.tsx';
 
 interface KeyPaletteProps {
@@ -142,26 +143,7 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm }: KeyPa
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-            <div className="palette-mods">
-              <span className="palette-mods-label" id="palette-mods-label">
-                Hold with placed keys:
-              </span>
-              <div className="mod-toggles" role="group" aria-labelledby="palette-mods-label">
-                {MODIFIER_FUNCTIONS.map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    className={`mod-toggle${mods.includes(m.id) ? ' active' : ''}`}
-                    aria-pressed={mods.includes(m.id)}
-                    aria-label={`Hold ${m.name} with placed keys`}
-                    title={`Hold ${m.name} with the placed key (${m.id})`}
-                    onClick={() => toggleMod(m.id)}
-                  >
-                    {m.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <ModifierBar mods={mods} onToggle={toggleMod} onClear={() => setMods([])} />
           </div>
           <div className="palette-scroll" ref={scroller} onScroll={onScroll}>
             {!searching && (
