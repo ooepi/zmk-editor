@@ -38,18 +38,23 @@
   --lime-950: #1a1f05;
   --blue-300: #7aa7ff;
   --blue-600: #2f6fe0;
+  --blue-700: #1f52b0;
   --amber-300: #f5b86b;
   --amber-700: #b86a0b;
+  --amber-800: #8a4f06;
   --violet-300: #c792ea;
   --violet-700: #8a3fc4;
   --pink-300: #f38ba8;
   --pink-700: #c2386b;
   --cyan-300: #67d8ef;
   --cyan-700: #0f8aa3;
+  --red-200: #ff9494;
   --red-300: #ff6b6b;
   --red-600: #d43d3d;
+  --red-700: #b02a2a;
   --green-300: #6ee7a8;
   --green-700: #1f9d5c;
+  --green-800: #146b3e;
 
   /* 2. Scales */
   --font-sans: 'Plus Jakarta Sans Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -106,6 +111,10 @@
   --success-soft: color-mix(in srgb, var(--green-300) 12%, transparent);
   --warning: var(--amber-300);
   --info: var(--blue-300);
+  --success-text: var(--green-300);
+  --warning-text: var(--amber-300);
+  --info-text: var(--blue-300);
+  --danger-text: var(--red-200);
   --keycap: var(--graphite-850);
   --keycap-top: var(--graphite-750);
   --keycap-edge: var(--graphite-650);
@@ -152,6 +161,10 @@
   --success-soft: color-mix(in srgb, var(--green-700) 12%, transparent);
   --warning: var(--amber-700);
   --info: var(--blue-600);
+  --success-text: var(--green-800);
+  --warning-text: var(--amber-800);
+  --info-text: var(--blue-700);
+  --danger-text: var(--red-700);
   --keycap: var(--paper-0);
   --keycap-top: var(--paper-0);
   --keycap-edge: var(--paper-250);

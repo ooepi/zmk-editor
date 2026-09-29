@@ -9,6 +9,7 @@ import type { EditorAction } from '../state/editorReducer.ts';
 import { usePreferences } from '../state/preferences.ts';
 import { DesignerCanvas, RotationField, UnitField } from './DesignerCanvas.tsx';
 import { HelpLink } from '../help/HelpLink.tsx';
+import { Section } from './ui/Section.tsx';
 
 interface LayoutDesignerProps {
   config: ZmkConfig;
@@ -54,7 +55,25 @@ export function LayoutDesigner({ config, dispatch, onClose }: LayoutDesignerProp
     <div className="designer">
       <div className="designer-main">
         <div className="designer-head">
-          <h2 className="panel-title">Layout designer · {findKeyboard(config.keyboard)?.name ?? config.keyboard}</h2>
+          <div className="designer-head-title">
+            <h2 className="panel-title">Layout designer · {findKeyboard(config.keyboard)?.name ?? config.keyboard}</h2>
+            <div className="row">
+              <button
+                type="button"
+                className="button"
+                disabled={!dirty}
+                onClick={() => {
+                  setDraft({ name: 'custom', keys: initial.keys.map((k) => ({ ...k })) });
+                  setDirty(false);
+                }}
+              >
+                Discard changes
+              </button>
+              <button type="button" className="button primary" disabled={!dirty} onClick={save}>
+                Save layout
+              </button>
+            </div>
+          </div>
           <p className="muted small">
             Drag keys (they snap to ¼ key) or select one and use the arrow keys (Shift: 1 key). Ctrl/Shift-click or drag a box
             to select several and move them together. Keys are numbered in keymap order. This changes where keys are drawn, not how they’re wired: the {keyCount} keys stay the same.{' '}
@@ -68,8 +87,14 @@ export function LayoutDesigner({ config, dispatch, onClose }: LayoutDesignerProp
         <TemplatePanel keyCount={keyCount} onApply={(layout) => { update(layout); setSelection([0]); }} />
 
         {key && selected !== null ? (
-          <fieldset className="fieldset">
-            <legend>Key {selected} · {labels[selected] ?? ''}</legend>
+          <Section
+            title={`Key ${selected}`}
+            lead={
+              <kbd className="mini-key panel-key" aria-hidden="true">
+                {labels[selected] || selected}
+              </kbd>
+            }
+          >
             <div className="field-grid">
               <UnitField key={`x-${selected}`} label="X" value={key.x} onChange={(x) => updateKey(selected, { x })} />
               <UnitField key={`y-${selected}`} label="Y" value={key.y} onChange={(y) => updateKey(selected, { y })} />
@@ -96,7 +121,7 @@ export function LayoutDesigner({ config, dispatch, onClose }: LayoutDesignerProp
                 No rotation
               </button>
             </div>
-          </fieldset>
+          </Section>
         ) : selection.length > 1 ? (
           <p className="muted small">{selection.length} keys selected. Drag them or use the arrow keys to move them together.</p>
         ) : (
@@ -104,20 +129,6 @@ export function LayoutDesigner({ config, dispatch, onClose }: LayoutDesignerProp
         )}
 
         <div className="stack">
-          <button type="button" className="button primary" disabled={!dirty} onClick={save}>
-            Save layout
-          </button>
-          <button
-            type="button"
-            className="button"
-            disabled={!dirty}
-            onClick={() => {
-              setDraft({ name: 'custom', keys: initial.keys.map((k) => ({ ...k })) });
-              setDirty(false);
-            }}
-          >
-            Discard changes
-          </button>
           {config.layout && (
             <button
               type="button"
@@ -170,8 +181,7 @@ function TemplatePanel({ keyCount, onApply }: { keyCount: number; onApply: (layo
   };
 
   return (
-    <fieldset className="fieldset">
-      <legend>Start from a template</legend>
+    <Section title="Start from a template" icon="layers">
       <label className="field">
         <span className="field-label">Template</span>
         <select className="input" value={template} onChange={(e) => setTemplate(e.target.value as Template)}>
@@ -217,6 +227,6 @@ function TemplatePanel({ keyCount, onApply }: { keyCount: number; onApply: (layo
       >
         Apply template
       </button>
-    </fieldset>
+    </Section>
   );
 }

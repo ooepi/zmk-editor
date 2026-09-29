@@ -26,6 +26,8 @@ import { setPreferences, usePreferences } from '../state/preferences.ts';
 import { ModuleFinder } from './ModuleFinder.tsx';
 import { HelpLink } from '../help/HelpLink.tsx';
 import { httpsUrl } from '../../core/url.ts';
+import { Badge } from './ui/Badge.tsx';
+import { Section } from './ui/Section.tsx';
 
 interface ModulesViewProps {
   config: ZmkConfig;
@@ -78,11 +80,17 @@ export function ModulesView({ config, dispatch, onScreens }: ModulesViewProps & 
 
   return (
     <div className="modules">
-      <h2 className="panel-title">Modules</h2>
-      <p className="muted">
-        Modules add behaviors, LED and display features to ZMK. Each is set to the release matching your ZMK version (
-        {version}), so the firmware and its modules always fit together. <HelpLink to="modules" />
-      </p>
+      <Section
+        variant="flat"
+        title="Modules"
+        icon="puzzle"
+        description={
+          <>
+            Modules add behaviors, LED and display features to ZMK. Each is set to the release matching your ZMK version (
+            {version}), so the firmware and its modules always fit together. <HelpLink to="modules" />
+          </>
+        }
+      />
 
       {mismatches.length > 0 && (
         <div className="notice warn" role="alert">
@@ -191,15 +199,23 @@ function ModuleCard({ module, config, dispatch, installed, onRemove }: ModuleCar
     .map((v) => (module.revisions[v] === v ? v : `${v} (as ${module.revisions[v]})`))
     .join(', ');
   const own = config.keymap.behaviors.filter((b) => b.label && module.compatibles?.includes(b.compatible));
+  const category = MODULE_CATEGORIES.find((c) => c.id === module.category)?.label;
 
   return (
     <article className={`module-card${installed ? ' installed' : ''}`} aria-label={module.name}>
       <header className="module-head">
         <div>
           <h3>{module.name}</h3>
-          <a className="mono small" href={httpsUrl(module.homepage)} target="_blank" rel="noreferrer">
-            {module.id}
-          </a>
+          <span className="module-meta">
+            {installed ? (
+              <Badge tone="accent">Installed</Badge>
+            ) : (
+              category && <Badge>{category}</Badge>
+            )}
+            <a className="mono small" href={httpsUrl(module.homepage)} target="_blank" rel="noreferrer">
+              {module.id}
+            </a>
+          </span>
         </div>
         {installed ? (
           <button type="button" className="button danger" onClick={onRemove}>

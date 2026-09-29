@@ -21,6 +21,8 @@ import { ConnectSection, type Connection } from './ConnectSection.tsx';
 import { DiffView } from './DiffView.tsx';
 import { HardwareIssueList } from './HardwareIssueList.tsx';
 import { httpsUrl } from '../../core/url.ts';
+import { Badge, type BadgeTone } from './ui/Badge.tsx';
+import { Section } from './ui/Section.tsx';
 
 interface BuildViewProps {
   config: ZmkConfig;
@@ -169,8 +171,16 @@ export function BuildView({ config, dispatch }: BuildViewProps) {
       />
 
       {connection && (
-        <section className="build-section" aria-label="Changes">
-          <h2 className="panel-title">Changes to commit</h2>
+        <Section
+          label="Changes"
+          title="Changes to commit"
+          icon="code"
+          actions={
+            <Badge tone={changes.length > 0 ? 'accent' : 'neutral'}>
+              {changes.length} file{changes.length === 1 ? '' : 's'}
+            </Badge>
+          }
+        >
           {changes.length === 0 ? (
             <p className="muted">The branch already matches the editor.</p>
           ) : (
@@ -250,7 +260,7 @@ export function BuildView({ config, dispatch }: BuildViewProps) {
               Latest build
             </button>
           </div>
-        </section>
+        </Section>
       )}
 
       {build.phase !== 'idle' && <BuildStatus build={build} onFirmware={(run, firmware) => setBuild({ phase: 'done', run, firmware })} />}
@@ -307,8 +317,7 @@ const STATUS_TEXT: Record<string, string> = {
 function BuildStatus({ build, onFirmware }: { build: BuildState; onFirmware: (run: WorkflowRun, firmware: FirmwareFile[]) => void }) {
   const run = 'run' in build ? build.run : undefined;
   return (
-    <section className="build-section" aria-label="Build">
-      <h2 className="panel-title">Build</h2>
+    <Section title="Build" icon="rocket" actions={<BuildBadge build={build} />}>
       <p role="status" className={build.phase === 'failed' || build.phase === 'blocked' ? 'field-error' : ''}>
         {build.phase === 'committing' && 'Committing…'}
         {build.phase === 'waiting' && (build.run ? STATUS_TEXT[build.run.status] ?? build.run.status : 'Waiting for the build to start…')}
@@ -340,8 +349,27 @@ function BuildStatus({ build, onFirmware }: { build: BuildState; onFirmware: (ru
         </div>
       )}
       {build.phase === 'done' && <FirmwareList firmware={build.firmware} />}
-    </section>
+    </Section>
   );
+}
+
+/** The build's state at a glance, beside its title. */
+function BuildBadge({ build }: { build: BuildState }) {
+  const [tone, text]: [BadgeTone, string] =
+    build.phase === 'done'
+      ? ['success', 'Ready']
+      : build.phase === 'failed'
+        ? ['danger', 'Failed']
+        : build.phase === 'blocked'
+          ? ['warning', 'Needs you']
+          : build.phase === 'committing'
+            ? ['info', 'Committing']
+            : build.phase === 'downloading'
+              ? ['info', 'Downloading']
+              : build.phase === 'waiting' && build.run?.status !== 'in_progress'
+                ? ['warning', 'Queued']
+                : ['info', 'Building'];
+  return <Badge tone={tone}>{text}</Badge>;
 }
 
 interface DirectoryPicker {

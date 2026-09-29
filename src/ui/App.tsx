@@ -24,6 +24,7 @@ import { SelectionPanel } from './components/SelectionPanel.tsx';
 import { ThemeToggle } from './components/ThemeToggle.tsx';
 import { Icon, type IconName } from './components/Icon.tsx';
 import { IconButton } from './components/ui/IconButton.tsx';
+import { Section } from './components/ui/Section.tsx';
 import { ModulesView } from './components/ModulesView.tsx';
 import { ScreensView } from './components/ScreensView.tsx';
 import { SettingsView } from './components/SettingsView.tsx';
@@ -371,7 +372,7 @@ function Editor() {
           </main>
         ) : view === 'screens' ? (
           <main className="workspace single">
-            <ScreensView config={config} dispatch={dispatch} onBuild={() => setView('build')} onKeyboard={() => setView('keyboard')} />
+            <ScreensView config={config} dispatch={dispatch} onKeyboard={() => setView('keyboard')} />
           </main>
         ) : view === 'behaviors' || view === 'macros' ? (
           <main className="workspace single">
@@ -480,28 +481,60 @@ function Editor() {
 /** The shortcuts the keymap overview lists; Help has them all. */
 const OVERVIEW_SHORTCUTS = SHORTCUTS.filter((s) => s.handles);
 
+/** "Ctrl+Shift+Z or Ctrl+Y" as key chips: [Ctrl][Shift][Z] or [Ctrl][Y]. */
+function ShortcutKeys({ keys }: { keys: string }) {
+  return (
+    <span className="shortcut-keys">
+      {keys.split(' or ').map((combo, i) => (
+        <span key={combo} className="shortcut-combo">
+          {i > 0 && <span className="muted small">or</span>}
+          {combo.split('+').map((k) => (
+            <kbd key={k} className="kbd">
+              {k}
+            </kbd>
+          ))}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 function Overview({ warnings }: { warnings: string[] }) {
   return (
-    <div>
-      <h2 className="panel-title">Details</h2>
-      <p className="muted">
-        Select a key or an encoder to edit it, or drag keys from the palette below the keyboard. Hover a layer to
-        rename, reorder or delete it. <HelpLink to="editing-keys" />
-      </p>
-      <p className="muted small">
-        Shortcuts: {OVERVIEW_SHORTCUTS.map((s) => `${s.keys}: ${s.action.toLowerCase()}`).join(' · ')}.{' '}
-        <HelpLink to="shortcuts">All shortcuts</HelpLink>
-      </p>
+    <>
+      <Section
+        variant="flat"
+        title="Details"
+        label="Keymap overview"
+        icon="keyboard"
+        description={
+          <>
+            Select a key or an encoder to edit it, or drag keys from the palette below the keyboard. Hover a layer to rename,
+            reorder or delete it. <HelpLink to="editing-keys" />
+          </>
+        }
+      />
+      <Section variant="flat" title="Shortcuts" actions={<HelpLink to="shortcuts">All shortcuts</HelpLink>}>
+        <dl className="shortcut-list">
+          {OVERVIEW_SHORTCUTS.map((s) => (
+            <div key={s.keys} className="shortcut-row">
+              <dt>
+                <ShortcutKeys keys={s.keys} />
+              </dt>
+              <dd>{s.action}</dd>
+            </div>
+          ))}
+        </dl>
+      </Section>
       {warnings.length > 0 && (
-        <>
-          <h2 className="panel-title">Import notes</h2>
+        <Section variant="flat" title="Import notes" icon="help">
           <ul className="notes">
             {warnings.map((w) => (
               <li key={w}>{w}</li>
             ))}
           </ul>
-        </>
+        </Section>
       )}
-    </div>
+    </>
   );
 }

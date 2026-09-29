@@ -10,6 +10,9 @@ interface HelpViewProps {
 
 const HIGHLIGHT = 'help-search';
 
+/** How long a contents jump's smooth scroll may take before the reading marker follows the page again. */
+const JUMP_SETTLE_MS = 900;
+
 /** The words a section shows: its text and titles, for searching without rendering it. */
 function nodeText(node: ReactNode): string {
   if (typeof node === 'string' || typeof node === 'number') return String(node);
@@ -42,7 +45,11 @@ function matchRanges(root: Node, words: string[]): Range[] {
 /** The user guide: contents, search, and every section. */
 export function HelpView({ section }: HelpViewProps) {
   const [query, setQuery] = useState('');
+  /** The section being read, highlighted in the contents. */
+  const [current, setCurrent] = useState<string | null>(null);
   const sections = useRef(new Map<string, HTMLElement>());
+  /** Set while a clicked contents link keeps its highlight, as the page scrolls there. */
+  const jumping = useRef<number | null>(null);
   const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const wordsKey = words.join(' ');
 
@@ -73,7 +80,35 @@ export function HelpView({ section }: HelpViewProps) {
     return () => cancelAnimationFrame(frame);
   }, [section]);
 
-  const jump = (id: string) => document.getElementById(`help-${id}`)?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+  // Follow the reading position: the first section in the top third of the screen is the current one.
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return;
+    const visible = new Set<string>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const id = entry.target.id.replace(/^help-/, '');
+          if (entry.isIntersecting) visible.add(id);
+          else visible.delete(id);
+        }
+        // A jump's smooth scroll passes other sections, and a short last section may never reach the
+        // top; the clicked link stays highlighted until the next scroll of the reader's own.
+        if (jumping.current !== null) return;
+        const first = HELP_SECTIONS.find((s) => visible.has(s.id));
+        if (first) setCurrent(first.id);
+      },
+      { rootMargin: '0px 0px -65% 0px' },
+    );
+    for (const element of sections.current.values()) observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  const jump = (id: string) => {
+    if (jumping.current !== null) window.clearTimeout(jumping.current);
+    jumping.current = window.setTimeout(() => (jumping.current = null), JUMP_SETTLE_MS);
+    setCurrent(id);
+    document.getElementById(`help-${id}`)?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+  };
   const shown = HELP_SECTIONS.filter((s) => !hidden.has(s.id));
 
   return (
@@ -90,7 +125,12 @@ export function HelpView({ section }: HelpViewProps) {
         <ol>
           {shown.map((s) => (
             <li key={s.id}>
-              <button type="button" className="help-toc-link" onClick={() => jump(s.id)}>
+              <button
+                type="button"
+                className={`help-toc-link${current === s.id ? ' active' : ''}`}
+                aria-current={current === s.id ? 'true' : undefined}
+                onClick={() => jump(s.id)}
+              >
                 {s.title}
               </button>
             </li>

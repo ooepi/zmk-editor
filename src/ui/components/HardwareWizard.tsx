@@ -8,6 +8,7 @@ import { hasErrors, validateBasics, validateHardware } from '../../core/hardware
 import { halfEncoders, resizeMatrix } from '../../core/hardware/wiring.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
 import { HardwareBasicsStep } from './HardwareBasicsStep.tsx';
+import { Icon } from './Icon.tsx';
 import { HardwareLayoutStep } from './HardwareLayoutStep.tsx';
 import { HardwareReviewStep } from './HardwareReviewStep.tsx';
 import { HardwareWiringStep } from './HardwareWiringStep.tsx';
@@ -108,11 +109,20 @@ export function HardwareWizard({ config, dispatch, mode, onDone, onCancel }: Pro
           {STEPS.map((name, i) => (
             <li key={name} className={i === step ? 'active' : i < step ? 'done' : undefined} aria-current={i === step ? 'step' : undefined}>
               {i < step ? (
-                <button type="button" className="wizard-step-button" onClick={() => setStep(i)}>
-                  {i + 1}. {name}
+                <button type="button" className="wizard-step-button" aria-label={`${i + 1}. ${name}`} onClick={() => setStep(i)}>
+                  <span className="wizard-dot" aria-hidden="true">
+                    <Icon name="check" size={14} strokeWidth={3} />
+                  </span>
+                  {name}
                 </button>
               ) : (
-                `${i + 1}. ${name}`
+                <span className="wizard-step-label">
+                  <span className="wizard-dot" aria-hidden="true">
+                    {i + 1}
+                  </span>
+                  <span className="sr-only">{i + 1}. </span>
+                  {name}
+                </span>
               )}
             </li>
           ))}

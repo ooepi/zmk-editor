@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { ThemeToggle } from '../components/ThemeToggle.tsx';
 import { Dialog } from '../components/ui/Dialog.tsx';
 import { IconButton } from '../components/ui/IconButton.tsx';
+import { Badge } from '../components/ui/Badge.tsx';
 import { Menu } from '../components/ui/Menu.tsx';
+import { Section } from '../components/ui/Section.tsx';
 import { Switch } from '../components/ui/Switch.tsx';
 import { useTheme } from '../useTheme.ts';
 
@@ -118,6 +120,34 @@ export default function DesignSystemPage() {
             Link button
           </button>
         </div>
+      </section>
+
+      <section className="ds-section" aria-labelledby="ds-sections">
+        <h2 id="ds-sections">Sections and badges</h2>
+        <p className="muted small">
+          <code>Section</code>: a titled card with an optional icon, description and header actions; it's a region named by
+          its title. <code>Badge</code>: a tinted pill for counts and states.
+        </p>
+        <Section
+          title="Build"
+          level={3}
+          icon="rocket"
+          description="GitHub Actions builds the firmware from your repository."
+          actions={
+            <button type="button" className="button primary">
+              Commit &amp; build
+            </button>
+          }
+        >
+          <div className="ds-row">
+            <Badge>3 files</Badge>
+            <Badge tone="accent">Changed</Badge>
+            <Badge tone="success">Success</Badge>
+            <Badge tone="warning">Queued</Badge>
+            <Badge tone="danger">Failed</Badge>
+            <Badge tone="info">Running</Badge>
+          </div>
+        </Section>
       </section>
 
       <section className="ds-section" aria-labelledby="ds-icon-buttons">

@@ -205,28 +205,65 @@
 .wizard-steps {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  row-gap: var(--s-2);
+  align-items: center;
   list-style: none;
   margin: 0;
   padding: 0;
   color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: 600;
 }
 
-.wizard-steps li {
-  padding: 4px 12px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
+/* A line joins each step to the next. */
+.wizard-steps li + li::before {
+  content: '';
+  display: inline-block;
+  width: 28px;
+  height: 2px;
+  margin: 0 var(--s-2);
+  border-radius: 1px;
+  background: var(--border-strong);
+  vertical-align: middle;
 }
 
-.wizard-steps .done {
-  border-color: var(--accent-line);
+.wizard-steps li.done + li::before,
+.wizard-steps li.done::before {
+  background: var(--accent-line);
+}
+
+.wizard-step-label,
+.wizard-step-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.wizard-dot {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border-strong);
+  border-radius: 50%;
+  font-size: var(--fs-xs);
+  font-weight: 700;
 }
 
 .wizard-steps .active {
+  color: var(--text);
+}
+
+.wizard-steps .active .wizard-dot {
+  border-color: var(--accent-line);
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.wizard-steps .done .wizard-dot {
   border-color: var(--accent-line);
   background: var(--accent-soft);
   color: var(--accent-text);
-  font-weight: 600;
 }
 
 .wizard-step-button {
@@ -242,15 +279,59 @@
   color: var(--accent-text);
 }
 
-.wizard-card {
-  padding: 20px;
+/* Two or three options as cards (radio buttons underneath). */
+.choice-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.choice-cards legend {
+  margin-bottom: var(--s-2);
+  padding: 0;
+}
+
+.choice-card {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.choice-card:hover {
+  border-color: var(--border-strong);
+}
+
+.choice-card.active {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.choice-card:has(input:disabled) {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.wizard-card {
+  padding: var(--s-5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
   background: var(--surface);
 }
 
 .wizard-card > .stack {
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
 }
 
 .wizard-footer {
@@ -465,3 +546,14 @@
   margin-bottom: 8px;
 }
 
+
+.designer-head-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.designer-head-title .panel-title {
+  margin: 0;
+}

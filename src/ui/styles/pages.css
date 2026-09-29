@@ -80,20 +80,6 @@
   padding: 16px 24px 48px;
 }
 
-.screens-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.screens-head .button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
 .screen-slots {
   display: flex;
   flex-wrap: wrap;
@@ -293,10 +279,6 @@ img.pixel-art {
     padding: 12px 16px 40px;
   }
 
-  .screens-head {
-    flex-direction: column;
-  }
-
   .screens-layout {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -397,24 +379,6 @@ img.pixel-art {
   max-width: 900px;
   margin: 0 auto;
   padding: 16px 24px 48px;
-}
-
-.build-section {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 14px 16px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-}
-
-.build-section p {
-  margin: 0;
-}
-
-.build-section a {
-  color: var(--accent-text);
 }
 
 .connect-form {
@@ -533,4 +497,20 @@ img.pixel-art {
   color: var(--text-muted);
   font-size: 13px;
   margin-bottom: 8px;
+}
+
+/* Keyboard page */
+
+.keyboard-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.module-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
 }

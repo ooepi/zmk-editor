@@ -45,6 +45,21 @@ function contrast(a: string, b: string): number {
 
 const BACKGROUNDS = ['--bg', '--surface', '--surface-2'];
 
+/** `hex` laid over `bg` at `alpha`, like color-mix(in srgb, hex alpha, transparent) on bg. */
+function over(hex: string, bg: string, alpha: number): string {
+  const channel = (c: string, i: number) => parseInt(c.slice(i, i + 2), 16);
+  const mixed = [1, 3, 5].map((i) => Math.round(channel(hex, i) * alpha + channel(bg, i) * (1 - alpha)));
+  return `#${mixed.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+}
+
+/** Badge tones: text token, and the colour its 16% tint is made from (controls.css). */
+const BADGE_TONES = [
+  ['--success-text', '--success'],
+  ['--warning-text', '--warning'],
+  ['--info-text', '--info'],
+  ['--danger-text', '--danger'],
+] as const;
+
 describe.each(Object.entries(themes))('%s theme contrast', (_name, theme) => {
   it.each(['--accent-line', '--focus-ring'])('%s reads as a line (3:1) on every surface', (token) => {
     for (const bg of BACKGROUNDS) expect(contrast(resolve(theme, token), resolve(theme, bg)), `${token} on ${bg}`).toBeGreaterThanOrEqual(3);
@@ -52,6 +67,13 @@ describe.each(Object.entries(themes))('%s theme contrast', (_name, theme) => {
 
   it('--accent-text reads as text (4.5:1) on every surface', () => {
     for (const bg of BACKGROUNDS) expect(contrast(resolve(theme, '--accent-text'), resolve(theme, bg)), `on ${bg}`).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it.each(BADGE_TONES)('%s reads as text (4.5:1) on its badge tint', (text, tint) => {
+    for (const bg of BACKGROUNDS) {
+      const badge = over(resolve(theme, tint), resolve(theme, bg), 0.16);
+      expect(contrast(resolve(theme, text), badge), `on ${bg}`).toBeGreaterThanOrEqual(4.5);
+    }
   });
 });
 

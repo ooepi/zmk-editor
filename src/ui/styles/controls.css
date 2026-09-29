@@ -598,3 +598,119 @@ input.switch:disabled {
 .dialog-header p {
   margin: var(--s-1) 0 0;
 }
+
+/* Section: a titled card with an icon, description and header actions */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+
+.section.flat {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+}
+
+.section-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.section-heading {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.section-title {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* A title without a description sits level with its icon. */
+.section-head.centered {
+  align-items: center;
+}
+
+.section-description {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+
+.section-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+/* On narrow screens the actions go under the title instead of squeezing it. */
+@media (max-width: 600px) {
+  .section-head {
+    flex-wrap: wrap;
+  }
+
+  .section-actions {
+    flex-basis: 100%;
+    flex-wrap: wrap;
+  }
+}
+
+/* Badge tones */
+
+.badge.tone-accent {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.badge.tone-success {
+  background: color-mix(in srgb, var(--success) 16%, transparent);
+  color: var(--success-text);
+}
+
+.badge.tone-warning {
+  background: color-mix(in srgb, var(--warning) 16%, transparent);
+  color: var(--warning-text);
+}
+
+.badge.tone-danger {
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+  color: var(--danger-text);
+}
+
+.badge.tone-info {
+  background: color-mix(in srgb, var(--info) 16%, transparent);
+  color: var(--info-text);
+}
+
+.section p {
+  margin: 0;
+}
+
+.section a:not(.button) {
+  color: var(--accent-text);
+}
