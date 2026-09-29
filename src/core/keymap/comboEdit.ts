@@ -1,3 +1,4 @@
+import { describeBinding, displayContext } from './display.ts';
 import { nodeName } from './edit.ts';
 import type { Binding, Combo, KeymapModel } from './model.ts';
 
@@ -38,4 +39,15 @@ export function renameCombo(model: KeymapModel, name: string, displayName: strin
 
 export function deleteCombo(model: KeymapModel, name: string): KeymapModel {
   return { ...model, combos: model.combos.filter((c) => c.name !== name) };
+}
+
+/** A combo for people: the labels of its keys (on the base layer) and what it sends. */
+export function comboParts(combo: Combo, model: KeymapModel): { keys: string[]; sends: string } {
+  const ctx = displayContext(model);
+  const base = model.layers[0]?.bindings ?? [];
+  const keys = combo.keyPositions.map((position) => {
+    const binding = base[Number(position)];
+    return binding ? describeBinding(binding, ctx).main : `#${position}`;
+  });
+  return { keys, sends: describeBinding(combo.binding, ctx).main };
 }
