@@ -169,6 +169,18 @@ describe('editorReducer', () => {
     expect(shown(state)).toBe(before);
   });
 
+  it('marks a notice transient only when asked, and a later notice clears the mark', () => {
+    let state = run(start(), { type: 'notify', notice: 'Combo saved.', transient: true });
+    expect(state.notice).toBe('Combo saved.');
+    expect(state.noticeTransient).toBe(true);
+    state = run(state, { type: 'selectKey', index: 3 });
+    expect(state.noticeTransient).toBe(true);
+    state = run(state, { type: 'notify', notice: 'Something to read.' });
+    expect(state.noticeTransient).toBe(false);
+    state = run(state, { type: 'notify', notice: 'Again.', transient: true }, { type: 'dismissNotice' });
+    expect(state.noticeTransient).toBe(false);
+  });
+
   it('never deletes the last layer', () => {
     let state = start();
     for (let i = 0; i < 6; i++) state = run(state, { type: 'deleteLayer', index: 0 });

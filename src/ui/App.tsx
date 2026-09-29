@@ -79,6 +79,9 @@ export function App() {
   return <Editor />;
 }
 
+/** How long a short confirmation stays on screen. */
+const TRANSIENT_NOTICE_MS = 4000;
+
 function isTyping(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|SELECT|TEXTAREA)$/.test(target.tagName));
 }
@@ -147,6 +150,13 @@ function Editor() {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [dispatch, view, keyCount, hasSelection, hasClipboard]);
+
+  // Short confirmations ("Combo saved.") clear themselves; other notices wait to be dismissed.
+  useEffect(() => {
+    if (!state.notice || !state.noticeTransient) return;
+    const timer = window.setTimeout(() => dispatch({ type: 'dismissNotice' }), TRANSIENT_NOTICE_MS);
+    return () => window.clearTimeout(timer);
+  }, [state.notice, state.noticeTransient, dispatch]);
 
   const selectedCombo = keymap.combos.find((c) => c.name === combo);
   const macroCount = keymap.behaviors.filter((b) => behaviorKind(b) === 'macro').length;
