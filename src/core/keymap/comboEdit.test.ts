@@ -59,6 +59,9 @@ describe('comboParts', () => {
   });
 
   it('names a layer the combo switches to', () => {
-    expect(comboParts(createCombo(model, [0, 1], { behavior: 'mo', params: ['1'] }), model).sends).toBe('Nav');
+    const parts = comboParts(createCombo(model, [0, 1], { behavior: 'mo', params: ['1'] }), model);
+    expect(parts.sends).toBe('Nav');
+    // …and how: while held (mo), toggled (tog)…
+    expect(parts.sendsTag).toBe('mo');
   });
 });

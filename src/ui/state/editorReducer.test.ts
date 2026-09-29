@@ -213,4 +213,12 @@ describe('editorReducer', () => {
     expect(edited.config.west.zmkVersion).toBe('v0.2');
     expect(run(edited, { type: 'undo' }).config.west.zmkVersion).toBe('v0.3');
   });
+
+  it('counts notices, so the same confirmation twice restarts its timer', () => {
+    const first = start();
+    const once = editorReducer(first, { type: 'notify', notice: 'Combo saved.', transient: true });
+    const twice = editorReducer(once, { type: 'notify', notice: 'Combo saved.', transient: true });
+    expect(twice.noticeSeq).toBe(once.noticeSeq + 1);
+    expect(editorReducer(twice, { type: 'selectLayer', index: 0 }).noticeSeq).toBe(twice.noticeSeq);
+  });
 });

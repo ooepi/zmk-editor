@@ -42,12 +42,14 @@ export function deleteCombo(model: KeymapModel, name: string): KeymapModel {
 }
 
 /** A combo for people: the labels of its keys (on the base layer) and what it sends. */
-export function comboParts(combo: Combo, model: KeymapModel): { keys: string[]; sends: string } {
+export function comboParts(combo: Combo, model: KeymapModel): { keys: string[]; sends: string; sendsTag?: string } {
   const ctx = displayContext(model);
   const base = model.layers[0]?.bindings ?? [];
   const keys = combo.keyPositions.map((position) => {
     const binding = base[Number(position)];
     return binding ? describeBinding(binding, ctx).main : `#${position}`;
   });
-  return { keys, sends: describeBinding(combo.binding, ctx).main };
+  const sends = describeBinding(combo.binding, ctx);
+  // A layer key says how it works (mo, tog, lt…): "NAV" alone doesn't.
+  return sends.kind === 'layer' && sends.sub ? { keys, sends: sends.main, sendsTag: sends.sub } : { keys, sends: sends.main };
 }

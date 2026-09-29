@@ -21,7 +21,7 @@ export function ComboBanner({ keys, blocked, onDone }: ComboBannerProps) {
   }, [onDone]);
 
   return (
-    <div className={`combo-banner${blocked ? ' blocked' : ''}`} role="region" aria-label="Combo keys">
+    <div className={`combo-banner${blocked ? ' blocked' : ''}`} role="region" aria-label="Combo keys" tabIndex={-1}>
       <span className="combo-banner-text">Click the keys for this combo</span>
       <span className="badge">{keys === 0 ? 'No keys yet' : `${keys} key${keys === 1 ? '' : 's'}`}</span>
       {blocked && (
