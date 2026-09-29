@@ -1,0 +1,751 @@
+/* Behaviors and macros: the grouped list, the New behavior dialog, and the diagram editors. */
+
+/* Each kind's colour, as --kind, for everything inside it. */
+.kind-tone-holdtap {
+  --kind: var(--kind-holdtap);
+}
+
+.kind-tone-modmorph {
+  --kind: var(--kind-modmorph);
+}
+
+.kind-tone-tapdance {
+  --kind: var(--kind-tapdance);
+}
+
+.kind-tone-encoder {
+  --kind: var(--kind-encoder);
+}
+
+.kind-tone-macro {
+  --kind: var(--kind-macro);
+}
+
+.kind-tone-module {
+  --kind: var(--kind-module);
+}
+
+.kind-disc {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--kind) 16%, transparent);
+  color: var(--kind);
+}
+
+.kind-disc.small {
+  width: 24px;
+  height: 24px;
+}
+
+.kind-disc.large {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-md);
+}
+
+.kind-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--kind);
+}
+
+.diagram-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  color: var(--kind, var(--text-muted));
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* The page */
+
+.behaviors-page {
+  grid-template-columns: 300px minmax(0, 1fr);
+}
+
+.behaviors-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  margin-bottom: var(--s-4);
+}
+
+.behaviors-list-head .panel-title {
+  margin: 0;
+}
+
+.behaviors-list-head .button {
+  gap: var(--s-1);
+}
+
+.behavior-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.behavior-group-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0 0 var(--s-2);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+
+.behavior-item {
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  gap: var(--s-3);
+}
+
+.behavior-item-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.behavior-item-name {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.behavior-item-summary {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.behavior-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-5);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-lg);
+}
+
+.behavior-empty p {
+  margin: 0;
+}
+
+.behavior-intro {
+  padding: var(--s-6);
+  border: 1px dashed var(--border);
+  border-radius: var(--r-lg);
+}
+
+.behavior-intro p {
+  margin: 0;
+}
+
+/* New behavior: type cards */
+
+.type-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-3);
+}
+
+.type-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-2);
+  padding: var(--s-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.type-card:hover {
+  border-color: var(--kind);
+  background: var(--surface-3);
+}
+
+.type-card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--fs-md);
+}
+
+.type-card-about {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+
+.type-picture {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-top: auto;
+  padding-top: var(--s-2);
+  color: var(--kind);
+}
+
+.type-picture-note {
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
+.mini-key.split-key {
+  display: inline-flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+@media (max-width: 640px) {
+  .type-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* The editor */
+
+.split-editor .behavior-editor {
+  max-width: 760px;
+  gap: var(--s-4);
+}
+
+.behavior-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-4);
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--kind);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+
+.behavior-head-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-width: 0;
+}
+
+.input-prefixed {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.input-prefix {
+  color: var(--kind, var(--text-muted));
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+
+.input-prefixed .input {
+  flex: 1;
+}
+
+.diagram-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+
+.diagram-card > p {
+  margin: 0;
+}
+
+.diagram-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.diagram-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 700;
+}
+
+.diagram-card.advanced summary {
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.diagram-card.advanced[open] summary {
+  margin-bottom: var(--s-2);
+}
+
+/* A big keycap in the diagrams */
+
+.big-key {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 72px;
+  min-height: 64px;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--keycap-edge);
+  border-radius: 10px;
+  background: var(--keycap-top);
+  box-shadow: 0 3px 0 var(--keycap-edge);
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+
+.big-key.morphed {
+  border-color: var(--kind);
+  box-shadow: 0 3px 0 var(--kind);
+}
+
+.big-key-name {
+  color: var(--kind);
+  font-size: var(--fs-xs);
+}
+
+.big-key.split-key {
+  min-width: 120px;
+  min-height: 96px;
+  border-color: var(--kind);
+  box-shadow: 0 3px 0 var(--kind);
+  font-size: var(--fs-sm);
+}
+
+.big-key-hold {
+  color: var(--kind);
+}
+
+/* Hold-tap: key, arms, timing strip */
+
+.ht-diagram {
+  display: flex;
+  align-items: center;
+  gap: var(--s-5);
+}
+
+.ht-arms {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.ht-arm {
+  position: relative;
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--s-2);
+}
+
+/* A line from the key to each arm. */
+.ht-arm::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: calc(-1 * var(--s-5));
+  width: var(--s-4);
+  border-top: 2px solid var(--border-strong);
+}
+
+.ht-arm-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  font-weight: 700;
+}
+
+.ht-arm-hold .ht-arm-label {
+  color: var(--kind);
+}
+
+.timing-value {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.input.compact {
+  width: 84px;
+  min-height: 32px;
+  padding-block: 0;
+}
+
+.timing-strip {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.timing-bar {
+  display: flex;
+  height: 32px;
+  overflow: hidden;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+
+.timing-zone {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--s-2);
+}
+
+.timing-zone.tap {
+  width: var(--term);
+  min-width: 0;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.timing-zone.hold {
+  flex: 1;
+  justify-content: flex-end;
+  background: color-mix(in srgb, var(--kind) 18%, transparent);
+  color: var(--kind);
+}
+
+/* The range input sits over the bar; only its thumb (the marker) shows. */
+.timing-range {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 32px;
+  margin: 0;
+  background: transparent;
+  appearance: none;
+  cursor: ew-resize;
+}
+
+.timing-range::-webkit-slider-runnable-track {
+  height: 32px;
+  background: transparent;
+}
+
+.timing-range::-moz-range-track {
+  height: 32px;
+  background: transparent;
+}
+
+.timing-range::-webkit-slider-thumb {
+  width: 6px;
+  height: 40px;
+  margin-top: -4px;
+  border: 2px solid var(--surface);
+  border-radius: var(--r-pill);
+  background: var(--text);
+  appearance: none;
+}
+
+.timing-range::-moz-range-thumb {
+  width: 6px;
+  height: 40px;
+  border: 2px solid var(--surface);
+  border-radius: var(--r-pill);
+  background: var(--text);
+}
+
+.timing-range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.timing-range:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.timing-extra {
+  position: relative;
+  height: 18px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+}
+
+.timing-extra-zone {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: var(--r-sm);
+  background: repeating-linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--info) 30%, transparent) 0 6px,
+    transparent 6px 12px
+  );
+}
+
+.timing-extra-label {
+  position: relative;
+  padding: 0 var(--s-2);
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 18px;
+}
+
+.timing-ticks {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.segmented.wrap {
+  flex-wrap: wrap;
+  border-radius: var(--r-lg);
+}
+
+/* Mod-morph: two keys side by side */
+
+.mm-diagram {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--s-4);
+}
+
+.mm-case {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.mm-case > .binding-editor,
+.mm-case > .property-fields {
+  align-self: stretch;
+}
+
+.mm-arrow {
+  /* Level with the two keycaps, under their eyebrows. */
+  align-self: start;
+  margin-top: 36px;
+  color: var(--kind);
+  font-size: var(--fs-2xl);
+  font-weight: 700;
+}
+
+/* Tap-dance: a row of tap cards */
+
+.td-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--s-3);
+}
+
+.td-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+
+.td-card.active {
+  border-color: var(--kind);
+  background: color-mix(in srgb, var(--kind) 8%, var(--surface-2));
+}
+
+.td-key {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-1) 0 var(--s-2);
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.td-name {
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.td-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--border);
+}
+
+.td-card .tap-header {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.td-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  height: 22px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--kind) 18%, transparent);
+  color: var(--kind);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+
+.td-card .icon-button.small {
+  width: 26px;
+  min-width: 26px;
+  height: 26px;
+}
+
+.td-card .icon-button.small .icon {
+  width: 14px;
+  height: 14px;
+}
+
+.td-card.drop-before {
+  box-shadow: -3px 0 0 var(--accent-line);
+}
+
+.td-card.drop-after {
+  box-shadow: 3px 0 0 var(--accent-line);
+}
+
+.td-add {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: 120px;
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.td-add:hover {
+  border-color: var(--kind);
+  color: var(--kind);
+}
+
+/* Encoder: a knob between its two directions */
+
+.enc-diagram {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--s-4);
+}
+
+.enc-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.knob {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 72px;
+  height: 72px;
+  border: 1px solid var(--keycap-edge);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, var(--keycap-top), var(--keycap));
+  box-shadow:
+    0 3px 0 var(--keycap-edge),
+    0 0 0 6px color-mix(in srgb, var(--kind, var(--kind-encoder)) 16%, transparent);
+}
+
+/* The knob's pointer notch. */
+.knob::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: calc(50% - 2px);
+  width: 4px;
+  height: 16px;
+  border-radius: var(--r-pill);
+  background: var(--kind, var(--kind-encoder));
+}
+
+.knob.small {
+  width: 26px;
+  height: 26px;
+  box-shadow: 0 2px 0 var(--keycap-edge);
+}
+
+.knob.small::after {
+  top: 3px;
+  height: 7px;
+  width: 3px;
+}
+
+/* The footer tip */
+
+.behavior-tip {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+@media (max-width: 900px) {
+  .behaviors-page {
+    grid-template-columns: 1fr;
+  }
+
+  .ht-diagram,
+  .mm-diagram,
+  .enc-diagram {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ht-arm::before,
+  .mm-arrow {
+    display: none;
+  }
+}

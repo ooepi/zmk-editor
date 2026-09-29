@@ -35,6 +35,7 @@ const shots: { name: string; setup: (page: Page) => Promise<void> }[] = [
     setup: async (page) => {
       await page.getByRole('navigation', { name: 'Views' }).getByRole('button', { name: /^Behaviors/ }).click();
       // The demo has only encoder behaviors; a new hold-tap has more to show.
+      await page.getByRole('button', { name: 'New behavior' }).click();
       await page.getByRole('button', { name: '+ Hold-tap' }).click();
     },
   },

@@ -453,7 +453,6 @@
 
 /* Tap-dance and conditional layers */
 
-.tap,
 .conditional {
   display: flex;
   flex-direction: column;

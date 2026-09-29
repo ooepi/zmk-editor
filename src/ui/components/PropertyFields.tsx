@@ -7,6 +7,7 @@ import {
   type PropertyValue,
 } from '../../core/catalog/properties.ts';
 import type { DtProperty } from '../../core/dts/ast.ts';
+import { Switch } from './ui/Switch.tsx';
 
 interface PropertyFieldsProps {
   schemas: PropertySchema[];
@@ -66,13 +67,7 @@ function PropertyField({
     case 'bool':
       return (
         <div className="field checkbox">
-          <input
-            id={id}
-            type="checkbox"
-            aria-describedby={`${id}-help`}
-            checked={value === true}
-            onChange={(e) => onChange(e.target.checked)}
-          />
+          <Switch id={id} aria-describedby={`${id}-help`} checked={value === true} onChange={onChange} />
           <span>
             <label htmlFor={id}>{schema.label}</label>
             {help}
