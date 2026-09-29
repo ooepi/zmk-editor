@@ -154,4 +154,27 @@
   .workspace:has(.palette) .keyboard {
     width: 100%;
   }
+
+  /* The rail runs across the top; touch has no hover, so its buttons always show. */
+  .canvas-row {
+    flex-direction: column;
+    padding: 0 var(--s-3);
+  }
+
+  .layer-rail {
+    align-self: stretch;
+    flex-direction: row;
+    align-items: center;
+    max-height: none;
+    overflow-x: auto;
+  }
+
+  .layer-rail-list {
+    flex-direction: row;
+  }
+
+  .layer-grip,
+  .layer-row-actions {
+    opacity: 1;
+  }
 }

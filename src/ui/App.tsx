@@ -17,7 +17,7 @@ import { KeyboardCanvas } from './components/KeyboardCanvas.tsx';
 import { KeyboardView } from './components/KeyboardView.tsx';
 import { KeyPalette } from './components/KeyPalette.tsx';
 import { LayoutDesigner } from './components/LayoutDesigner.tsx';
-import { LayerBar } from './components/LayerBar.tsx';
+import { LayerRail } from './components/LayerRail.tsx';
 import { PrintView } from './components/PrintView.tsx';
 import { SelectionPanel } from './components/SelectionPanel.tsx';
 import { ThemeToggle } from './components/ThemeToggle.tsx';
@@ -345,32 +345,34 @@ function Editor() {
         ) : (
           <main className="workspace">
             <section className="canvas-area" aria-label="Keymap">
-              {view === 'keymap' && <LayerBar layers={keymap.layers} active={layer} dispatch={dispatch} />}
-              <div className="canvas">
-                <KeyboardCanvas
-                  keymap={keymap}
-                  layout={layout}
-                  layer={view === 'combos' ? 0 : layer}
-                  selection={view === 'keymap' ? selection : []}
-                  onSelectBox={
-                    view === 'keymap' ? (indices, additive) => dispatch({ type: 'selectKeys', indices, additive }) : undefined
-                  }
-                  highlighted={view === 'combos' && selectedCombo ? new Set(selectedCombo.keyPositions.map(Number)) : undefined}
-                  onSelectKey={onKeyClick}
-                  drop={view === 'keymap' ? keyDrop : undefined}
-                />
-                {view === 'keymap' && (
-                  <EncoderStrip
+              <div className="canvas-row">
+                {view === 'keymap' && <LayerRail layers={keymap.layers} active={layer} dispatch={dispatch} />}
+                <div className="canvas">
+                  <KeyboardCanvas
                     keymap={keymap}
-                    layer={layer}
-                    selected={sensor}
-                    onSelect={(index) => dispatch({ type: 'selectSensor', index: index === sensor ? null : index })}
-                    onDropItem={(index: number, direction: EncoderDirection, item: PaletteItem) => {
-                      dispatch({ type: 'placeOnEncoder', index, direction, item });
-                      if (applyToEncoder({ behavior: 'trans', params: [] }, item, direction)) remember(item);
-                    }}
+                    layout={layout}
+                    layer={view === 'combos' ? 0 : layer}
+                    selection={view === 'keymap' ? selection : []}
+                    onSelectBox={
+                      view === 'keymap' ? (indices, additive) => dispatch({ type: 'selectKeys', indices, additive }) : undefined
+                    }
+                    highlighted={view === 'combos' && selectedCombo ? new Set(selectedCombo.keyPositions.map(Number)) : undefined}
+                    onSelectKey={onKeyClick}
+                    drop={view === 'keymap' ? keyDrop : undefined}
                   />
-                )}
+                  {view === 'keymap' && (
+                    <EncoderStrip
+                      keymap={keymap}
+                      layer={layer}
+                      selected={sensor}
+                      onSelect={(index) => dispatch({ type: 'selectSensor', index: index === sensor ? null : index })}
+                      onDropItem={(index: number, direction: EncoderDirection, item: PaletteItem) => {
+                        dispatch({ type: 'placeOnEncoder', index, direction, item });
+                        if (applyToEncoder({ behavior: 'trans', params: [] }, item, direction)) remember(item);
+                      }}
+                    />
+                  )}
+                </div>
               </div>
               {view === 'keymap' && <KeyPalette keymap={keymap} armed={armed} selection={selection} onPick={onPaletteClick} />}
             </section>
@@ -412,8 +414,8 @@ function Overview({ warnings }: { warnings: string[] }) {
     <div>
       <h2 className="panel-title">Details</h2>
       <p className="muted">
-        Select a key or an encoder to edit it, or drag keys from the palette below the keyboard. Double-click a layer
-        tab to rename it. <HelpLink to="editing-keys" />
+        Select a key or an encoder to edit it, or drag keys from the palette below the keyboard. Hover a layer to
+        rename, reorder or delete it. <HelpLink to="editing-keys" />
       </p>
       <p className="muted small">
         Shortcuts: {OVERVIEW_SHORTCUTS.map((s) => `${s.keys}: ${s.action.toLowerCase()}`).join(' · ')}.{' '}

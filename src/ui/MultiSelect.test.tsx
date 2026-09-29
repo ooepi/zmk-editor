@@ -3,7 +3,7 @@ import { act, cleanup, createEvent, fireEvent, render, screen, within } from '@t
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App.tsx';
-import { HOVER_SWITCH_MS } from './components/LayerBar.tsx';
+import { HOVER_SWITCH_MS } from './components/LayerRail.tsx';
 
 beforeEach(() => localStorage.clear());
 afterEach(() => {

@@ -73,7 +73,7 @@ describe('App', () => {
     expect(tabs().at(-1)?.textContent).toBe('6Gaming');
     expect(tabs().at(-1)?.getAttribute('aria-selected')).toBe('true');
 
-    await user.click(screen.getByRole('button', { name: 'Delete layer' }));
+    await user.click(screen.getByRole('button', { name: 'Delete layer Gaming' }));
     expect(tabs()).toHaveLength(6);
   });
 
