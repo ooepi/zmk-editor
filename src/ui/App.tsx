@@ -161,8 +161,12 @@ function Editor() {
     return () => window.clearTimeout(timer);
   }, [state.notice, state.noticeTransient, dispatch]);
 
-  // After an undo the open combo may be gone; then nothing is open.
+  // After an undo the open combo may be gone; then nothing is open, and a redo won't reopen it.
   const selectedCombo = keymap.combos.find((c) => c.name === combo);
+  if (combo !== null && !selectedCombo) {
+    setCombo(null);
+    setComboBlocked(false);
+  }
 
   const openCombo = (name: string | null) => {
     setCombo(name);
@@ -381,7 +385,11 @@ function Editor() {
               )}
               <div className="canvas-row">
                 {view === 'keymap' && <LayerRail layers={keymap.layers} active={layer} dispatch={dispatch} />}
-                <div className="canvas">
+                {/* In the combos view a click beside the keyboard (not in a gap between keys) finishes the combo. */}
+                <div
+                  className="canvas"
+                  onClick={view === 'combos' ? (event) => event.target === event.currentTarget && finishCombo() : undefined}
+                >
                   <KeyboardCanvas
                     keymap={keymap}
                     layout={layout}
@@ -390,9 +398,7 @@ function Editor() {
                     onSelectBox={
                       view === 'keymap'
                         ? (indices, additive) => dispatch({ type: 'selectKeys', indices, additive })
-                        : view === 'combos' && selectedCombo
-                          ? (indices) => indices.length === 0 && finishCombo()
-                          : undefined
+                        : undefined
                     }
                     highlighted={view === 'combos' && selectedCombo ? new Set(selectedCombo.keyPositions.map(Number)) : undefined}
                     onSelectKey={onKeyClick}

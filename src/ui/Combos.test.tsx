@@ -68,6 +68,48 @@ describe('making a combo', () => {
     expect(banner()).toBeTruthy();
   });
 
+  it('finishes on a click beside the keyboard, but not on the gaps between keys', async () => {
+    const user = await newCombo();
+    await user.click(key('Key 13: Q'));
+    await user.click(key('Key 14: W'));
+    const keyboard = screen.getByRole('group', { name: 'Keyboard layout' });
+    fireEvent.pointerDown(keyboard, { button: 0 });
+    fireEvent.pointerUp(keyboard);
+    fireEvent.click(keyboard);
+    expect(banner()).toBeTruthy();
+    fireEvent.click(keyboard.closest('.canvas') as HTMLElement);
+    expect(screen.queryByRole('region', { name: 'Combo keys' })).toBeNull();
+    expect(key('Key 13: Q').className).not.toContain('highlighted');
+  });
+
+  it('a click beside the keyboard is blocked like Done when keys are missing', async () => {
+    const user = await newCombo();
+    await user.click(key('Key 13: Q'));
+    fireEvent.click(screen.getByRole('group', { name: 'Keyboard layout' }).closest('.canvas') as HTMLElement);
+    expect(within(banner()).getByRole('alert')).toBeTruthy();
+  });
+
+  it('keeps the combo open when Esc is pressed while typing', async () => {
+    const user = await newCombo();
+    await user.click(key('Key 13: Q'));
+    await user.click(key('Key 14: W'));
+    await user.type(screen.getByRole('searchbox', { name: /Search keys for/ }), 'ta{Escape}');
+    expect(banner()).toBeTruthy();
+  });
+
+  it('does not reopen a closed combo when redo brings it back', async () => {
+    const user = await newCombo();
+    await user.click(key('Key 13: Q'));
+    await user.click(within(banner()).getByRole('button', { name: 'Done' }));
+    await user.click(screen.getByRole('button', { name: 'Undo' }));
+    await user.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(screen.queryByRole('region', { name: 'Combo keys' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Redo' }));
+    await user.click(screen.getByRole('button', { name: 'Redo' }));
+    expect(screen.queryByRole('region', { name: 'Combo keys' })).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
   it('closes the editor if undo removes the combo', async () => {
     const user = await newCombo();
     await user.click(screen.getByRole('button', { name: 'Undo' }));
