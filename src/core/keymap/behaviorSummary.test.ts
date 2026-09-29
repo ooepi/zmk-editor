@@ -39,7 +39,7 @@ describe('behaviorSection', () => {
   it('sorts behaviors into the list’s sections', () => {
     expect(behaviorSection(make('hold-tap'))).toBe('hold-tap');
     expect(behaviorSection(make('sensor-rotate'))).toBe('sensor-rotate');
-    expect(behaviorSection({ name: 'l', compatible: 'zmk,behavior-leader-key', properties: [], bindings: [] })).toBe('module');
-    expect(behaviorSection({ name: 'c', compatible: 'zmk,behavior-caps-word', properties: [], bindings: [] })).toBe('other');
+    expect(behaviorSection({ compatible: 'zmk,behavior-leader-key' })).toBe('module');
+    expect(behaviorSection({ compatible: 'zmk,behavior-caps-word' })).toBe('other');
   });
 });

@@ -13,6 +13,7 @@ describe('tap-dance and conditional layers', () => {
     const user = userEvent.setup();
     render(<App />);
     await user.click(screen.getByRole('button', { name: 'Behaviors (2)' }));
+    await user.click(screen.getByRole('button', { name: 'New behavior' }));
     await user.click(screen.getByRole('button', { name: '+ Tap-dance' }));
     expect(screen.getByText('1 tap')).toBeTruthy();
     expect(screen.getByText('2 taps')).toBeTruthy();

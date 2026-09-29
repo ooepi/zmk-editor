@@ -106,13 +106,11 @@
   cursor: grab;
 }
 
-.step.drop-before,
-.tap.drop-before {
+.step.drop-before {
   box-shadow: 0 -3px 0 var(--accent-line);
 }
 
-.step.drop-after,
-.tap.drop-after {
+.step.drop-after {
   box-shadow: 0 3px 0 var(--accent-line);
 }
 

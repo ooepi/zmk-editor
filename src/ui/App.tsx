@@ -102,6 +102,8 @@ function Editor() {
   const [comboBlocked, setComboBlocked] = useState(false);
   const [behavior, setBehavior] = useState<string | null>(null);
   const [macro, setMacro] = useState<string | null>(null);
+  /** The palette section to open on next time the Keymap tab shows, from "Show in palette". */
+  const [paletteStart, setPaletteStart] = useState<string | null>(null);
   /** A palette tile placed on each clicked key, until Esc. */
   const [armed, setArmed] = useState<PaletteItem | null>(null);
   const { config, layer, key, selection, clipboard, sensor } = state;
@@ -375,6 +377,10 @@ function Editor() {
               selected={view === 'macros' ? macro : behavior}
               onSelect={view === 'macros' ? setMacro : setBehavior}
               dispatch={dispatch}
+              onShowInPalette={(section) => {
+                setPaletteStart(section);
+                setView('keymap');
+              }}
             />
           </main>
         ) : (
@@ -418,7 +424,17 @@ function Editor() {
                   )}
                 </div>
               </div>
-              {view === 'keymap' && <KeyPalette keymap={keymap} armed={armed} selection={selection} onPick={onPaletteClick} onDisarm={() => setArmed(null)} />}
+              {view === 'keymap' && (
+                <KeyPalette
+                  keymap={keymap}
+                  armed={armed}
+                  selection={selection}
+                  onPick={onPaletteClick}
+                  onDisarm={() => setArmed(null)}
+                  startAt={paletteStart}
+                  onStarted={() => setPaletteStart(null)}
+                />
+              )}
             </section>
             <aside className="panel" aria-label="Details">
               {view === 'combos' ? (

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react';
 import {
   formatKeyExpression,
   keyExpressionLabel,
@@ -30,6 +30,10 @@ interface KeyPaletteProps {
   onPick: (item: PaletteItem) => void;
   /** Stop placing the armed tile. */
   onDisarm: () => void;
+  /** Open on this section (e.g. `behaviors-custom`), showing the palette if it's collapsed. */
+  startAt?: string | null;
+  /** The palette has jumped to `startAt`. */
+  onStarted?: () => void;
 }
 
 const TRANSPARENT: PaletteItem = { kind: 'binding', binding: { behavior: 'trans', params: [] } };
@@ -65,10 +69,10 @@ const MEDIA_TILES: Record<string, { icon: IconName; name?: string }> = {
 const JUMP_SETTLE_MS = 800;
 
 /** Keys and behaviors laid out as tiles in one list: drag one onto a key, or click it and then keys. */
-export function KeyPalette({ keymap, armed, selection, onPick, onDisarm }: KeyPaletteProps) {
+export function KeyPalette({ keymap, armed, selection, onPick, onDisarm, startAt, onStarted }: KeyPaletteProps) {
   const [query, setQuery] = useState('');
   /** Which half of the palette is browsed; a search shows both. */
-  const [half, setHalf] = useState<'keys' | 'behaviors'>('keys');
+  const [half, setHalf] = useState<'keys' | 'behaviors'>(startAt?.startsWith('behaviors') ? 'behaviors' : 'keys');
   const [mods, setMods] = useState<ModifierFunction[]>([]);
   const [current, setCurrent] = useState<string | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
@@ -123,6 +127,23 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm }: KeyPa
     const atBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 2;
     setCurrent(sectionInView(tops, box.getBoundingClientRect().top, atBottom, jumped.current?.id ?? null));
   };
+
+  // Asked to open on a section: show the palette first, then jump once its sections are rendered.
+  useEffect(() => {
+    if (!startAt) return;
+    if (collapsed) {
+      setPreferences({ paletteCollapsed: false });
+      return;
+    }
+    // After this render, so the section is in the list to scroll to.
+    const timer = window.setTimeout(() => {
+      jump(startAt);
+      onStarted?.();
+    });
+    return () => window.clearTimeout(timer);
+    // jump is recreated every render; this runs only for a new request.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startAt, collapsed]);
 
   const toTop = () => {
     setCurrent(null);

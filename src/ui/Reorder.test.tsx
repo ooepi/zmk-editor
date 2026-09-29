@@ -63,10 +63,13 @@ describe('drag to reorder', () => {
     const user = userEvent.setup();
     render(<App />);
     await user.click(screen.getByRole('button', { name: 'Behaviors (2)' }));
+    await user.click(screen.getByRole('button', { name: 'New behavior' }));
     await user.click(screen.getByRole('button', { name: '+ Tap-dance' }));
     await user.click(screen.getByRole('button', { name: '+ Add tap' }));
-    const source = (name: string) => (screen.getByRole('textbox', { name: `${name}: Source` }) as HTMLInputElement).value;
+    // Each card shows what its tap sends; click a card to edit it below the row.
+    const sends = (name: string) => screen.getByRole('button', { name: `Edit ${name}` }).querySelector('kbd')?.textContent;
     const setSource = async (name: string, text: string) => {
+      await user.click(screen.getByRole('button', { name: `Edit ${name}` }));
       const field = screen.getByRole('textbox', { name: `${name}: Source` });
       await user.clear(field);
       await user.type(field, `${text}{Enter}`);
@@ -75,13 +78,15 @@ describe('drag to reorder', () => {
     await setSource('2 taps', '&kp Y');
     await setSource('3 taps', '&kp Z');
 
-    const header = (name: string) => screen.getByText(name).closest('.tap-header') as HTMLElement;
-    const tap = (name: string) => screen.getByText(name).closest('.tap') as HTMLElement;
-    drag(header('3 taps'), tap('1 tap'));
-    expect(['1 tap', '2 taps', '3 taps'].map(source)).toEqual(['&kp Z', '&kp X', '&kp Y']);
+    const card = (name: string) => screen.getByText(name).closest('.td-card') as HTMLElement;
+    const header = (name: string) => card(name).querySelector('.tap-header') as HTMLElement;
+    drag(header('3 taps'), card('1 tap'));
+    expect(['1 tap', '2 taps', '3 taps'].map(sends)).toEqual(['Z', 'X', 'Y']);
+    // The edited tap (Z, last edited) moved with its card.
+    expect(screen.getByRole('button', { name: 'Edit 1 tap' }).getAttribute('aria-pressed')).toBe('true');
 
     await user.click(screen.getByRole('button', { name: 'Move 1 tap down' }));
-    expect(['1 tap', '2 taps', '3 taps'].map(source)).toEqual(['&kp X', '&kp Z', '&kp Y']);
+    expect(['1 tap', '2 taps', '3 taps'].map(sends)).toEqual(['X', 'Z', 'Y']);
     expect((screen.getByRole('button', { name: 'Move 1 tap up' }) as HTMLButtonElement).disabled).toBe(true);
   });
 

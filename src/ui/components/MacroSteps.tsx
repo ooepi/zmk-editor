@@ -4,6 +4,7 @@ import { textToBindings } from '../../core/keymap/macroText.ts';
 import type { Behavior, Binding, KeymapModel } from '../../core/keymap/model.ts';
 import { moveItem, useReorder } from '../reorder.ts';
 import { BindingEditor } from './BindingEditor.tsx';
+import { Icon } from './Icon.tsx';
 
 interface MacroStepsProps {
   keymap: KeymapModel;
@@ -57,7 +58,7 @@ export function MacroSteps({ keymap, behavior, onChange }: MacroStepsProps) {
           return (
             <li key={i} className={`step${i === selected ? ' active' : ''}${reorder.dropClass(i)}`} {...reorder.handle(i)} {...reorder.target(i)}>
               <span className="grip" aria-hidden="true" title="Drag to reorder">
-                ⋮⋮
+                <Icon name="grip" size={14} strokeWidth={3} />
               </span>
               <button
                 type="button"

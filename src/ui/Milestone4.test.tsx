@@ -45,6 +45,7 @@ describe('combos, encoders, behaviors and macros', () => {
     const user = userEvent.setup();
     render(<App />);
     await user.click(screen.getByRole('button', { name: 'Behaviors (2)' }));
+    await user.click(screen.getByRole('button', { name: 'New behavior' }));
     await user.click(screen.getByRole('button', { name: '+ Hold-tap' }));
     const name = screen.getByRole('textbox', { name: 'Name (use it as &name)' });
     await user.clear(name);
@@ -54,7 +55,8 @@ describe('combos, encoders, behaviors and macros', () => {
     await user.type(name, 'hm{Enter}');
     expect(screen.getByRole('button', { name: /&hm/ })).toBeTruthy();
 
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Flavor' }), 'tap-preferred');
+    await user.click(within(screen.getByRole('group', { name: 'Flavor' })).getByRole('button', { name: 'Tap-preferred' }));
+    expect(within(screen.getByRole('group', { name: 'Flavor' })).getByRole('button', { name: 'Tap-preferred' }).getAttribute('aria-pressed')).toBe('true');
     await user.click(screen.getByRole('button', { name: 'Keymap' }));
     await user.click(screen.getByRole('button', { name: 'Key 0: Esc' }));
     await chooseBehavior(user, 'hm');
