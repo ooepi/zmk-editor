@@ -17,11 +17,12 @@ import { KeyboardCanvas } from './components/KeyboardCanvas.tsx';
 import { KeyboardView } from './components/KeyboardView.tsx';
 import { KeyPalette } from './components/KeyPalette.tsx';
 import { LayoutDesigner } from './components/LayoutDesigner.tsx';
-import { LayerBar } from './components/LayerBar.tsx';
+import { LayerRail } from './components/LayerRail.tsx';
 import { PrintView } from './components/PrintView.tsx';
 import { SelectionPanel } from './components/SelectionPanel.tsx';
 import { ThemeToggle } from './components/ThemeToggle.tsx';
-import { Icon } from './components/Icon.tsx';
+import { Icon, type IconName } from './components/Icon.tsx';
+import { IconButton } from './components/ui/IconButton.tsx';
 import { ModulesView } from './components/ModulesView.tsx';
 import { ScreensView } from './components/ScreensView.tsx';
 import { SettingsView } from './components/SettingsView.tsx';
@@ -149,15 +150,15 @@ function Editor() {
 
   const selectedCombo = keymap.combos.find((c) => c.name === combo);
   const macroCount = keymap.behaviors.filter((b) => behaviorKind(b) === 'macro').length;
-  const tabs: { id: View; label: string }[] = [
-    { id: 'keymap', label: 'Keymap' },
-    { id: 'combos', label: `Combos (${keymap.combos.length})` },
-    { id: 'behaviors', label: `Behaviors (${keymap.behaviors.length - macroCount})` },
-    { id: 'macros', label: `Macros (${macroCount})` },
-    { id: 'modules', label: `Modules (${config.west.modules.length})` },
-    { id: 'screens', label: 'Screens' },
-    { id: 'settings', label: 'Settings' },
-    { id: 'help', label: 'Help' },
+  // Help isn't a tab: the ? button in the top bar and the Learn more links open it.
+  const tabs: { id: View; label: string; icon: IconName; count?: number }[] = [
+    { id: 'keymap', label: 'Keymap', icon: 'keyboard' },
+    { id: 'combos', label: 'Combos', icon: 'link', count: keymap.combos.length },
+    { id: 'behaviors', label: 'Behaviors', icon: 'sliders', count: keymap.behaviors.length - macroCount },
+    { id: 'macros', label: 'Macros', icon: 'listOrdered', count: macroCount },
+    { id: 'modules', label: 'Modules', icon: 'puzzle', count: config.west.modules.length },
+    { id: 'screens', label: 'Screens', icon: 'monitor' },
+    { id: 'settings', label: 'Settings', icon: 'settings' },
   ];
 
   const onKeyClick = (index: number, additive = false) => {
@@ -226,36 +227,41 @@ function Editor() {
             </div>
             <VersionSelect config={config} dispatch={dispatch} />
           </div>
-          <Toolbar
-            config={config}
-            canUndo={state.past.length > 0}
-            canRedo={state.future.length > 0}
-            locked={view === 'newKeyboard' || view === 'editHardware'}
-            onPrint={() => setView('print')}
-            dispatch={dispatch}
-          />
-          <div className="topbar-end">
-            <ThemeToggle theme={theme} onToggle={toggleTheme} />
-            <button type="button" className="button help-button" aria-label="Open help" title="Help" onClick={() => openHelp()}>
-              <Icon name="help" size={18} />
-            </button>
-            <a className="coffee-link" href="https://www.buymeacoffee.com/gristone" target="_blank" rel="noopener noreferrer">
-              <span aria-hidden="true">☕</span> Buy me a coffee
-            </a>
+          <div className="topbar-actions">
+            <Toolbar
+              config={config}
+              canUndo={state.past.length > 0}
+              canRedo={state.future.length > 0}
+              locked={view === 'newKeyboard' || view === 'editHardware'}
+              onPrint={() => setView('print')}
+              dispatch={dispatch}
+            />
+            <div className="topbar-end">
+              <ThemeToggle theme={theme} onToggle={toggleTheme} />
+              <IconButton icon="help" label="Open help" title="Help" onClick={() => openHelp()} />
+              <a className="coffee-link" href="https://www.buymeacoffee.com/gristone" target="_blank" rel="noopener noreferrer">
+                <span aria-hidden="true">☕</span> Buy me a coffee
+              </a>
+            </div>
           </div>
         </header>
         <nav className="viewtabs" aria-label="Views">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              className={`viewtab${view === t.id ? ' active' : ''}`}
-              aria-current={view === t.id ? 'page' : undefined}
-              onClick={() => setView(t.id)}
-            >
-              {t.label}
-            </button>
-          ))}
+          <div className="viewtabs-group">
+            {tabs.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                className={`viewtab${view === t.id ? ' active' : ''}`}
+                aria-current={view === t.id ? 'page' : undefined}
+                aria-label={t.count === undefined ? undefined : `${t.label} (${t.count})`}
+                onClick={() => setView(t.id)}
+              >
+                <Icon name={t.icon} />
+                <span>{t.label}</span>
+                {t.count ? <span className="viewtab-count">{t.count}</span> : null}
+              </button>
+            ))}
+          </div>
           {/* The last step, set apart: where you go once the keymap is done. */}
           <button
             type="button"
@@ -339,32 +345,34 @@ function Editor() {
         ) : (
           <main className="workspace">
             <section className="canvas-area" aria-label="Keymap">
-              {view === 'keymap' && <LayerBar layers={keymap.layers} active={layer} dispatch={dispatch} />}
-              <div className="canvas">
-                <KeyboardCanvas
-                  keymap={keymap}
-                  layout={layout}
-                  layer={view === 'combos' ? 0 : layer}
-                  selection={view === 'keymap' ? selection : []}
-                  onSelectBox={
-                    view === 'keymap' ? (indices, additive) => dispatch({ type: 'selectKeys', indices, additive }) : undefined
-                  }
-                  highlighted={view === 'combos' && selectedCombo ? new Set(selectedCombo.keyPositions.map(Number)) : undefined}
-                  onSelectKey={onKeyClick}
-                  drop={view === 'keymap' ? keyDrop : undefined}
-                />
-                {view === 'keymap' && (
-                  <EncoderStrip
+              <div className="canvas-row">
+                {view === 'keymap' && <LayerRail layers={keymap.layers} active={layer} dispatch={dispatch} />}
+                <div className="canvas">
+                  <KeyboardCanvas
                     keymap={keymap}
-                    layer={layer}
-                    selected={sensor}
-                    onSelect={(index) => dispatch({ type: 'selectSensor', index: index === sensor ? null : index })}
-                    onDropItem={(index: number, direction: EncoderDirection, item: PaletteItem) => {
-                      dispatch({ type: 'placeOnEncoder', index, direction, item });
-                      if (applyToEncoder({ behavior: 'trans', params: [] }, item, direction)) remember(item);
-                    }}
+                    layout={layout}
+                    layer={view === 'combos' ? 0 : layer}
+                    selection={view === 'keymap' ? selection : []}
+                    onSelectBox={
+                      view === 'keymap' ? (indices, additive) => dispatch({ type: 'selectKeys', indices, additive }) : undefined
+                    }
+                    highlighted={view === 'combos' && selectedCombo ? new Set(selectedCombo.keyPositions.map(Number)) : undefined}
+                    onSelectKey={onKeyClick}
+                    drop={view === 'keymap' ? keyDrop : undefined}
                   />
-                )}
+                  {view === 'keymap' && (
+                    <EncoderStrip
+                      keymap={keymap}
+                      layer={layer}
+                      selected={sensor}
+                      onSelect={(index) => dispatch({ type: 'selectSensor', index: index === sensor ? null : index })}
+                      onDropItem={(index: number, direction: EncoderDirection, item: PaletteItem) => {
+                        dispatch({ type: 'placeOnEncoder', index, direction, item });
+                        if (applyToEncoder({ behavior: 'trans', params: [] }, item, direction)) remember(item);
+                      }}
+                    />
+                  )}
+                </div>
               </div>
               {view === 'keymap' && <KeyPalette keymap={keymap} armed={armed} selection={selection} onPick={onPaletteClick} />}
             </section>
@@ -406,8 +414,8 @@ function Overview({ warnings }: { warnings: string[] }) {
     <div>
       <h2 className="panel-title">Details</h2>
       <p className="muted">
-        Select a key or an encoder to edit it, or drag keys from the palette below the keyboard. Double-click a layer
-        tab to rename it. <HelpLink to="editing-keys" />
+        Select a key or an encoder to edit it, or drag keys from the palette below the keyboard. Hover a layer to
+        rename, reorder or delete it. <HelpLink to="editing-keys" />
       </p>
       <p className="muted small">
         Shortcuts: {OVERVIEW_SHORTCUTS.map((s) => `${s.keys}: ${s.action.toLowerCase()}`).join(' · ')}.{' '}

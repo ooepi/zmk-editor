@@ -64,6 +64,48 @@
   border-radius: 50%;
 }
 
+.icon-button > .icon {
+  width: 18px;
+  height: 18px;
+}
+
+/*
+ * An icon button that names itself in a small bubble under it on hover or keyboard
+ * focus. The bubble is out of the layout, so showing it never moves anything.
+ */
+.icon-button.labelled {
+  position: relative;
+}
+
+.icon-button-label {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  z-index: 60;
+  padding: 3px var(--s-2);
+  border-radius: var(--r-sm);
+  background: var(--text);
+  color: var(--bg);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -2px);
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.icon-button.labelled:is(:hover, :focus-visible) .icon-button-label {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.icon-button.danger {
+  color: var(--danger);
+}
+
 .button:hover:not(:disabled),
 .icon-button:hover:not(:disabled) {
   background: var(--surface-3);
@@ -125,6 +167,78 @@
   background: var(--danger-soft);
   border-color: var(--danger);
   color: var(--danger);
+}
+
+/* Menus: a dropdown of actions behind an icon button (Menu.tsx). */
+
+.menu-anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 220px;
+  padding: var(--s-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
+}
+
+.menu.start {
+  right: auto;
+  left: 0;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 36px;
+  padding: 0 var(--s-3);
+  border: none;
+  border-radius: var(--r-sm);
+  background: transparent;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.menu-item:is(:hover, :focus-visible):not(:disabled) {
+  background: var(--surface-3);
+}
+
+.menu-item:focus-visible {
+  outline-offset: -2px;
+}
+
+.menu-item .icon {
+  color: var(--text-muted);
+}
+
+.menu-item.danger,
+.menu-item.danger .icon {
+  color: var(--danger);
+}
+
+.menu-item:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.menu-separator {
+  height: 1px;
+  margin: var(--s-1) 0;
+  background: var(--border);
 }
 
 /* Fields */

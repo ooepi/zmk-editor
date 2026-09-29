@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { GitHubClient } from '../../core/github/client.ts';
 import { openPublicRepo, parseRepoInput, type PublicRepo } from '../../core/github/publicRepo.ts';
-import { Icon } from './Icon.tsx';
+import { IconButton } from './ui/IconButton.tsx';
 
 interface OpenFromGitHubProps {
   disabled?: boolean | undefined;
@@ -45,17 +45,15 @@ export function OpenFromGitHub({ disabled, title, onOpened }: OpenFromGitHubProp
 
   return (
     <span className="popover-anchor">
-      <button
-        type="button"
-        className="button"
+      <IconButton
+        icon="github"
+        label="Open from GitHub"
+        expand
         disabled={disabled}
         aria-expanded={open}
         title={title ?? 'Open a public zmk-config repository without logging in'}
         onClick={() => (open ? close() : setOpen(true))}
-      >
-        <Icon name="github" />
-        Open from GitHub
-      </button>
+      />
       {open && (
         <form
           className="popover"

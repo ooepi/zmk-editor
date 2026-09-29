@@ -1,104 +1,193 @@
-/* Layer bar */
+/* Layer rail: the layers float beside the keyboard as a vertical list. */
 
-.layerbar {
+.canvas-row {
+  flex: 1;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--border);
+  min-height: 0;
+  padding-left: var(--s-4);
 }
 
-.layer-tabs,
-.layer-actions {
+/*
+ * A click-through column that scrolls the rail when there are more layers than fit.
+ * Its right padding is room for a hovered row's buttons (see .layer-row-actions);
+ * the negative margin lets the canvas start under that room, but the canvas's own
+ * padding keeps keys out of it, so the buttons never cover a key.
+ */
+.layer-rail-scroll {
+  --rail-overhang: 64px;
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  flex-direction: column;
+  max-height: 100%;
+  margin-right: calc(var(--s-6) + var(--s-2) - var(--rail-overhang));
+  padding: var(--s-3) var(--rail-overhang) var(--s-3) 0;
+  overflow: hidden auto;
+  pointer-events: none;
+  scrollbar-width: none;
+}
+
+.layer-rail-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.canvas-row > .canvas {
+  flex: 1;
+  min-width: 0;
+}
+
+.layer-rail {
+  margin-block: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: 6px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
+  pointer-events: auto;
+}
+
+.layer-rail-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+/* Grip, tab, and the rename and delete buttons; the extras appear on hover or focus. */
+.layer-row {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  align-items: center;
+  gap: var(--s-1);
+  border-radius: var(--r-pill);
+}
+
+/* The tab and its rename and delete buttons share one pill. */
+.layer-pill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 92px;
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.layer-pill:hover {
+  background: var(--surface-3);
+}
+
+.layer-row.active .layer-pill {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.layer-grip {
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  cursor: grab;
+}
+
+.layer-grip,
+.layer-row-actions {
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.layer-row:is(:hover, :focus-within) :is(.layer-grip, .layer-row-actions) {
+  opacity: 1;
+}
+
+/*
+ * The actions extend the hovered pill to the right, over the canvas, so the rail
+ * only needs room for the names.
+ */
+.layer-row-actions {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  left: calc(100% - var(--s-5));
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 3px 0 var(--s-5);
+  border-radius: 0 var(--r-pill) var(--r-pill) 0;
+  background: inherit;
+  pointer-events: none;
+}
+
+.layer-row:is(:hover, :focus-within) .layer-row-actions {
+  pointer-events: auto;
+}
+
+.layer-row-actions .icon-button {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  min-height: 30px;
+  border-color: transparent;
+  background: transparent;
+  color: inherit;
+}
+
+.layer-row-actions .icon-button:hover:not(:disabled) {
+  border-color: transparent;
+  background: color-mix(in srgb, currentcolor 12%, transparent);
+}
+
+.layer-row-actions .icon-button.danger:hover:not(:disabled) {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.layer-row.active .layer-row-actions .icon-button.danger:hover:not(:disabled) {
+  color: var(--accent-contrast);
+  background: color-mix(in srgb, currentcolor 14%, transparent);
+}
+
+.layer-row-actions .icon-button > .icon {
+  width: 16px;
+  height: 16px;
 }
 
 .layer-tab {
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 8px;
-  height: 36px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0 14px;
-  cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.layer-tab:hover {
-  color: var(--text);
-  background: var(--surface-2);
-}
-
-.layer-tab.active {
-  color: var(--accent-contrast);
-  background: var(--accent);
-  border-color: var(--accent-line);
-}
-
-.layer-tab.active .layer-index {
+  gap: var(--s-2);
+  height: 38px;
+  padding: 0 var(--s-2) 0 var(--s-4);
+  border: none;
+  border-radius: var(--r-pill);
+  background: transparent;
   color: inherit;
-  opacity: 0.75;
-}
-
-.layerbar-label {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-}
-
-.layerbar .layer-tabs {
-  flex: 1;
-  gap: 6px;
-}
-
-.layer-actions {
-  gap: 6px;
-}
-
-.layer-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface-2);
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
 }
 
-.layer-action:hover:not(:disabled) {
-  border-color: var(--accent-line);
+.layer-row.active .layer-index {
+  color: inherit;
+  opacity: 0.7;
 }
 
-.layer-action.danger:hover:not(:disabled) {
-  border-color: var(--danger);
-  color: var(--danger);
+.layer-row.drag-hover .layer-pill {
+  border: 1px dashed var(--accent-line);
 }
 
-.layer-action:disabled {
-  opacity: 0.4;
-  cursor: default;
+.layer-row.drop-before {
+  box-shadow: 0 -2px 0 var(--accent-line);
 }
 
-.layer-tab.drag-hover {
-  color: var(--text);
-  border-color: var(--accent-line);
-  border-style: dashed;
+.layer-row.drop-after {
+  box-shadow: 0 2px 0 var(--accent-line);
 }
 
 .layer-index {
@@ -107,13 +196,18 @@
 }
 
 .layer-rename {
-  width: 130px;
-  padding: 4px 8px;
-  border-radius: 6px;
+  width: 140px;
+  height: 38px;
+  padding: 0 var(--s-3);
   border: 1px solid var(--accent-line);
+  border-radius: var(--r-pill);
   background: var(--surface-2);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--fs-sm);
+}
+
+.layer-add {
+  align-self: center;
 }
 
 /* Keyboard */

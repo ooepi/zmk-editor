@@ -6,7 +6,8 @@ import { generateKeymap } from '../../core/keymap/generator.ts';
 import { textLayoutFor } from '../../core/layouts/index.ts';
 import type { PublicRepo } from '../../core/github/publicRepo.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
-import { Icon } from './Icon.tsx';
+import { IconButton } from './ui/IconButton.tsx';
+import { Menu } from './ui/Menu.tsx';
 import { OpenFromGitHub } from './OpenFromGitHub.tsx';
 import { demoConfig } from '../state/demo.ts';
 
@@ -99,38 +100,52 @@ export function Toolbar({ config, canUndo, canRedo, locked, onPrint, dispatch }:
   };
 
   return (
-    <div className="toolbar">
-      <button
-        type="button"
-        className="button"
+    <div className="toolbar" role="toolbar" aria-label="Keymap actions">
+      <IconButton
+        icon="undo"
+        label="Undo"
         disabled={!canUndo || locked}
-        onClick={() => dispatch({ type: 'undo' })}
         title={locked ? lockedTitle : 'Undo (Ctrl+Z)'}
-      >
-        <Icon name="undo" />
-        Undo
-      </button>
-      <button
-        type="button"
-        className="button"
+        onClick={() => dispatch({ type: 'undo' })}
+      />
+      <IconButton
+        icon="redo"
+        label="Redo"
         disabled={!canRedo || locked}
-        onClick={() => dispatch({ type: 'redo' })}
         title={locked ? lockedTitle : 'Redo (Ctrl+Shift+Z)'}
-      >
-        <Icon name="redo" />
-        Redo
-      </button>
-      <span className="toolbar-sep" />
-      <button
-        type="button"
-        className="button"
+        onClick={() => dispatch({ type: 'redo' })}
+      />
+      <span className="toolbar-sep" aria-hidden="true" />
+      <OpenFromGitHub disabled={locked} title={locked ? lockedTitle : undefined} onOpened={openRepo} />
+      <IconButton
+        icon="print"
+        label="Print keymap"
+        expand
         disabled={locked}
-        onClick={() => fileInput.current?.click()}
-        title={locked ? lockedTitle : 'Pick your .keymap, and optionally its .conf, west.yml, build.yaml and .editor.json'}
-      >
-        <Icon name="open" />
-        Open files
-      </button>
+        title={locked ? lockedTitle : 'A cheat sheet of every layer, to print or save as PDF'}
+        onClick={onPrint}
+      />
+      <Menu
+        label="More actions"
+        items={[
+          {
+            label: 'Open files',
+            icon: 'open',
+            disabled: !!locked,
+            title: locked ? lockedTitle : 'Pick your .keymap, and optionally its .conf, west.yml, build.yaml and .editor.json',
+            onSelect: () => fileInput.current?.click(),
+          },
+          { label: 'Download .keymap', icon: 'download', onSelect: downloadKeymap },
+          {
+            label: 'Download config (.zip)',
+            icon: 'archive',
+            title: 'Keymap, .conf, west.yml, build.yaml and the build workflow',
+            onSelect: downloadZip,
+          },
+          'separator',
+          { label: 'Reset to demo', icon: 'reset', tone: 'danger', disabled: !!locked, title: locked ? lockedTitle : undefined, onSelect: resetDemo },
+        ]}
+      />
       <input
         ref={fileInput}
         type="file"
@@ -144,23 +159,6 @@ export function Toolbar({ config, canUndo, canRedo, locked, onPrint, dispatch }:
           e.target.value = '';
         }}
       />
-      <OpenFromGitHub disabled={locked} title={locked ? lockedTitle : undefined} onOpened={openRepo} />
-      <button type="button" className="button" onClick={downloadKeymap}>
-        <Icon name="download" />
-        Download .keymap
-      </button>
-      <button type="button" className="button" onClick={downloadZip} title="Keymap, .conf, west.yml, build.yaml and the build workflow">
-        <Icon name="archive" />
-        Download config (.zip)
-      </button>
-      <button type="button" className="button" disabled={locked} onClick={onPrint} title={locked ? lockedTitle : 'A cheat sheet of every layer, to print or save as PDF'}>
-        <Icon name="print" />
-        Print keymap
-      </button>
-      <button type="button" className="button" disabled={locked} onClick={resetDemo} title={locked ? lockedTitle : undefined}>
-        <Icon name="reset" />
-        Reset to demo
-      </button>
     </div>
   );
 }

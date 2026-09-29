@@ -24,10 +24,21 @@ describe('help', () => {
   it('opens from the Help tab with every section in the contents', async () => {
     const user = userEvent.setup();
     render(<App />);
-    await user.click(screen.getByRole('button', { name: 'Help' }));
+    await user.click(screen.getByRole('button', { name: 'Open help' }));
     expect(toc().getAllByRole('button').map((b) => b.textContent)).toEqual(HELP_SECTIONS.map((s) => s.title));
     expect(help().getByRole('heading', { level: 2, name: 'Keyboard shortcuts' })).toBeTruthy();
     expect(help().getByRole('cell', { name: 'Ctrl+V' })).toBeTruthy();
+  });
+
+  it('describes the layer rail and the More menu as they are', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Open help' }));
+    const text = help().getByRole('heading', { level: 2, name: 'Layers' }).closest('section')?.textContent ?? '';
+    expect(text).toMatch(/Alt\+↑/);
+    expect(text).not.toMatch(/tabs above the keyboard|deletes the shown layer/);
+    expect(help().getAllByText(/More menu/).length).toBeGreaterThan(0);
+    expect(help().getByRole('cell', { name: 'Alt+↑ or Alt+↓ on a layer' })).toBeTruthy();
   });
 
   it('opens from the ? button', async () => {
@@ -40,7 +51,7 @@ describe('help', () => {
   it('filters sections with the search box', async () => {
     const user = userEvent.setup();
     render(<App />);
-    await user.click(screen.getByRole('button', { name: 'Help' }));
+    await user.click(screen.getByRole('button', { name: 'Open help' }));
     await user.type(toc().getByRole('searchbox', { name: 'Search help' }), 'home row');
     const titles = toc()
       .getAllByRole('button')

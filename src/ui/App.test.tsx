@@ -73,8 +73,30 @@ describe('App', () => {
     expect(tabs().at(-1)?.textContent).toBe('6Gaming');
     expect(tabs().at(-1)?.getAttribute('aria-selected')).toBe('true');
 
-    await user.click(screen.getByRole('button', { name: 'Delete layer' }));
+    await user.click(screen.getByRole('button', { name: 'Delete layer Gaming' }));
     expect(tabs()).toHaveLength(6);
+  });
+
+  it('keeps everyday actions in the top bar and the rest in the More menu', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    for (const name of ['Undo', 'Redo', 'Open from GitHub', 'Print keymap']) expect(screen.getByRole('button', { name })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Download .keymap' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'More actions' }));
+    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual([
+      'Open files',
+      'Download .keymap',
+      'Download config (.zip)',
+      'Reset to demo',
+    ]);
+  });
+
+  it('shows the views as tabs with counts, and help from the top bar only', () => {
+    render(<App />);
+    const nav = within(screen.getByRole('navigation', { name: 'Views' }));
+    const names = nav.getAllByRole('button').map((b) => (b.getAttribute('aria-label') ?? b.textContent ?? '').replace(/ \(\d+\)$/, ' (n)'));
+    expect(names).toEqual(['Keymap', 'Combos (n)', 'Behaviors (n)', 'Macros (n)', 'Modules (n)', 'Screens', 'Settings', 'Build & flash']);
+    expect(nav.queryByRole('button', { name: 'Help' })).toBeNull();
   });
 
   it('keeps edits after a reload', async () => {
