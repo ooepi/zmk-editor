@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { moveItem, reorderTarget } from './reorder.ts';
+import { dropGap, moveItem, reorderTarget } from './reorder.ts';
 
 describe('reorderTarget', () => {
   it('moves an item down, before or after the one it is dropped on', () => {
@@ -26,5 +26,20 @@ describe('moveItem', () => {
     expect(moveItem(list, 0, 2)).toEqual(['b', 'c', 'a', 'd']);
     expect(moveItem(list, 3, 1)).toEqual(['a', 'd', 'b', 'c']);
     expect(list).toEqual(['a', 'b', 'c', 'd']);
+  });
+});
+
+describe('dropGap', () => {
+  it('treats the lower half of one item and the upper half of the next as one gap', () => {
+    expect(dropGap({ index: 1, after: true }, 4)).toBe(2);
+    expect(dropGap({ index: 2, after: false }, 4)).toBe(2);
+    expect(dropGap({ index: 3, after: true }, 0)).toBe(4);
+  });
+
+  it('shows no gap beside the dragged item, where the drop would not move it', () => {
+    expect(dropGap({ index: 2, after: false }, 2)).toBeNull();
+    expect(dropGap({ index: 2, after: true }, 2)).toBeNull();
+    expect(dropGap({ index: 1, after: true }, 2)).toBeNull();
+    expect(dropGap(null, 2)).toBeNull();
   });
 });

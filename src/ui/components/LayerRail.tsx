@@ -113,7 +113,7 @@ export function LayerRail({ layers, active, dispatch }: LayerRailProps) {
               <div
                 key={layer.name}
                 role="presentation"
-                className={`layer-row${index === active ? ' active' : ''}${hovered === index ? ' drag-hover' : ''}${reorder.dropClass(index)}`}
+                className={`layer-row${index === active ? ' active' : ''}${renaming === index ? ' renaming' : ''}${hovered === index ? ' drag-hover' : ''}${reorder.dropClass(index, index === layers.length - 1)}`}
                 {...target}
                 onDragEnter={(event) => onRowDragEnter(event, index)}
                 onDragLeave={(event) => {
@@ -130,15 +130,20 @@ export function LayerRail({ layers, active, dispatch }: LayerRailProps) {
                 </span>
                 <span className="layer-pill">
                   {renaming === index ? (
-                    <input
-                      className="layer-rename"
-                      aria-label="Layer name"
-                      value={draft}
-                      autoFocus
-                      onChange={(e) => setDraft(e.target.value)}
-                      onBlur={finishRename}
-                      onKeyDown={onRenameKey}
-                    />
+                    <span className="layer-rename-field">
+                      <span className="layer-index">{index}</span>
+                      <input
+                        className="layer-rename"
+                        aria-label="Layer name"
+                        value={draft}
+                        autoFocus
+                        spellCheck={false}
+                        onFocus={(e) => e.currentTarget.select()}
+                        onChange={(e) => setDraft(e.target.value)}
+                        onBlur={finishRename}
+                        onKeyDown={onRenameKey}
+                      />
+                    </span>
                   ) : (
                     <button
                       type="button"
@@ -156,16 +161,24 @@ export function LayerRail({ layers, active, dispatch }: LayerRailProps) {
                       {name}
                     </button>
                   )}
-                  <span className="layer-row-actions">
-                    <IconButton icon="pencil" label={`Rename layer ${name}`} onClick={() => startRename(index)} />
-                    <IconButton
-                      icon="trash"
-                      label={`Delete layer ${name}`}
-                      tone="danger"
-                      disabled={layers.length <= 1}
-                      onClick={() => deleteLayer(index)}
-                    />
-                  </span>
+                  {renaming === index ? (
+                    // Keep focus in the field while clicking these, so its blur doesn't save first.
+                    <span className="layer-row-actions" onMouseDown={(e) => e.preventDefault()}>
+                      <IconButton icon="check" label="Save layer name" className="layer-rename-save" onClick={finishRename} />
+                      <IconButton icon="x" label="Cancel rename" onClick={() => setRenaming(null)} />
+                    </span>
+                  ) : (
+                    <span className="layer-row-actions">
+                      <IconButton icon="pencil" label={`Rename layer ${name}`} onClick={() => startRename(index)} />
+                      <IconButton
+                        icon="trash"
+                        label={`Delete layer ${name}`}
+                        tone="danger"
+                        disabled={layers.length <= 1}
+                        onClick={() => deleteLayer(index)}
+                      />
+                    </span>
+                  )}
                 </span>
               </div>
             );

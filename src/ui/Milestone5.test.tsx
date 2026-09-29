@@ -111,7 +111,7 @@ describe('modules and unicode', () => {
     const keymap = new File([files['config/test_pad.keymap'] ?? ''], 'test_pad.keymap');
     const definition = new File([files['config/boards/shields/test_pad/test_pad.editor.json'] ?? ''], 'test_pad.editor.json');
     await user.upload(screen.getByTestId('config-files'), [keymap, definition]);
-    expect(await screen.findByRole('button', { name: 'Test Pad ▾' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Change keyboard: Test Pad' })).toBeTruthy();
   });
 
   it('carries over the designed keyboard’s definition when only its keymap is re-opened', async () => {
@@ -122,7 +122,7 @@ describe('modules and unicode', () => {
     const files = generateConfig(config);
     const keymap = new File([files['config/test_pad.keymap'] ?? ''], 'test_pad.keymap');
     await user.upload(screen.getByTestId('config-files'), [keymap]);
-    expect(await screen.findByRole('button', { name: 'Test Pad ▾' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Change keyboard: Test Pad' })).toBeTruthy();
   });
 
   it('lets an explicitly picked .editor.json win over the carried-over definition', async () => {
@@ -135,6 +135,6 @@ describe('modules and unicode', () => {
     const keymap = new File([otherFiles['config/test_pad.keymap'] ?? ''], 'test_pad.keymap');
     const definition = new File([otherFiles['config/boards/shields/test_pad/test_pad.editor.json'] ?? ''], 'test_pad.editor.json');
     await user.upload(screen.getByTestId('config-files'), [keymap, definition]);
-    expect(await screen.findByRole('button', { name: 'Other Pad ▾' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Change keyboard: Other Pad' })).toBeTruthy();
   });
 });

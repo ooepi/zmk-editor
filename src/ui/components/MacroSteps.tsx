@@ -56,7 +56,7 @@ export function MacroSteps({ keymap, behavior, onChange }: MacroStepsProps) {
         {steps.map((_, i) => {
           const label = labels[i];
           return (
-            <li key={i} className={`step${i === selected ? ' active' : ''}${reorder.dropClass(i)}`} {...reorder.handle(i)} {...reorder.target(i)}>
+            <li key={i} className={`step${i === selected ? ' active' : ''}${reorder.dropClass(i, i === steps.length - 1)}`} {...reorder.handle(i)} {...reorder.target(i)}>
               <span className="grip" aria-hidden="true" title="Drag to reorder">
                 <Icon name="grip" size={14} strokeWidth={3} />
               </span>

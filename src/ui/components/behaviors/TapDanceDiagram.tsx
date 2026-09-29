@@ -45,7 +45,7 @@ export function TapDanceDiagram({ keymap, behavior, onChange }: TapDanceDiagramP
           return (
             <div
               key={i}
-              className={`td-card${i === selected ? ' active' : ''}${reorder.dropClass(i)}`}
+              className={`td-card${i === selected ? ' active' : ''}${reorder.dropClass(i, i === taps.length - 1)}`}
               {...reorder.target(i, 'x')}
             >
               <div className="tap-header" {...reorder.handle(i)}>
