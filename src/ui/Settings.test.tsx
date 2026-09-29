@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { findSetting, writeSetting } from '../core/catalog/settings.ts';
@@ -108,9 +108,49 @@ describe('Settings tab', () => {
     expect(within(region('Power & sleep')).getByRole('switch', { name: 'Deep sleep' })).toBeTruthy();
     expect(within(region('Power & sleep')).queryByRole('switch', { name: 'Soft off' })).toBeNull();
     expect(within(region('Bluetooth')).getByRole('combobox', { name: 'Transmit power' })).toBeTruthy();
-    // Resetting a setting takes it off the list.
+    // A reset row stays put (no longer marked) with focus on it, and leaves the list next time.
     await user.click(within(region('Power & sleep')).getByRole('button', { name: 'Reset Deep sleep to default' }));
+    const sleep = screen.getByRole('switch', { name: 'Deep sleep' });
+    expect(document.activeElement).toBe(sleep);
+    expect(within(region('Power & sleep')).queryByRole('button', { name: 'Reset Deep sleep to default' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: /^Changed only/ }));
+    await user.click(screen.getByRole('button', { name: /^Changed only/ }));
     expect(screen.queryByRole('switch', { name: 'Deep sleep' })).toBeNull();
+  });
+
+  it('keeps a changed row while its field is cleared to retype it', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await openSettings(user);
+    await user.click(screen.getByRole('button', { name: /^Changed only/ }));
+    const idle = screen.getByRole('spinbutton', { name: 'Idle after (ms)' });
+    await user.clear(idle);
+    await user.type(idle, '60000');
+    expect((screen.getByRole('spinbutton', { name: 'Idle after (ms)' }) as HTMLInputElement).value).toBe('60000');
+    expect(document.activeElement).toBe(screen.getByRole('spinbutton', { name: 'Idle after (ms)' }));
+  });
+
+  it('turns Changed only off back to the group it came from', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await openSettings(user);
+    await openGroup(user, 'Display');
+    await user.click(screen.getByRole('button', { name: /^Changed only/ }));
+    await user.click(screen.getByRole('button', { name: /^Changed only/ }));
+    expect(navItem('Display').getAttribute('aria-current')).toBe('true');
+  });
+
+  it('lists a known setting with a value it can’t read under Raw .conf', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await openSettings(user);
+    await user.click(navItem('Raw .conf'));
+    const textarea = screen.getByRole('textbox', { name: '.conf file' });
+    await user.clear(textarea);
+    await user.type(textarea, 'CONFIG_ZMK_IDLE_TIMEOUT=abc');
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(screen.getByText('CONFIG_ZMK_IDLE_TIMEOUT=abc (value not understood)')).toBeTruthy();
+    expect(navItem('Raw .conf').textContent).toContain('1 other');
   });
 
   it('warns about mouse keys with pointing off, links to its group, and fixes it', async () => {
@@ -124,6 +164,8 @@ describe('Settings tab', () => {
     expect(alert.textContent).toMatch(/mouse keys are off/);
     await user.click(within(alert).getByRole('button', { name: 'Show Encoders & pointing' }));
     expect(region('Encoders & pointing')).toBeTruthy();
+    // The link lands on the setting itself.
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('switch', { name: 'Mouse keys' })));
     await user.click(within(alert).getByRole('button', { name: 'Turn on' }));
     expect(screen.queryByRole('alert', { name: 'Setting problems' })).toBeNull();
     expect(await conf(user)).toContain('CONFIG_ZMK_POINTING=y');

@@ -66,10 +66,35 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 /** Kconfig settings (`config/<keyboard>.conf`): pick a group on the left, change it on the right. */
 export function SettingsView({ config, dispatch }: SettingsViewProps) {
   const [pane, setPane] = useState<Pane>('power');
+  /** The group to go back to when Changed only is turned off. */
+  const [lastGroup, setLastGroup] = useState<SettingGroup>('power');
+  const openGroup = (group: SettingGroup) => {
+    setPane(group);
+    setLastGroup(group);
+  };
+  /** Opens a setting's group and focuses the setting, once its row is on screen. */
+  const showSetting = (name: string) => {
+    const def = findSetting(name);
+    if (!def) return;
+    openGroup(def.group);
+    window.setTimeout(() => {
+      const control = document.querySelector<HTMLElement>(`[data-setting="${name}"] :is(input, select)`);
+      control?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+      control?.focus({ preventScroll: true });
+    });
+  };
   const set = (def: SettingDef, value: SettingValue | undefined) =>
     dispatch({ type: 'editConfig', config: { ...config, kconfig: writeSetting(config.kconfig, def, value) } });
   const warnings = useMemo(() => settingWarnings(config), [config]);
-  const others = config.kconfig.lines.filter((l) => l.kind === 'set' && !KNOWN.has(l.name));
+  // Lines the fields can't show: settings this page doesn't know, and known ones with a value it can't read.
+  const others = config.kconfig.lines.flatMap((l) => {
+    if (l.kind !== 'set') return [];
+    if (!KNOWN.has(l.name)) return [`${l.name}=${l.value}`];
+    const def = findSetting(l.name.replace(/^CONFIG_/, ''));
+    return def && def.type.kind !== 'choice' && readSetting(config.kconfig, def) === undefined
+      ? [`${l.name}=${l.value} (value not understood)`]
+      : [];
+  });
   /** "Changed" means set in the .conf: the counters, the filter and the row markers all use this. */
   const changed = SETTINGS.filter((def) => readSetting(config.kconfig, def) !== undefined);
   const changedIn = (group: SettingGroup) => changed.filter((def) => def.group === group).length;
@@ -102,7 +127,7 @@ export function SettingsView({ config, dispatch }: SettingsViewProps) {
           type="button"
           className={`chip settings-filter${pane === 'changed' ? ' active' : ''}`}
           aria-pressed={pane === 'changed'}
-          onClick={() => setPane(pane === 'changed' ? 'power' : 'changed')}
+          onClick={() => setPane(pane === 'changed' ? lastGroup : 'changed')}
         >
           <Icon name="listFilter" size={14} />
           Changed only
@@ -122,7 +147,7 @@ export function SettingsView({ config, dispatch }: SettingsViewProps) {
                     type="button"
                     className="link-button"
                     aria-label={`Show ${group.label}`}
-                    onClick={() => setPane(group.id)}
+                    onClick={() => showSetting(w.setting)}
                   >
                     {group.label} →
                   </button>
@@ -154,8 +179,8 @@ export function SettingsView({ config, dispatch }: SettingsViewProps) {
                 key={g.id}
                 type="button"
                 className={`settings-nav-item${pane === g.id ? ' active' : ''}`}
-                aria-current={pane === g.id ? 'page' : undefined}
-                onClick={() => setPane(g.id)}
+                aria-current={pane === g.id ? 'true' : undefined}
+                onClick={() => openGroup(g.id)}
               >
                 <Icon name={GROUP_ICONS[g.id]} size={16} />
                 <span className="grow">{g.label}</span>
@@ -167,7 +192,7 @@ export function SettingsView({ config, dispatch }: SettingsViewProps) {
           <button
             type="button"
             className={`settings-nav-item${pane === 'raw' ? ' active' : ''}`}
-            aria-current={pane === 'raw' ? 'page' : undefined}
+            aria-current={pane === 'raw' ? 'true' : undefined}
             onClick={() => setPane('raw')}
           >
             <Icon name="code" size={16} />
@@ -178,15 +203,12 @@ export function SettingsView({ config, dispatch }: SettingsViewProps) {
 
         <div className="settings-pane">
           {pane === 'raw' ? (
-            <RawPane
-              config={config}
-              dispatch={dispatch}
-              others={others.map((l) => (l.kind === 'set' ? `${l.name}=${l.value}` : ''))}
-            />
+            <RawPane config={config} dispatch={dispatch} others={others} />
           ) : pane === 'changed' ? (
-            <ChangedOnly changed={changed} row={row} onShowGroup={setPane} />
+            // Keyed by keyboard: another keyboard's .conf starts a fresh list.
+            <ChangedOnly key={config.keyboard} changed={changed} row={row} onShowGroup={openGroup} />
           ) : (
-            <GroupView key={pane} group={pane} changed={changed} row={row} />
+            <GroupView key={`${pane}-${config.keyboard}`} group={pane} changed={changed} row={row} />
           )}
         </div>
       </div>
@@ -209,13 +231,25 @@ function GroupHeader({ group }: { group: SettingGroup }) {
   );
 }
 
+/**
+ * Names that stay listed once shown while a pane is open, so a row doesn't vanish while
+ * it's being edited (a field cleared to retype) or right after its reset.
+ */
+function useKept(names: string[]): Set<string> {
+  const [kept, setKept] = useState(() => new Set(names));
+  if (names.some((n) => !kept.has(n))) setKept(new Set([...kept, ...names]));
+  return kept;
+}
+
 /** One group: its everyday settings, then the advanced ones behind a toggle (changed ones always show). */
 function GroupView({ group, changed, row }: { group: SettingGroup; changed: SettingDef[]; row: (def: SettingDef) => ReactNode }) {
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const advancedId = useId();
   const defs = SETTINGS.filter((s) => s.group === group);
   const basic = defs.filter((s) => !s.advanced);
   const advanced = defs.filter((s) => s.advanced);
-  const shownAdvanced = showAdvanced ? advanced : advanced.filter((s) => changed.includes(s));
+  const kept = useKept(advanced.filter((s) => changed.includes(s)).map((s) => s.name));
+  const shownAdvanced = showAdvanced ? advanced : advanced.filter((s) => kept.has(s.name));
   const hidden = advanced.length - shownAdvanced.length;
   return (
     <section className="settings-group" aria-label={groupOf(group).label}>
@@ -224,7 +258,7 @@ function GroupView({ group, changed, row }: { group: SettingGroup; changed: Sett
       {advanced.length > 0 && (
         <>
           {shownAdvanced.length > 0 && (
-            <div className="setting-rows advanced" aria-label="Advanced settings" role="group">
+            <div id={advancedId} className="setting-rows advanced" aria-label="Advanced settings" role="group">
               {shownAdvanced.map(row)}
             </div>
           )}
@@ -232,6 +266,7 @@ function GroupView({ group, changed, row }: { group: SettingGroup; changed: Sett
             <button
               type="button"
               className="link-button settings-advanced-toggle"
+              aria-controls={shownAdvanced.length > 0 ? advancedId : undefined}
               aria-expanded={showAdvanced}
               onClick={() => setShowAdvanced(!showAdvanced)}
             >
@@ -255,7 +290,9 @@ function ChangedOnly({
   row: (def: SettingDef) => ReactNode;
   onShowGroup: (group: SettingGroup) => void;
 }) {
-  if (changed.length === 0) {
+  const kept = useKept(changed.map((d) => d.name));
+  const listed = SETTINGS.filter((d) => kept.has(d.name));
+  if (listed.length === 0) {
     return (
       <div className="settings-empty">
         <Icon name="check" size={22} />
@@ -265,8 +302,11 @@ function ChangedOnly({
   }
   return (
     <div className="settings-changed">
-      <p className="muted small">{plural(changed.length, 'changed setting')}. Reset one to go back to its default.</p>
-      {SETTING_GROUPS.filter((g) => changed.some((d) => d.group === g.id)).map((g) => (
+      <p className="muted small">
+        {plural(changed.length, 'changed setting')}. Reset one to go back to its default; it leaves this list next time you open
+        it.
+      </p>
+      {SETTING_GROUPS.filter((g) => listed.some((d) => d.group === g.id)).map((g) => (
         <section key={g.id} className="settings-group" aria-label={g.label}>
           <header className="settings-group-head compact">
             <span className="settings-group-icon">
@@ -282,7 +322,7 @@ function ChangedOnly({
               All {g.label} settings →
             </button>
           </header>
-          <div className="setting-rows">{changed.filter((d) => d.group === g.id).map(row)}</div>
+          <div className="setting-rows">{listed.filter((d) => d.group === g.id).map(row)}</div>
         </section>
       ))}
     </div>
@@ -360,7 +400,7 @@ function SettingRow({
   }
 
   return (
-    <div className={`setting-row${isSet ? ' is-set' : ''}${unavailable ? ' unavailable' : ''}`}>
+    <div className={`setting-row${isSet ? ' is-set' : ''}${unavailable ? ' unavailable' : ''}`} data-setting={def.name}>
       <div className="setting-text">
         <span className="setting-title">
           <label htmlFor={id}>{def.label}</label>
@@ -381,7 +421,11 @@ function SettingRow({
             icon="reset"
             label={`Reset ${def.label} to default`}
             className="setting-reset"
-            onClick={() => onChange(undefined)}
+            onClick={() => {
+              // The button goes away with the change; keep keyboard focus on the setting itself.
+              document.getElementById(id)?.focus();
+              onChange(undefined);
+            }}
           />
         ) : (
           <span className="setting-reset-space" aria-hidden="true" />
@@ -425,7 +469,7 @@ function RawConf({ config, dispatch }: SettingsViewProps) {
   const [text, setText] = useState(original);
   return (
     <div className="raw-conf">
-      <h4 className="settings-subhead">Edit the .conf file directly</h4>
+      <h4 className="settings-subhead">Edit as text</h4>
       <textarea
         className="input mono"
         aria-label=".conf file"

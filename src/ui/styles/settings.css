@@ -232,9 +232,13 @@
   background: color-mix(in srgb, var(--accent) 4%, transparent);
 }
 
-.setting-row.unavailable .setting-text,
+/* Only the control dims; the text, including why it's unavailable, stays readable. */
 .setting-row.unavailable .setting-control {
   opacity: 0.55;
+}
+
+.setting-row.unavailable .setting-title {
+  color: var(--text-muted);
 }
 
 .setting-text {
@@ -265,7 +269,7 @@
 
 .setting-default {
   color: var(--text-muted);
-  opacity: 0.8;
+  font-style: italic;
 }
 
 .setting-control {
@@ -352,5 +356,22 @@
   .setting-row {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .setting-control {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .setting-control select.input,
+  .setting-control > .input:not(select),
+  .setting-number {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+  }
+
+  .setting-number .input {
+    width: 100%;
   }
 }
