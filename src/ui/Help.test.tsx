@@ -24,7 +24,7 @@ describe('help', () => {
   it('opens from the Help tab with every section in the contents', async () => {
     const user = userEvent.setup();
     render(<App />);
-    await user.click(screen.getByRole('button', { name: 'Help' }));
+    await user.click(screen.getByRole('button', { name: 'Open help' }));
     expect(toc().getAllByRole('button').map((b) => b.textContent)).toEqual(HELP_SECTIONS.map((s) => s.title));
     expect(help().getByRole('heading', { level: 2, name: 'Keyboard shortcuts' })).toBeTruthy();
     expect(help().getByRole('cell', { name: 'Ctrl+V' })).toBeTruthy();
@@ -40,7 +40,7 @@ describe('help', () => {
   it('filters sections with the search box', async () => {
     const user = userEvent.setup();
     render(<App />);
-    await user.click(screen.getByRole('button', { name: 'Help' }));
+    await user.click(screen.getByRole('button', { name: 'Open help' }));
     await user.type(toc().getByRole('searchbox', { name: 'Search help' }), 'home row');
     const titles = toc()
       .getAllByRole('button')

@@ -2,47 +2,77 @@
 
 .viewtabs {
   display: flex;
-  gap: 2px;
-  padding: 0 12px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  align-items: center;
+  gap: var(--s-3);
+  padding: 0 var(--s-5) var(--s-3);
+  background: var(--bg);
   /* On a phone the tabs scroll sideways instead of widening the page. */
   overflow-x: auto;
 }
 
-.viewtab {
+/* The views sit together in one pill; the active one is filled. */
+.viewtabs-group {
+  display: flex;
   flex-shrink: 0;
-  white-space: nowrap;
+  gap: 2px;
+  padding: var(--s-1);
+  border-radius: var(--r-pill);
+  background: var(--surface);
 }
 
 .viewtab {
-  background: none;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 36px;
+  padding: 0 var(--s-4);
   border: none;
-  border-bottom: 2px solid transparent;
-  padding: 8px 12px;
+  border-radius: var(--r-pill);
+  background: none;
   color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
 }
 
 .viewtab:hover {
   color: var(--text);
+  background: var(--surface-2);
 }
 
 .viewtab.active {
+  color: var(--accent-contrast);
+  background: var(--accent);
+}
+
+.viewtab-count {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
   color: var(--text);
-  border-bottom-color: var(--accent-line);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.viewtab.active .viewtab-count {
+  background: color-mix(in srgb, var(--accent-contrast) 15%, transparent);
+  color: inherit;
 }
 
 /* Build & flash: the last step, pushed to the far end and filled so it can't be missed. */
 .viewtab.build-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  align-self: center;
-  margin: 5px 0 5px auto;
-  padding: 6px 16px;
+  margin-left: auto;
+  min-height: 40px;
+  padding: 0 var(--s-5);
   border: 1px solid var(--accent-line);
-  border-radius: 8px;
   background: var(--accent);
   color: var(--accent-contrast);
   font-weight: 700;
@@ -50,7 +80,7 @@
 
 .viewtab.build-tab:hover {
   color: var(--accent-contrast);
-  filter: brightness(1.08);
+  filter: brightness(1.06);
 }
 
 .viewtab.build-tab.active {

@@ -91,6 +91,14 @@ describe('App', () => {
     ]);
   });
 
+  it('shows the views as tabs with counts, and help from the top bar only', () => {
+    render(<App />);
+    const nav = within(screen.getByRole('navigation', { name: 'Views' }));
+    const names = nav.getAllByRole('button').map((b) => (b.getAttribute('aria-label') ?? b.textContent ?? '').replace(/ \(\d+\)$/, ' (n)'));
+    expect(names).toEqual(['Keymap', 'Combos (n)', 'Behaviors (n)', 'Macros (n)', 'Modules (n)', 'Screens', 'Settings', 'Build & flash']);
+    expect(nav.queryByRole('button', { name: 'Help' })).toBeNull();
+  });
+
   it('keeps edits after a reload', async () => {
     const user = userEvent.setup();
     const { unmount } = render(<App />);
