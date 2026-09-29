@@ -107,6 +107,154 @@
   color: var(--text-muted);
 }
 
+/* Combos: a formula of little keycaps, a banner while one is open, and the editor in three steps. */
+
+.combo-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-3);
+  margin: var(--s-3) var(--s-4) 0;
+  padding: var(--s-2) var(--s-2) var(--s-2) var(--s-5);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow:
+    inset 4px 0 0 var(--key-hold),
+    var(--shadow-float);
+}
+
+.combo-banner-text {
+  font-weight: 600;
+}
+
+.combo-banner-error {
+  color: var(--danger);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.combo-banner-done {
+  margin-left: auto;
+}
+
+.combo-formula {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.combo-formula-part {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+}
+
+.combo-formula-op {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.mini-key {
+  min-width: 26px;
+  padding: 2px 6px;
+  border: 1px solid var(--keycap-edge);
+  border-radius: 6px;
+  background: var(--keycap-top);
+  box-shadow: 0 2px 0 var(--keycap-edge);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-align: center;
+}
+
+.mini-key.sends {
+  border-color: var(--key-hold);
+  box-shadow: 0 2px 0 var(--key-hold);
+}
+
+.combo-item {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-2);
+  padding: var(--s-3);
+}
+
+.combo-item-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.badge.warn {
+  background: color-mix(in srgb, var(--warning) 16%, transparent);
+  color: var(--warning);
+}
+
+.combo-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.combo-editor-head .panel-title {
+  margin: 0;
+}
+
+.combo-step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--border);
+}
+
+.combo-step-title {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 700;
+}
+
+.step-no {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+
+.combo-options > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.combo-options > summary::-webkit-details-marker {
+  display: none;
+}
+
+.combo-options > summary::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+  transform: rotate(45deg);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.combo-options[open] > summary::after {
+  transform: rotate(-135deg);
+}
+
 @media (max-width: 900px) {
   .workspace {
     grid-template-columns: 1fr;
