@@ -6,7 +6,8 @@ import { describe, expect, it } from 'vitest';
 // stay readable in both themes. The fill accent is too pale for that in the light theme,
 // so state lines use --accent-line and text uses --accent-text. See docs/design-system.md.
 const DIR = fileURLToPath(new URL('.', import.meta.url));
-const TOKENS = readFileSync(`${DIR}tokens.css`, 'utf8');
+// Normalised, so a checkout with CRLF line endings (core.autocrlf) parses the same.
+const TOKENS = readFileSync(`${DIR}tokens.css`, 'utf8').replace(/\r\n/g, '\n');
 
 /** The custom properties declared in the block whose selector starts with `header`. */
 function block(header: string): Map<string, string> {

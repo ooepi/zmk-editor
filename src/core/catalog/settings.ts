@@ -23,6 +23,8 @@ export interface SettingDef {
   type: SettingType;
   /** ZMK v0.3's default; absent when the board or shield decides. */
   default?: SettingValue;
+  /** Rarely changed: listed after a group's everyday settings, behind "Show advanced". */
+  advanced?: true;
 }
 
 export type SettingGroup = 'power' | 'bluetooth' | 'battery' | 'underglow' | 'backlight' | 'display' | 'input' | 'keyboard';
@@ -50,8 +52,30 @@ const int = (name: string, group: SettingGroup, label: string, help: string, def
 });
 const pct = { unit: '%', min: 0, max: 100 } as const;
 
+/** Rarely changed settings, shown after each group's everyday ones. */
+const ADVANCED = new Set([
+  'BT_CTLR_TX_PWR',
+  'BT_MAX_CONN',
+  'ZMK_BLE_EXPERIMENTAL_CONN',
+  'ZMK_BLE_EXPERIMENTAL_SEC',
+  'ZMK_BLE_PASSKEY_ENTRY',
+  'BT_GATT_ENFORCE_SUBSCRIPTION',
+  'ZMK_BLE_CLEAR_BONDS_ON_START',
+  'ZMK_RGB_UNDERGLOW_EXT_POWER',
+  'ZMK_RGB_UNDERGLOW_BRT_MIN',
+  'ZMK_RGB_UNDERGLOW_HUE_STEP',
+  'ZMK_RGB_UNDERGLOW_SAT_STEP',
+  'ZMK_RGB_UNDERGLOW_BRT_STEP',
+  'EC11_TRIGGER',
+  'ZMK_POINTING_SMOOTH_SCROLLING',
+  'ZMK_HID_REPORT_TYPE',
+  'ZMK_HID_CONSUMER_REPORT_USAGES',
+  'ZMK_USB_LOGGING',
+]);
+
 /** Curated from ZMK v0.3's configuration docs (docs/docs/config/*.md). */
-export const SETTINGS: SettingDef[] = [
+export const SETTINGS: SettingDef[] = (
+  [
   int('ZMK_IDLE_TIMEOUT', 'power', 'Idle after', 'Inactivity before the keyboard idles (lighting and display can turn off).', 30000, { unit: 'ms', min: 0 }),
   bool('ZMK_SLEEP', 'power', 'Deep sleep', 'Sleep after a longer inactivity. Wakes on a key press; the connection may take a moment to return.', false),
   int('ZMK_IDLE_SLEEP_TIMEOUT', 'power', 'Deep sleep after', 'Inactivity before deep sleep (when deep sleep is on).', 900000, { unit: 'ms', min: 0 }),
@@ -168,7 +192,8 @@ export const SETTINGS: SettingDef[] = [
   },
   bool('ZMK_WPM', 'keyboard', 'Words per minute', 'Calculate typing speed (used by WPM widgets).', false),
   bool('ZMK_USB_LOGGING', 'keyboard', 'USB logging', 'Debug output over USB. Uses more power; turn off for daily use.', false),
-];
+  ] satisfies SettingDef[]
+).map((def): SettingDef => (ADVANCED.has(def.name) ? { ...def, advanced: true } : def));
 
 export function findSetting(name: string): SettingDef | undefined {
   return SETTINGS.find((s) => s.name === name);
@@ -215,6 +240,8 @@ export function writeSetting(model: KconfigModel, def: SettingDef, value: Settin
 
 export interface SettingWarning {
   message: string;
+  /** The setting it's about, to point at its group. */
+  setting: string;
   fix?: { name: string; value: SettingValue };
 }
 
@@ -287,28 +314,33 @@ export function settingWarnings(config: ZmkConfig): SettingWarning[] {
     return set ?? def.default;
   };
   const { keys, sensors } = usedBehaviors(config);
-  const warnings: SettingWarning[] = unsupportedHardwareSettings(config).map(({ name, message }) => ({ message, fix: { name, value: false } }));
+  /** A warning about `name` whose fix sets it to `to`. */
+  const fixing = (name: string, to: SettingValue, message: string): SettingWarning => ({ message, setting: name, fix: { name, value: to } });
+  const warnings: SettingWarning[] = unsupportedHardwareSettings(config).map(({ name, message }) => fixing(name, false, message));
   // Don't suggest turning on something the keyboard has no hardware for.
   const canUse = (name: string) => !lacksHardwareFor(config, name);
   if (['mkp', 'mmv', 'msc'].some((b) => keys.has(b)) && value('ZMK_POINTING') !== true) {
-    warnings.push({ message: 'The keymap has mouse keys, but mouse keys are off, so they won’t work.', fix: { name: 'ZMK_POINTING', value: true } });
+    warnings.push(fixing('ZMK_POINTING', true, 'The keymap has mouse keys, but mouse keys are off, so they won’t work.'));
   }
   if (keys.has('rgb_ug') && value('ZMK_RGB_UNDERGLOW') !== true && canUse('ZMK_RGB_UNDERGLOW')) {
-    warnings.push({ message: 'The keymap has &rgb_ug keys, but RGB underglow is off.', fix: { name: 'ZMK_RGB_UNDERGLOW', value: true } });
+    warnings.push(fixing('ZMK_RGB_UNDERGLOW', true, 'The keymap has &rgb_ug keys, but RGB underglow is off.'));
   }
   if (keys.has('bl') && value('ZMK_BACKLIGHT') !== true && canUse('ZMK_BACKLIGHT')) {
-    warnings.push({ message: 'The keymap has &bl keys, but the backlight is off.', fix: { name: 'ZMK_BACKLIGHT', value: true } });
+    warnings.push(fixing('ZMK_BACKLIGHT', true, 'The keymap has &bl keys, but the backlight is off.'));
   }
   if (sensors && value('EC11') !== true && canUse('EC11')) {
-    warnings.push({ message: 'The keymap uses an encoder, but EC11 encoder support isn’t turned on here (most keyboards need it).', fix: { name: 'EC11', value: true } });
+    warnings.push(fixing('EC11', true, 'The keymap uses an encoder, but EC11 encoder support isn’t turned on here (most keyboards need it).'));
   }
   if (config.hardware && hasDisplay(config.hardware) && value('ZMK_DISPLAY') === false) {
-    warnings.push({ message: `${config.hardware.displayName} has a screen, but Display is off in Settings, so it stays dark.`, fix: { name: 'ZMK_DISPLAY', value: true } });
+    warnings.push(fixing('ZMK_DISPLAY', true, `${config.hardware.displayName} has a screen, but Display is off in Settings, so it stays dark.`));
   }
   const idle = value('ZMK_IDLE_TIMEOUT');
   const sleep = value('ZMK_IDLE_SLEEP_TIMEOUT');
   if (value('ZMK_SLEEP') === true && typeof idle === 'number' && typeof sleep === 'number' && sleep < idle) {
-    warnings.push({ message: 'Deep sleep starts before the keyboard goes idle; the sleep time should be longer than the idle time.' });
+    warnings.push({
+      message: 'Deep sleep starts before the keyboard goes idle; the sleep time should be longer than the idle time.',
+      setting: 'ZMK_IDLE_SLEEP_TIMEOUT',
+    });
   }
   return warnings;
 }

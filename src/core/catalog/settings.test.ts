@@ -6,7 +6,7 @@ import { generateKconfig, parseKconfig } from '../files/kconfig.ts';
 import { newHardwareConfig } from '../hardware/config.ts';
 import { setDisplay } from '../hardware/displays.ts';
 import { testSplit } from '../hardware/testFixtures.ts';
-import { findSetting, readSetting, SETTINGS, settingWarnings, unsupportedHardwareSettings, writeSetting } from './settings.ts';
+import { findSetting, readSetting, SETTING_GROUPS, SETTINGS, settingWarnings, unsupportedHardwareSettings, writeSetting } from './settings.ts';
 
 const fixture = (name: string) => readFileSync(join(import.meta.dirname, '../../../test/fixtures/lily58', name), 'utf8');
 const load = () =>
@@ -94,6 +94,45 @@ describe('settingWarnings', () => {
     const kconfig = writeSetting(config.kconfig, setting('ZMK_IDLE_SLEEP_TIMEOUT'), 1000);
     expect(settingWarnings({ ...config, kconfig }).map((w) => w.message)).toEqual([expect.stringMatching(/sleep.*before.*idle/i)]);
   });
+
+  it('names the setting each warning is about, so it can link to its group', () => {
+    const config = load();
+    let kconfig = writeSetting(config.kconfig, setting('ZMK_POINTING'), undefined);
+    kconfig = writeSetting(kconfig, setting('ZMK_IDLE_SLEEP_TIMEOUT'), 1000);
+    const warnings = settingWarnings({ ...config, kconfig });
+    expect(warnings.map((w) => w.setting)).toEqual(['ZMK_POINTING', 'ZMK_IDLE_SLEEP_TIMEOUT']);
+    for (const w of warnings) expect(findSetting(w.setting)).toBeDefined();
+  });
+});
+
+describe('basic and advanced settings', () => {
+  it('flags the rarely changed settings as advanced', () => {
+    expect(SETTINGS.filter((s) => s.advanced).map((s) => s.name)).toEqual([
+      'BT_CTLR_TX_PWR',
+      'BT_MAX_CONN',
+      'ZMK_BLE_EXPERIMENTAL_CONN',
+      'ZMK_BLE_EXPERIMENTAL_SEC',
+      'ZMK_BLE_PASSKEY_ENTRY',
+      'BT_GATT_ENFORCE_SUBSCRIPTION',
+      'ZMK_BLE_CLEAR_BONDS_ON_START',
+      'ZMK_RGB_UNDERGLOW_EXT_POWER',
+      'ZMK_RGB_UNDERGLOW_BRT_MIN',
+      'ZMK_RGB_UNDERGLOW_HUE_STEP',
+      'ZMK_RGB_UNDERGLOW_SAT_STEP',
+      'ZMK_RGB_UNDERGLOW_BRT_STEP',
+      'EC11_TRIGGER',
+      'ZMK_POINTING_SMOOTH_SCROLLING',
+      'ZMK_HID_REPORT_TYPE',
+      'ZMK_HID_CONSUMER_REPORT_USAGES',
+      'ZMK_USB_LOGGING',
+    ]);
+  });
+
+  it('leaves every group some basic settings', () => {
+    for (const group of SETTING_GROUPS) {
+      expect(SETTINGS.some((s) => s.group === group.id && !s.advanced), group.id).toBe(true);
+    }
+  });
 });
 
 describe('settings a designed keyboard has no hardware for', () => {
@@ -135,6 +174,7 @@ describe('settings a designed keyboard has no hardware for', () => {
     const on = { ...designed, keymap, kconfig: writeSetting(designed.kconfig, def, true) };
     expect(settingWarnings(on)).toContainEqual({
       message: 'RGB underglow is on, but Test Split has no LED strip yet, so the firmware won’t build.',
+      setting: 'ZMK_RGB_UNDERGLOW',
       fix: { name: 'ZMK_RGB_UNDERGLOW', value: false },
     });
   });
@@ -159,6 +199,7 @@ describe('settings a designed keyboard has no hardware for', () => {
     const off = { ...withScreen, kconfig: writeSetting(withScreen.kconfig, def, false) };
     expect(settingWarnings(off)).toContainEqual({
       message: 'Test Split has a screen, but Display is off in Settings, so it stays dark.',
+      setting: 'ZMK_DISPLAY',
       fix: { name: 'ZMK_DISPLAY', value: true },
     });
   });
