@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   ArtifactDownloadError,
+  buildFailure,
   BuildWaitCancelled,
   downloadFirmware,
   findLatestRun,
   waitForRun,
+  type FailedJob,
   type WorkflowRun,
 } from '../../core/github/builds.ts';
 import { GitHubClient, type RepoRef } from '../../core/github/client.ts';
@@ -32,7 +34,8 @@ export type BuildState =
   | { phase: 'waiting'; sha: string; run: WorkflowRun | null }
   | { phase: 'downloading'; run: WorkflowRun }
   | { phase: 'done'; run: WorkflowRun; firmware: FirmwareFile[] }
-  | { phase: 'failed'; message: string; run?: WorkflowRun }
+  /** `jobs`: which halves failed and why, read from the run once it's known to have failed. */
+  | { phase: 'failed'; message: string; run?: WorkflowRun; jobs?: FailedJob[] }
   | { phase: 'blocked'; run: WorkflowRun; message: string };
 
 const message = (error: unknown) => (error instanceof Error ? error.message : String(error));
@@ -174,7 +177,11 @@ export function useBuildSession() {
   const fetchFirmware = async (g: number, conn: Connection, run: WorkflowRun) => {
     if (!current(g)) return;
     if (run.conclusion !== 'success') {
-      setBuild({ phase: 'failed', message: `The build ${run.conclusion ?? 'did not finish'}. Open it on GitHub to see why.`, run });
+      const failedMessage = `The build ${run.conclusion ?? 'did not finish'}.`;
+      setBuild({ phase: 'failed', message: failedMessage, run });
+      // Then say why, as far as GitHub lets the page read it.
+      const jobs = await buildFailure(conn.client, conn.ref, run.id);
+      if (current(g) && jobs.length > 0) setBuild({ phase: 'failed', message: failedMessage, run, jobs });
       return;
     }
     setBuild({ phase: 'downloading', run });

@@ -10,6 +10,16 @@ export interface FakeRun {
   html_url: string;
   /** Artifact zips for this run. */
   artifacts: { id: number; name: string; zip: Uint8Array }[];
+  /** The run's jobs, with each job's log text. */
+  jobs?: FakeJob[];
+}
+
+export interface FakeJob {
+  id: number;
+  name: string;
+  conclusion: 'success' | 'failure';
+  steps: { name: string; conclusion: 'success' | 'failure' | 'skipped' }[];
+  log: string;
 }
 
 interface Commit {
@@ -31,6 +41,8 @@ export class FakeGitHub {
   onCommit?: (sha: string) => void;
   /** Simulates the browser blocking the artifact redirect. */
   blockArtifactDownload = false;
+  /** Simulates the browser blocking the log redirect. */
+  blockLogDownload = false;
   /** Answers requests without a token, like a public repo. */
   isPublic = false;
   /** Answers every request with GitHub's rate-limit error. */
@@ -181,6 +193,24 @@ export class FakeGitHub {
       const branch = url.searchParams.get('branch');
       const runs = this.runs.filter((r) => (!sha || r.head_sha === sha) && (!branch || branch === 'main'));
       return this.json(200, { workflow_runs: [...runs].reverse() });
+    }
+    const jobsMatch = /^\/actions\/runs\/(\d+)\/jobs$/.exec(rest);
+    if (jobsMatch) {
+      const run = this.runs.find((r) => r.id === Number(jobsMatch[1]));
+      const jobs = (run?.jobs ?? []).map((j) => ({
+        id: j.id,
+        name: j.name,
+        conclusion: j.conclusion,
+        html_url: `https://github.com/me/zmk-config/actions/runs/${run?.id}/job/${j.id}`,
+        steps: j.steps,
+      }));
+      return this.json(200, { total_count: jobs.length, jobs });
+    }
+    const logMatch = /^\/actions\/jobs\/(\d+)\/logs$/.exec(rest);
+    if (logMatch) {
+      if (this.blockLogDownload) throw new TypeError('Failed to fetch');
+      const job = this.runs.flatMap((r) => r.jobs ?? []).find((j) => j.id === Number(logMatch[1]));
+      return job ? new Response(job.log, { status: 200 }) : this.json(404, { message: 'Not Found' });
     }
     const runMatch = /^\/actions\/runs\/(\d+)(\/artifacts)?$/.exec(rest);
     if (runMatch) {
