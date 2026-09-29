@@ -598,3 +598,99 @@ input.switch:disabled {
 .dialog-header p {
   margin: var(--s-1) 0 0;
 }
+
+/* Section: a titled card with an icon, description and header actions */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+
+.section.flat {
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+}
+
+.section-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.section-heading {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.section-title {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* Centre a one-line title on the icon. */
+.section-head:has(.section-icon) .section-heading {
+  min-height: 32px;
+  justify-content: center;
+}
+
+.section-description {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+
+.section-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+/* Badge tones */
+
+.badge.tone-accent {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.badge.tone-success {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.badge.tone-warning {
+  background: color-mix(in srgb, var(--warning) 16%, transparent);
+  color: var(--warning);
+}
+
+.badge.tone-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.badge.tone-info {
+  background: color-mix(in srgb, var(--info) 16%, transparent);
+  color: var(--info);
+}
