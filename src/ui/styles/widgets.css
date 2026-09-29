@@ -16,7 +16,7 @@
 }
 
 .theme-toggle:hover {
-  border-color: var(--accent);
+  border-color: var(--accent-line);
 }
 
 .theme-toggle-icon {
@@ -183,7 +183,7 @@
 ::highlight(help-search) {
   background-color: var(--accent-soft);
   color: var(--text);
-  text-decoration: underline 2px var(--accent);
+  text-decoration: underline 2px var(--accent-line);
 }
 
 @media (max-width: 800px) {

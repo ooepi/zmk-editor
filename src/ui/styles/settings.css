@@ -42,7 +42,7 @@
 }
 
 .setting.is-set {
-  border-left-color: var(--accent);
+  border-left-color: var(--accent-line);
 }
 
 .setting-label {

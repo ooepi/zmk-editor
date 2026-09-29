@@ -74,7 +74,7 @@
 }
 
 .mod-toggle.active {
-  border-color: var(--accent);
+  border-color: var(--accent-line);
   background: var(--accent);
   color: var(--accent-contrast);
 }
@@ -105,7 +105,7 @@
 }
 
 .picker-key.selected {
-  border-color: var(--accent);
+  border-color: var(--accent-line);
   background: var(--accent-soft);
 }
 
@@ -133,8 +133,7 @@
   }
 
   .panel {
-    border-left: none;
-    border-top: 1px solid var(--border);
+    margin: 0 var(--s-3) var(--s-3);
   }
 
   /* Stack keyboard, palette and panel and scroll them as one page. */

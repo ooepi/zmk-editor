@@ -8,7 +8,7 @@ import { useTheme } from '../useTheme.ts';
 const COLOUR_GROUPS: { title: string; tokens: string[] }[] = [
   { title: 'Surfaces', tokens: ['--bg', '--surface', '--surface-2', '--surface-3', '--border', '--border-strong'] },
   { title: 'Text', tokens: ['--text', '--text-muted', '--accent-text'] },
-  { title: 'Accent and status', tokens: ['--accent', '--accent-soft', '--focus-ring', '--danger', '--success', '--warning', '--info'] },
+  { title: 'Accent and status', tokens: ['--accent', '--accent-line', '--accent-soft', '--focus-ring', '--danger', '--success', '--warning', '--info'] },
   { title: 'Key kinds', tokens: ['--key-layer', '--key-hold', '--key-macro', '--key-dim'] },
   { title: 'Behavior kinds', tokens: ['--kind-holdtap', '--kind-modmorph', '--kind-tapdance', '--kind-encoder', '--kind-macro', '--kind-module'] },
 ];

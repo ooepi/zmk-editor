@@ -30,7 +30,7 @@
 
 .viewtab.active {
   color: var(--text);
-  border-bottom-color: var(--accent);
+  border-bottom-color: var(--accent-line);
 }
 
 /* Build & flash: the last step, pushed to the far end and filled so it can't be missed. */
@@ -41,7 +41,7 @@
   align-self: center;
   margin: 5px 0 5px auto;
   padding: 6px 16px;
-  border: 1px solid var(--accent);
+  border: 1px solid var(--accent-line);
   border-radius: 8px;
   background: var(--accent);
   color: var(--accent-contrast);
@@ -100,7 +100,7 @@
 }
 
 .encoder.selected {
-  border-color: var(--accent);
+  border-color: var(--accent-line);
   background: var(--accent-soft);
 }
 
@@ -124,7 +124,7 @@
 }
 
 .encoder-dir.drop-target {
-  border-color: var(--accent);
+  border-color: var(--accent-line);
   background: var(--accent-soft);
 }
 

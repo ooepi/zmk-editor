@@ -87,9 +87,9 @@
 }
 
 .palette-tile.armed {
-  border-color: var(--accent);
+  border-color: var(--accent-line);
   background: var(--accent-soft);
-  box-shadow: 0 0 0 2px var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-line);
 }
 
 .palette-tile-main {

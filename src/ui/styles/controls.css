@@ -114,7 +114,7 @@
 
 .button.active {
   background: var(--accent-soft);
-  border-color: var(--accent);
+  border-color: var(--accent-line);
 }
 
 .button.danger {
@@ -337,7 +337,7 @@ input[type='radio'] {
 }
 
 .item.active {
-  border-color: var(--accent);
+  border-color: var(--accent-line);
   background: var(--accent-soft);
 }
 
@@ -395,6 +395,6 @@ input[type='radio'] {
   margin: 0;
   transform: translateX(-50%);
   box-shadow:
-    inset 4px 0 0 var(--accent),
+    inset 4px 0 0 var(--accent-line),
     var(--shadow-float);
 }

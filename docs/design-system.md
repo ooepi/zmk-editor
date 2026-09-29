@@ -24,13 +24,16 @@ See it live: run `npm run dev` and open **http://localhost:5173/#design**. That 
    - type `--fs-xs…--fs-2xl`
    - motion `--dur-fast`, `--ease-out`
    - small component tokens such as `--toggle-sun` and `--print-paper`
-3. **Semantic roles, one set per theme.** These say what a colour is *for*: `--bg`, `--surface`, `--surface-2`, `--surface-3`, `--border`, `--text`, `--text-muted`, `--accent`, `--accent-text`, `--accent-soft`, `--focus-ring`, `--danger`, `--success`, `--warning`, `--info`, the key colours `--key-*`, the behavior-kind colours `--kind-*`, and the shadows `--shadow-*`. The dark block is the default; the light block overrides it. The print sheet always uses the light one.
+3. **Semantic roles, one set per theme.** These say what a colour is *for*: `--bg`, `--surface`, `--surface-2`, `--surface-3`, `--border`, `--text`, `--text-muted`, `--accent`, `--accent-line`, `--accent-text`, `--accent-soft`, `--focus-ring`, `--danger`, `--success`, `--warning`, `--info`, the key colours `--key-*`, the behavior-kind colours `--kind-*`, and the shadows `--shadow-*`. The dark block is the default; the light block overrides it. The print sheet always uses the light one.
 
 **Components use layers 2 and 3 only, never the palette.** That is what lets one edit to `tokens.css` restyle the whole app, and lets a theme swap every colour at once.
 
-Two notes on the accent:
-- `--accent` is for fills, borders and highlights.
-- For accent-coloured *text*, use `--accent-text`. Lime is unreadable as text on a light background, so the light theme maps `--accent-text` to a dark olive.
+The accent comes in three strengths, because lime is too pale to read on a light background:
+- `--accent`: **fills** only (primary buttons, active chips and tabs, highlights).
+- `--accent-line`: **lines that mark state**, such as a selected key's ring, an active item's border, a tab underline or a drop indicator. It reaches at least 3:1 against every surface in both themes.
+- `--accent-text`: accent-coloured **text**. It reaches at least 4.5:1.
+
+`src/ui/styles/contrast.test.ts` checks those contrast ratios from `tokens.css`. It also fails if a border, outline, box-shadow or underline uses the fill `--accent`.
 
 ## Rules
 
@@ -38,6 +41,7 @@ These rules are enforced by `src/ui/styles/tokens.test.ts`, which runs with `npm
 
 - No raw colours (`#hex`, `rgb()`, `hsl()`) in any stylesheet except `tokens.css`.
 - No palette tokens (`--lime-300`, …) outside `tokens.css`.
+- Borders, outlines, rings and underlines use `--accent-line`, never the fill `--accent` (`contrast.test.ts`).
 
 These are by convention:
 

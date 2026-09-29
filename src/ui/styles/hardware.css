@@ -9,7 +9,7 @@
 .badge-button:hover,
 .badge-button.active {
   color: var(--text);
-  border-color: var(--accent);
+  border-color: var(--accent-line);
 }
 
 .keyboard-view {
@@ -219,11 +219,11 @@
 }
 
 .wizard-steps .done {
-  border-color: var(--accent);
+  border-color: var(--accent-line);
 }
 
 .wizard-steps .active {
-  border-color: var(--accent);
+  border-color: var(--accent-line);
   background: var(--accent-soft);
   color: var(--accent-text);
   font-weight: 600;
@@ -337,7 +337,7 @@
 
 .pin-grid select.active-pin,
 .encoder-pins select.active-pin {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--accent-line);
   outline-offset: 1px;
 }
 
@@ -407,7 +407,7 @@
 }
 
 .pinout-pad.used {
-  border-color: var(--accent);
+  border-color: var(--accent-line);
   background: var(--accent-soft);
 }
 

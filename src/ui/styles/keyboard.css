@@ -41,7 +41,7 @@
 .layer-tab.active {
   color: var(--accent-contrast);
   background: var(--accent);
-  border-color: var(--accent);
+  border-color: var(--accent-line);
 }
 
 .layer-tab.active .layer-index {
@@ -82,7 +82,7 @@
 }
 
 .layer-action:hover:not(:disabled) {
-  border-color: var(--accent);
+  border-color: var(--accent-line);
 }
 
 .layer-action.danger:hover:not(:disabled) {
@@ -97,7 +97,7 @@
 
 .layer-tab.drag-hover {
   color: var(--text);
-  border-color: var(--accent);
+  border-color: var(--accent-line);
   border-style: dashed;
 }
 
@@ -110,7 +110,7 @@
   width: 130px;
   padding: 4px 8px;
   border-radius: 6px;
-  border: 1px solid var(--accent);
+  border: 1px solid var(--accent-line);
   background: var(--surface-2);
   font-family: var(--font-mono);
   font-size: 13px;
@@ -157,9 +157,9 @@
 }
 
 .keycap.selected {
-  border-color: var(--accent);
+  border-color: var(--accent-line);
   box-shadow:
-    0 0 0 calc(var(--unit) * 0.03) var(--accent),
+    0 0 0 calc(var(--unit) * 0.03) var(--accent-line),
     0 calc(var(--unit) * 0.08) calc(var(--unit) * 0.2) var(--accent-soft);
 }
 
@@ -220,15 +220,15 @@
 }
 
 .keycap.drop-target {
-  border-color: var(--accent);
+  border-color: var(--accent-line);
   background: var(--accent-soft);
-  box-shadow: 0 0 0 calc(var(--unit) * 0.04) var(--accent);
+  box-shadow: 0 0 0 calc(var(--unit) * 0.04) var(--accent-line);
 }
 
 /* Box select on the keymap. */
 .select-box {
   position: absolute;
-  border: 1px dashed var(--accent);
+  border: 1px dashed var(--accent-line);
   background: var(--accent-soft);
   pointer-events: none;
 }

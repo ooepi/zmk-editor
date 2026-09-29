@@ -86,7 +86,7 @@
 }
 
 .step.active .step-main {
-  border-color: var(--accent);
+  border-color: var(--accent-line);
   background: var(--accent-soft);
 }
 
@@ -108,20 +108,20 @@
 
 .step.drop-before,
 .tap.drop-before {
-  box-shadow: 0 -3px 0 var(--accent);
+  box-shadow: 0 -3px 0 var(--accent-line);
 }
 
 .step.drop-after,
 .tap.drop-after {
-  box-shadow: 0 3px 0 var(--accent);
+  box-shadow: 0 3px 0 var(--accent-line);
 }
 
 .layer-tab.drop-before {
-  box-shadow: -3px 0 0 var(--accent);
+  box-shadow: -3px 0 0 var(--accent-line);
 }
 
 .layer-tab.drop-after {
-  box-shadow: 3px 0 0 var(--accent);
+  box-shadow: 3px 0 0 var(--accent-line);
 }
 
 .step-index {

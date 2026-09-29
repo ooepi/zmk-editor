@@ -24,7 +24,7 @@
 }
 
 .module-card.installed {
-  border-color: var(--accent);
+  border-color: var(--accent-line);
 }
 
 .module-card p {
@@ -158,7 +158,7 @@
 }
 
 .screen-card.in-use {
-  border-color: var(--accent);
+  border-color: var(--accent-line);
 }
 
 .screen-card.selected {
@@ -219,7 +219,7 @@ img.pixel-art {
 
 .badge.in-use {
   color: var(--accent-text);
-  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent-line);
 }
 
 .screen-card-actions {
@@ -376,7 +376,7 @@ img.pixel-art {
 
 .version-select select:hover {
   color: var(--text);
-  border-color: var(--accent);
+  border-color: var(--accent-line);
 }
 
 .sr-only {
