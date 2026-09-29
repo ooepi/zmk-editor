@@ -25,6 +25,7 @@ import { PrintView } from './components/PrintView.tsx';
 import { SelectionPanel } from './components/SelectionPanel.tsx';
 import { ThemeToggle } from './components/ThemeToggle.tsx';
 import { Icon, type IconName } from './components/Icon.tsx';
+import { Dialog } from './components/ui/Dialog.tsx';
 import { IconButton } from './components/ui/IconButton.tsx';
 import { Section } from './components/ui/Section.tsx';
 import { ModulesView } from './components/ModulesView.tsx';
@@ -73,7 +74,8 @@ function useHash(): string {
   return hash;
 }
 
-export function App() {
+/** `welcome`: greet a first visit with the welcome dialog (the app turns it on; tests opt in). */
+export function App({ welcome = false }: { welcome?: boolean } = {}) {
   const hash = useHash();
   if (hash === '#design') {
     return (
@@ -82,7 +84,7 @@ export function App() {
       </Suspense>
     );
   }
-  return <Editor />;
+  return <Editor welcome={welcome} />;
 }
 
 /** How long a short confirmation stays on screen. */
@@ -92,7 +94,7 @@ function isTyping(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|SELECT|TEXTAREA)$/.test(target.tagName));
 }
 
-function Editor() {
+function Editor({ welcome }: { welcome: boolean }) {
   const [theme, toggleTheme] = useTheme();
   const [state, dispatch] = useEditor();
   const [view, setView] = useState<View>(() => (isLoginCallback() ? 'build' : 'keymap'));
@@ -134,7 +136,7 @@ function Editor() {
   const { layouts, recent, welcomed, welcomePending } = usePreferences();
   // Not once they've moved on from the demo some other way (opened files, a keyboard, a repository).
   const onDemo = config.keyboard === DEMO_KEYBOARD && !buildSession.connection;
-  const showWelcome = (newcomer || welcomePending) && !welcomed && onDemo;
+  const showWelcome = welcome && (newcomer || welcomePending) && !welcomed && onDemo;
   const layout = physicalLayoutFor(config.keyboard, keyCount, layouts[config.keyboard], customLayout(config));
 
   /** Remembers a palette item placed from the palette for its Recent row. */
@@ -463,7 +465,7 @@ function Editor() {
                 />
               )}
             </section>
-            <aside className="panel" aria-label="Details" tabIndex={-1}>
+            <aside className="panel" aria-label="Details">
               {view === 'combos' ? (
                 <CombosPanel
                   keymap={keymap}
@@ -488,23 +490,6 @@ function Editor() {
                 <EncoderPanel key={`${layer}-s${sensor}`} keymap={keymap} layer={layer} sensor={sensor} dispatch={dispatch} />
               ) : (
                 <>
-                  {showWelcome && (
-                    <GetStarted
-                      onKeyboard={() => {
-                        setPreferences({ welcomed: true });
-                        setView('keyboard');
-                      }}
-                      onConfig={() => {
-                        setPreferences({ welcomed: true });
-                        setView('build');
-                      }}
-                      onDismiss={() => {
-                        setPreferences({ welcomed: true });
-                        // The card and its focused button go away; keep keyboard focus in the panel.
-                        document.querySelector<HTMLElement>('.panel')?.focus();
-                      }}
-                    />
-                  )}
                   <Overview warnings={state.warnings} />
                   <ConditionalLayersPanel keymap={keymap} dispatch={dispatch} />
                 </>
@@ -513,6 +498,18 @@ function Editor() {
           </main>
         )}
       </div>
+      <WelcomeDialog
+        open={showWelcome}
+        onKeyboard={() => {
+          setPreferences({ welcomed: true });
+          setView('keyboard');
+        }}
+        onConfig={() => {
+          setPreferences({ welcomed: true });
+          setView('build');
+        }}
+        onClose={() => setPreferences({ welcomed: true })}
+      />
     </HelpContext.Provider>
   );
 }
@@ -601,31 +598,52 @@ function ShortcutKeys({ keys }: { keys: string }) {
 
 const DEMO_KEYBOARD = demoConfig().config.keyboard;
 
-/** Shown on a first visit, above the overview: what this is, and where to go from the demo. */
-function GetStarted({ onKeyboard, onConfig, onDismiss }: { onKeyboard: () => void; onConfig: () => void; onDismiss: () => void }) {
+/** A first visit's welcome: what this is, and where to go from the demo. Closing it means "try the demo". */
+function WelcomeDialog({ open, onKeyboard, onConfig, onClose }: { open: boolean; onKeyboard: () => void; onConfig: () => void; onClose: () => void }) {
   return (
-    <Section
-      variant="flat"
-      className="get-started"
+    <Dialog
+      open={open}
       title="Welcome to ZMK Editor"
-      icon="keyboard"
-      description="This is a Lily58 demo keymap: try anything. Nothing leaves your browser until you commit to GitHub."
-      actions={<IconButton icon="x" label="Dismiss welcome" onClick={onDismiss} />}
+      description="Edit a ZMK keyboard's keymap, combos and settings, then build the firmware on GitHub. Nothing leaves your browser until you commit."
+      onClose={onClose}
     >
-      <div className="get-started-choices">
-        <button type="button" className="button primary" onClick={onKeyboard}>
-          <Icon name="keyboard" size={16} />
-          Pick your keyboard
+      <div className="welcome-choices">
+        <button
+          type="button"
+          className="welcome-choice primary"
+          aria-label="Pick your keyboard"
+          aria-describedby="welcome-keyboard"
+          data-autofocus
+          onClick={onKeyboard}
+        >
+          <span className="welcome-choice-icon">
+            <Icon name="keyboard" size={22} />
+          </span>
+          <strong>Pick your keyboard</strong>
+          <span id="welcome-keyboard">Start from ZMK's default keymap for it, or design your own.</span>
         </button>
-        <button type="button" className="button" onClick={onConfig}>
-          <Icon name="github" size={16} />
-          Open your config from GitHub
+        <button
+          type="button"
+          className="welcome-choice"
+          aria-label="Open your config from GitHub"
+          aria-describedby="welcome-config"
+          onClick={onConfig}
+        >
+          <span className="welcome-choice-icon">
+            <Icon name="github" size={22} />
+          </span>
+          <strong>Open your config from GitHub</strong>
+          <span id="welcome-config">Already have a zmk-config repository? Connect it and edit it here.</span>
         </button>
-        <button type="button" className="link-button" onClick={onDismiss}>
-          Keep exploring the demo
+        <button type="button" className="welcome-choice" aria-label="Try the demo" aria-describedby="welcome-demo" onClick={onClose}>
+          <span className="welcome-choice-icon">
+            <Icon name="pointer" size={22} />
+          </span>
+          <strong>Try the demo</strong>
+          <span id="welcome-demo">Look around with a Lily58 keymap first. You can pick your keyboard any time.</span>
         </button>
       </div>
-    </Section>
+    </Dialog>
   );
 }
 
