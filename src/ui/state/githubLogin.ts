@@ -1,6 +1,7 @@
 import {
   authorizeUrl,
   createPkce,
+  ensureFresh,
   exchangeCode,
   LoginError,
   randomString,
@@ -69,6 +70,25 @@ export async function completeLogin(config: AuthConfig, fetchImpl?: typeof fetch
   const tokens = await exchangeCode(config, { code, verifier: pending.verifier, redirectUri: redirectUri() }, fetchImpl);
   saveTokens(tokens, pending.remember);
   return tokens;
+}
+
+let pendingFresh: Promise<Tokens> | null = null;
+
+/**
+ * The stored login, refreshed first when it's about to expire. Callers share one refresh at a
+ * time: GitHub replaces the refresh token each time it's used, so two at once would log out.
+ */
+export function freshTokens(config: AuthConfig): Promise<Tokens> {
+  pendingFresh ??= (async () => {
+    const stored = loadTokens();
+    if (!stored) throw new LoginError('You are not logged in to GitHub. Log in again.');
+    const tokens = await ensureFresh(config, stored);
+    if (tokens !== stored) saveTokens(tokens);
+    return tokens;
+  })().finally(() => {
+    pendingFresh = null;
+  });
+  return pendingFresh;
 }
 
 export function loadTokens(): Tokens | null {

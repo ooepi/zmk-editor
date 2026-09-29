@@ -61,7 +61,10 @@ export class GitHubClient {
 async function toError(response: Response, what: string): Promise<GitHubError> {
   let detail = '';
   try {
-    detail = ((await response.json()) as { message?: string }).message ?? '';
+    const body = (await response.json()) as { message?: string; errors?: { message?: string }[] };
+    // GitHub puts the specific reason (e.g. "name already exists on this account") in errors[].
+    const reasons = (body.errors ?? []).map((e) => e.message).filter(Boolean);
+    detail = [body.message, ...reasons].filter(Boolean).join(': ');
   } catch {
     // Not JSON.
   }

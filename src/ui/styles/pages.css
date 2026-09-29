@@ -514,3 +514,45 @@ img.pixel-art {
   align-items: center;
   gap: var(--s-2);
 }
+
+.repo-picker-actions {
+  align-items: center;
+  gap: var(--s-3);
+}
+
+/* Creating a repository: a tinted panel under the picker. */
+.new-repo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--accent) 5%, var(--surface));
+}
+
+.new-repo p {
+  margin: 0;
+}
+
+.new-repo-title {
+  font-weight: 700;
+}
+
+.new-repo-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s-4);
+}
+
+.new-repo-fields .input-prefix {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.new-repo-private {
+  min-height: 40px;
+  align-items: center;
+}

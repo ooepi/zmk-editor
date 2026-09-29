@@ -21,7 +21,8 @@ interface Commit {
 export class FakeGitHub {
   token = 'good-token';
   files: Record<string, string>;
-  headSha = 'commit-0';
+  /** Null while the repository is empty (no commits yet). */
+  headSha: string | null = 'commit-0';
   commits = new Map<string, Commit>();
   trees = new Map<string, Record<string, string>>();
   runs: FakeRun[] = [];
@@ -34,6 +35,10 @@ export class FakeGitHub {
   isPublic = false;
   /** Answers every request with GitHub's rate-limit error. */
   rateLimited = false;
+  /** Whether the app may create repositories (it needs the Administration permission). */
+  canCreateRepos = true;
+  /** False until the editor creates me/zmk-config (then it has just a README, like auto_init). */
+  exists = true;
   private counter = 0;
 
   constructor(files: Record<string, string>) {
@@ -42,12 +47,26 @@ export class FakeGitHub {
     this.commits.set('commit-0', { tree: 'tree-0', parents: [], message: 'initial' });
   }
 
+  /** A repository with no commits yet, like one just created on GitHub without a README. */
+  static empty(): FakeGitHub {
+    const fake = new FakeGitHub({});
+    fake.headSha = null;
+    fake.commits.clear();
+    fake.trees.clear();
+    return fake;
+  }
+
+  /** The files at the branch head. */
+  headFiles(): Record<string, string> {
+    return { ...this.headTree() };
+  }
+
   private json(status: number, body: unknown): Response {
     return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
   }
 
   private headTree(): Record<string, string> {
-    const commit = this.commits.get(this.headSha);
+    const commit = this.headSha === null ? undefined : this.commits.get(this.headSha);
     return this.trees.get(commit?.tree ?? '') ?? {};
   }
 
@@ -78,12 +97,43 @@ export class FakeGitHub {
         ],
       });
     }
-    if (path === `${repo}/branches`) return this.json(200, [{ name: 'main' }, { name: 'editor-test' }]);
-    if (!path.startsWith(repo)) return this.json(404, { message: 'Not Found' });
+    if (path === '/user/repos' && method === 'POST') {
+      if (!this.canCreateRepos) return this.json(403, { message: 'Resource not accessible by integration' });
+      if (body.name === 'zmk-config' && this.exists) {
+        return this.json(422, { message: 'Repository creation failed.', errors: [{ message: 'name already exists on this account' }] });
+      }
+      if (body.name === 'zmk-config') {
+        this.exists = true;
+        this.trees.set('tree-0', { 'README.md': '# zmk-config' });
+        this.commits.set('commit-0', { tree: 'tree-0', parents: [], message: 'Initial commit' });
+        this.headSha = 'commit-0';
+      }
+      return this.json(201, {
+        name: body.name,
+        owner: { login: 'me' },
+        default_branch: 'main',
+        private: Boolean(body.private),
+        html_url: `https://github.com/me/${body.name}`,
+      });
+    }
+    if (path === `${repo}/branches`) return this.json(200, this.headSha === null ? [] : [{ name: 'main' }, { name: 'editor-test' }]);
+    if (!path.startsWith(repo) || !this.exists) return this.json(404, { message: 'Not Found' });
     const rest = path.slice(repo.length);
 
     if (rest === '' && method === 'GET') return this.json(200, { full_name: 'me/zmk-config', default_branch: 'main', html_url: 'https://github.com/me/zmk-config' });
+    if (this.headSha === null && rest.startsWith('/git/')) return this.json(409, { message: 'Git Repository is empty.' });
     if (rest === '/git/ref/heads/main') return this.json(200, { object: { sha: this.headSha } });
+    if (rest.startsWith('/contents/') && method === 'PUT') {
+      const file = rest.slice('/contents/'.length);
+      const bytes = Uint8Array.from(atob(body.content), (c) => c.charCodeAt(0));
+      const tree = `tree-${++this.counter}`;
+      this.trees.set(tree, { ...this.headTree(), [file]: new TextDecoder().decode(bytes) });
+      const sha = `commit-${++this.counter}`;
+      this.commits.set(sha, { tree, parents: this.headSha === null ? [] : [this.headSha], message: body.message });
+      this.headSha = sha;
+      this.onCommit?.(sha);
+      return this.json(201, { commit: { sha } });
+    }
     if (rest.startsWith('/git/commits/') && method === 'GET') {
       const commit = this.commits.get(rest.slice('/git/commits/'.length));
       return commit ? this.json(200, { sha: rest.slice(13), tree: { sha: commit.tree } }) : this.json(404, { message: 'Not Found' });

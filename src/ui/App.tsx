@@ -8,6 +8,7 @@ import { physicalLayoutFor } from '../core/layouts/index.ts';
 import { BehaviorsView } from './components/BehaviorsView.tsx';
 import { BindingPanel } from './components/BindingPanel.tsx';
 import { BuildView } from './components/BuildView.tsx';
+import { useBuildSession } from './state/buildSession.ts';
 import { ComboBanner } from './components/ComboBanner.tsx';
 import { CombosPanel } from './components/CombosPanel.tsx';
 import { ConditionalLayersPanel } from './components/ConditionalLayersPanel.tsx';
@@ -105,6 +106,8 @@ function Editor() {
   const [macro, setMacro] = useState<string | null>(null);
   /** The palette section to open on next time the Keymap tab shows, from "Show in palette". */
   const [paletteStart, setPaletteStart] = useState<string | null>(null);
+  /** The GitHub repository and build, kept while you move between tabs. */
+  const buildSession = useBuildSession();
   // A jump request is for the next Keymap visit only; going anywhere else drops it.
   if (paletteStart && view !== 'keymap' && view !== 'behaviors' && view !== 'macros') setPaletteStart(null);
   /** A palette tile placed on each clicked key, until Esc. */
@@ -348,7 +351,7 @@ function Editor() {
           </main>
         ) : view === 'build' ? (
           <main className="workspace single">
-            <BuildView config={config} dispatch={dispatch} />
+            <BuildView config={config} dispatch={dispatch} session={buildSession} />
           </main>
         ) : view === 'print' ? (
           <main className="workspace single">
