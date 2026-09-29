@@ -99,16 +99,25 @@ export const CONFIG: HelpSection[] = [
     body: (
       <>
         <p>
-          The <Ui>Build &amp; flash</Ui> tab commits your config to GitHub, where GitHub Actions builds the firmware. You need a{' '}
-          <code>zmk-config</code> repository on GitHub, for example one made from ZMK's template.
+          The <Ui>Build &amp; flash</Ui> tab commits your config to GitHub, where GitHub Actions builds the firmware. It needs a{' '}
+          <code>zmk-config</code> repository on GitHub: pick one you have, or let the editor create one.
         </p>
         <Sub id="connect" title="Connecting to GitHub">
           <p>
-            <Ui>Log in with GitHub</Ui> asks GitHub which repositories the editor may use; it can read and commit files and
-            follow builds there, nothing else. Or open <Ui>Use a token instead</Ui> and paste a fine-grained personal
-            access token for just that repository, with <strong>Contents: read and write</strong>,{' '}
+            <Ui>Log in with GitHub</Ui> asks GitHub which repositories the editor may use; it reads and commits files and
+            follows builds there, and can create a new repository for you. Or open <Ui>Use a token instead</Ui> and paste a
+            fine-grained personal access token for just that repository, with <strong>Contents: read and write</strong>,{' '}
             <strong>Actions: read</strong> and <strong>Workflows: read and write</strong>. Pick the repository and branch
             and open it. <Ui>Load config from repo</Ui> replaces the editor's contents with what's in the repository.
+          </p>
+          <p>
+            No repository yet? <Ui>New repository</Ui> creates one on your GitHub account, commits this config to it and
+            starts the first build. An empty repository you made on GitHub works too: the first commit fills it. After
+            adding repositories on GitHub, <Ui>Refresh list</Ui> shows them without reloading the page.
+          </p>
+          <p>
+            The editor remembers the repository and reopens it by itself next time, and rereads the branch whenever you
+            open this tab, so the list of changes always matches GitHub.
           </p>
         </Sub>
         <Sub id="commit" title="Committing and building">

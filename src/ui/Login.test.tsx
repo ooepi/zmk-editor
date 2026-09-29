@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { generateConfig } from '../core/config.ts';
@@ -77,6 +77,43 @@ describe('Log in with GitHub', () => {
     await user.click(screen.getByRole('button', { name: 'Open repository' }));
     expect(await screen.findByText(/Connected to/)).toBeTruthy();
     expect(screen.getByText('The branch already matches the editor.')).toBeTruthy();
+  });
+
+  it('reopens the repository used last when the app starts, and keeps it across tabs', async () => {
+    const user = userEvent.setup();
+    localStorage.setItem('zmk-editor.login.v1', JSON.stringify({ accessToken: 'ghu_user', expiresAt: Date.now() + 3_600_000 }));
+    localStorage.setItem('zmk-editor.github.v1', JSON.stringify({ token: '', owner: 'me', repo: 'zmk-config', branch: 'main' }));
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Build & flash' }));
+    expect(await screen.findByText(/Connected to/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Open repository' })).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Keymap' }));
+    await user.click(screen.getByRole('button', { name: 'Build & flash' }));
+    expect(screen.getByText(/Connected to/)).toBeTruthy();
+  });
+
+  it('creates a repository for the config, commits it and starts the build', async () => {
+    const user = userEvent.setup();
+    fake.exists = false;
+    fake.onCommit = (sha) =>
+      fake.runs.push({ id: 9, head_sha: sha, status: 'queued', conclusion: null, html_url: 'https://github.com/me/zmk-config/actions/runs/9', artifacts: [] });
+    localStorage.setItem('zmk-editor.login.v1', JSON.stringify({ accessToken: 'ghu_user', expiresAt: Date.now() + 3_600_000 }));
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Build & flash' }));
+    await user.click(await screen.findByRole('button', { name: 'New repository' }));
+    const form = screen.getByRole('form', { name: 'New repository' });
+    const name = within(form).getByRole('textbox', { name: 'Repository name' });
+    await user.clear(name);
+    await user.type(name, 'zmk-config');
+    await user.click(within(form).getByRole('button', { name: 'Create and build' }));
+
+    expect(await screen.findByText(/Connected to/)).toBeTruthy();
+    await vi.waitFor(() => expect(fake.headFiles()['config/lily58.keymap']).toBeDefined());
+    expect(fake.headFiles()['README.md']).toBe('# zmk-config');
+    expect(fake.requests.find((r) => r.path === '/user/repos')?.body).toMatchObject({ name: 'zmk-config', auto_init: true });
+    expect(await screen.findByText(/Waiting for a runner/)).toBeTruthy();
+    expect(JSON.parse(localStorage.getItem('zmk-editor.github.v1') ?? '{}')).toMatchObject({ owner: 'me', repo: 'zmk-config' });
   });
 
   it('rejects a login response that this browser did not start', async () => {

@@ -5,7 +5,7 @@ import { GitHubClient, GitHubError } from './client.ts';
 import { ArtifactDownloadError, downloadFirmware, findLatestRun, waitForRun } from './builds.ts';
 import { extractUf2 } from './firmware.ts';
 import { FakeGitHub, type FakeRun } from './fakeGitHub.ts';
-import { commitFiles, loadRepoFiles } from './repo.ts';
+import { commitFiles, createRepo, loadRepoFiles } from './repo.ts';
 
 const REPO = { owner: 'me', repo: 'zmk-config', branch: 'main' };
 
@@ -50,11 +50,48 @@ describe('repo files', () => {
     });
   });
 
+  it('reads an empty repository as having no files yet', async () => {
+    const fake = FakeGitHub.empty();
+    const client = new GitHubClient('good-token', fake.fetch);
+    expect(await loadRepoFiles(client, REPO, () => true)).toEqual({ files: {}, headSha: null });
+  });
+
+  it('makes the first commit of an empty repository, then adds the rest on top', async () => {
+    const fake = FakeGitHub.empty();
+    const client = new GitHubClient('good-token', fake.fetch);
+    const result = await commitFiles(client, REPO, { 'config/west.yml': 'west ä', 'build.yaml': 'b', 'gone.txt': null }, 'First');
+    expect(result.committed).toBe(true);
+    expect(fake.headSha).toBe(result.sha);
+    expect(fake.headFiles()).toEqual({ 'config/west.yml': 'west ä', 'build.yaml': 'b' });
+    // The first file goes in through the Contents API, which works on an empty repo.
+    expect(fake.requests.some((r) => r.method === 'PUT' && r.path === '/repos/me/zmk-config/contents/config/west.yml')).toBe(true);
+  });
+
   it('makes no commit when nothing changed', async () => {
     const { fake, client } = setup();
     const result = await commitFiles(client, REPO, { 'config/west.yml': 'west' }, 'Nothing');
     expect(result).toEqual({ committed: false, sha: 'commit-0' });
     expect(fake.requests.some((r) => r.method === 'PATCH')).toBe(false);
+  });
+});
+
+describe('createRepo', () => {
+  it('creates a repository for the user, started with a README', async () => {
+    const { fake, client } = setup();
+    const created = await createRepo(client, { name: 'my-zmk', private: true });
+    expect(created).toEqual({ owner: 'me', repo: 'my-zmk', defaultBranch: 'main', private: true });
+    const request = fake.requests.find((r) => r.method === 'POST' && r.path === '/user/repos');
+    expect(request?.body).toMatchObject({ name: 'my-zmk', private: true, auto_init: true });
+  });
+
+  it('explains a name that is taken and a missing permission', async () => {
+    const { client } = setup();
+    await expect(createRepo(client, { name: 'zmk-config', private: false })).rejects.toThrow(/already have a repository named zmk-config/);
+    const noRights = new FakeGitHub({});
+    noRights.canCreateRepos = false;
+    await expect(createRepo(new GitHubClient('good-token', noRights.fetch), { name: 'x', private: false })).rejects.toThrow(
+      /can't create repositories/,
+    );
   });
 });
 

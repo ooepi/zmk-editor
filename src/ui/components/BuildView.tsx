@@ -1,23 +1,15 @@
-import { useMemo, useState, type Dispatch } from 'react';
+import { useEffect, useMemo, useState, type Dispatch } from 'react';
 import { unsupportedHardwareSettings } from '../../core/catalog/settings.ts';
 import { sensorGaps } from '../../core/keymap/sensorEdit.ts';
 import { configPaths, generateConfig, importConfig, type ZmkConfig } from '../../core/config.ts';
-import {
-  ArtifactDownloadError,
-  downloadFirmware,
-  findLatestRun,
-  waitForRun,
-  type WorkflowRun,
-} from '../../core/github/builds.ts';
+import type { WorkflowRun } from '../../core/github/builds.ts';
 import { diffStats, lineDiff } from '../../core/github/diff.ts';
 import { extractUf2, type FirmwareFile } from '../../core/github/firmware.ts';
-import { commitFiles } from '../../core/github/repo.ts';
 import { handEditedShieldFiles, staleShieldFiles } from '../../core/hardware/generate.ts';
 import { validateHardware } from '../../core/hardware/validate.ts';
+import type { BuildSession, BuildState, Connection } from '../state/buildSession.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
-import { clearGitHubSettings } from '../state/github.ts';
-import { clearTokens } from '../state/githubLogin.ts';
-import { ConnectSection, type Connection } from './ConnectSection.tsx';
+import { ConnectSection } from './ConnectSection.tsx';
 import { DiffView } from './DiffView.tsx';
 import { HardwareIssueList } from './HardwareIssueList.tsx';
 import { httpsUrl } from '../../core/url.ts';
@@ -27,18 +19,8 @@ import { Section } from './ui/Section.tsx';
 interface BuildViewProps {
   config: ZmkConfig;
   dispatch: Dispatch<EditorAction>;
+  session: BuildSession;
 }
-
-
-type BuildState =
-  | { phase: 'idle' }
-  | { phase: 'committing' }
-  | { phase: 'waiting'; sha: string; run: WorkflowRun | null }
-  | { phase: 'downloading'; run: WorkflowRun }
-  | { phase: 'done'; run: WorkflowRun; firmware: FirmwareFile[] }
-  | { phase: 'failed'; message: string; run?: WorkflowRun }
-  | { phase: 'blocked'; run: WorkflowRun; message: string };
-
 
 function save(data: Uint8Array | string, name: string, type = 'application/octet-stream') {
   const url = URL.createObjectURL(new Blob([typeof data === 'string' ? data : new Uint8Array(data)], { type }));
@@ -52,13 +34,16 @@ function save(data: Uint8Array | string, name: string, type = 'application/octet
 const message = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
 /** Connect to the zmk-config repo, commit, follow the build and get the firmware. */
-export function BuildView({ config, dispatch }: BuildViewProps) {
-  const [connection, setConnection] = useState<Connection | null>(null);
-  // Bumped on every explicit connect, so a hand-edit confirmation never carries over from a
-  // previous connection to the same repo (e.g. Disconnect then reconnect, with nothing changed).
-  const [connectionSeq, setConnectionSeq] = useState(0);
-  const [build, setBuild] = useState<BuildState>({ phase: 'idle' });
+export function BuildView({ config, dispatch, session }: BuildViewProps) {
+  const { connection, connectionSeq, build } = session;
   const [commitMessage, setCommitMessage] = useState('Update keymap with ZMK Editor');
+
+  // Opening the tab rereads the branch, so the changes list matches what's on GitHub now.
+  useEffect(() => {
+    void session.refresh();
+    // Only when the tab opens; the session's functions are new every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const generated = useMemo(() => generateConfig(config), [config]);
   // A null text deletes the file: shield files the editor generated earlier and no longer does.
@@ -80,84 +65,35 @@ export function BuildView({ config, dispatch }: BuildViewProps) {
   const unsupported = useMemo(() => unsupportedHardwareSettings(config), [config]);
   const encoderGaps = useMemo(() => sensorGaps(config.keymap), [config.keymap]);
   const handEditKey = connection
-    ? `${connectionSeq}:${connection.ref.owner}/${connection.ref.repo}@${connection.headSha}:${handEdited.join('|')}`
+    ? `${connectionSeq}:${connection.ref.owner}/${connection.ref.repo}@${connection.headSha ?? 'empty'}:${handEdited.join('|')}`
     : '';
   const [confirmedHandEdits, setConfirmedHandEdits] = useState<string | null>(null);
   const replaceHandEdits = handEdited.length > 0 && confirmedHandEdits === handEditKey;
   const busy = build.phase === 'committing' || build.phase === 'waiting' || build.phase === 'downloading';
+  const blocked = hardwareErrors.length > 0 || unsupported.length > 0 || encoderGaps.length > 0;
 
-  const follow = async (conn: Connection, sha: string) => {
-    try {
-      const run = await waitForRun(conn.client, conn.ref, sha, { onUpdate: (r) => setBuild({ phase: 'waiting', sha, run: r }) });
-      await fetchFirmware(conn, run);
-    } catch (error) {
-      setBuild({ phase: 'failed', message: message(error) });
-    }
+  const commitAndBuild = () => {
+    if (connection) void session.commitAndBuild(connection, changes, generated, commitMessage);
   };
 
-  const fetchFirmware = async (conn: Connection, run: WorkflowRun) => {
-    if (run.conclusion !== 'success') {
-      setBuild({ phase: 'failed', message: `The build ${run.conclusion ?? 'did not finish'}. Open it on GitHub to see why.`, run });
-      return;
-    }
-    setBuild({ phase: 'downloading', run });
-    try {
-      setBuild({ phase: 'done', run, firmware: await downloadFirmware(conn.client, conn.ref, run.id) });
-    } catch (error) {
-      if (error instanceof ArtifactDownloadError) setBuild({ phase: 'blocked', run, message: error.message });
-      else setBuild({ phase: 'failed', message: message(error), run });
-    }
-  };
-
-  const commitAndBuild = async () => {
-    if (!connection) return;
-    setBuild({ phase: 'committing' });
-    try {
-      const result = await commitFiles(connection.client, connection.ref, Object.fromEntries(changes), commitMessage);
-      const deleted = new Set(changes.filter(([, text]) => text === null).map(([path]) => path));
-      const files = Object.fromEntries(Object.entries({ ...connection.files, ...generated }).filter(([path]) => !deleted.has(path)));
-      const next = { ...connection, files, headSha: result.sha };
-      setConnection(next);
-      setBuild({ phase: 'waiting', sha: result.sha, run: null });
-      await follow(next, result.sha);
-    } catch (error) {
-      setBuild({ phase: 'failed', message: message(error) });
-    }
-  };
-
-  const latestBuild = async () => {
-    if (!connection) return;
-    try {
-      const run = await findLatestRun(connection.client, connection.ref);
-      if (!run) {
-        setBuild({ phase: 'failed', message: 'No builds on this branch yet.' });
-        return;
-      }
-      if (run.status === 'completed') await fetchFirmware(connection, run);
-      else {
-        setBuild({ phase: 'waiting', sha: run.head_sha, run });
-        await follow(connection, run.head_sha);
-      }
-    } catch (error) {
-      setBuild({ phase: 'failed', message: message(error) });
-    }
+  /** A repository just created for this config: commit everything and start the first build. */
+  const onCreated = (conn: Connection) => {
+    session.connect(conn);
+    if (blocked) return;
+    const all = Object.entries(generated).filter(([path, text]) => conn.files[path] !== text);
+    void session.commitAndBuild(conn, all, generated, 'Add keyboard config from ZMK Editor');
   };
 
   return (
     <div className="build-view">
       <ConnectSection
         connection={connection}
-        onConnected={(conn) => {
-          setConnection(conn);
-          setConnectionSeq((n) => n + 1);
-          setBuild({ phase: 'idle' });
-        }}
-        onDisconnect={() => {
-          clearGitHubSettings();
-          clearTokens();
-          setConnection(null);
-          setBuild({ phase: 'idle' });
-        }}
+        reconnecting={session.reconnecting}
+        reconnectError={session.reconnectError}
+        onConnected={session.connect}
+        onCreated={onCreated}
+        onRefresh={() => void session.refresh()}
+        onDisconnect={session.disconnect}
         onLoad={() => {
           if (!connection) return;
           if (!window.confirm(`Replace the editor contents with ${connection.ref.owner}/${connection.ref.repo}?`)) return;
@@ -250,20 +186,22 @@ export function BuildView({ config, dispatch }: BuildViewProps) {
               type="button"
               className="button primary"
               disabled={
-                busy || changes.length === 0 || !commitMessage.trim() || (handEdited.length > 0 && !replaceHandEdits) || hardwareErrors.length > 0 || unsupported.length > 0 || encoderGaps.length > 0
+                busy || changes.length === 0 || !commitMessage.trim() || (handEdited.length > 0 && !replaceHandEdits) || blocked
               }
-              onClick={() => void commitAndBuild()}
+              onClick={commitAndBuild}
             >
               Commit &amp; build
             </button>
-            <button type="button" className="button" disabled={busy} onClick={() => void latestBuild()}>
+            <button type="button" className="button" disabled={busy} onClick={() => void session.latestBuild()}>
               Latest build
             </button>
           </div>
         </Section>
       )}
 
-      {build.phase !== 'idle' && <BuildStatus build={build} onFirmware={(run, firmware) => setBuild({ phase: 'done', run, firmware })} />}
+      {build.phase !== 'idle' && (
+        <BuildStatus build={build} onFirmware={(run, firmware) => session.setBuild({ phase: 'done', run, firmware })} />
+      )}
     </div>
   );
 }

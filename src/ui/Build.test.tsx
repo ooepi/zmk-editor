@@ -71,7 +71,7 @@ describe('Build tab', () => {
     expect(await screen.findByText('Firmware ready: 2 files.')).toBeTruthy();
     const firmware = within(screen.getByRole('list', { name: 'Firmware files' })).getAllByRole('listitem');
     expect(firmware.map((f) => f.textContent)).toEqual([expect.stringContaining('lily58_left.uf2'), expect.stringContaining('lily58_right.uf2')]);
-    expect(fake.commits.get(fake.headSha)?.message).toBe('Update keymap with ZMK Editor');
+    expect(fake.commits.get(fake.headSha ?? '')?.message).toBe('Update keymap with ZMK Editor');
     expect(screen.getByText('The branch already matches the editor.')).toBeTruthy();
   });
 
@@ -98,6 +98,21 @@ describe('Build tab', () => {
     await user.click(await screen.findByRole('button', { name: 'Load config from repo' }));
     await user.click(screen.getByRole('button', { name: 'Keymap' }));
     expect(screen.getByRole('button', { name: 'Key 0: Tab' })).toBeTruthy();
+  });
+});
+
+describe('Build tab with an empty repository', () => {
+  it('connects to a repository with no commits yet and makes its first commit', async () => {
+    const user = userEvent.setup();
+    const empty = FakeGitHub.empty();
+    empty.onCommit = fake.onCommit;
+    vi.stubGlobal('fetch', empty.fetch);
+    render(<App />);
+    await connect(user);
+    expect(await screen.findByText(/which is still empty/)).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Commit & build' }));
+    await vi.waitFor(() => expect(empty.headFiles()['config/lily58.keymap']).toBeDefined());
+    expect(Object.keys(empty.headFiles())).toEqual(expect.arrayContaining(['build.yaml', 'config/west.yml', '.github/workflows/build.yml']));
   });
 });
 
@@ -179,7 +194,7 @@ describe('Build tab after removing a display', () => {
 
     await user.click(screen.getByRole('button', { name: 'Commit & build' }));
     await screen.findByText(/Waiting for the build to start/);
-    const head = fake.commits.get(fake.headSha);
+    const head = fake.commits.get(fake.headSha ?? '');
     expect(Object.keys(fake.trees.get(head?.tree ?? '') ?? {})).not.toContain(conf);
     expect(within(changes).queryByRole('button', { name: /test_pad\.conf/ })).toBeNull();
   });
