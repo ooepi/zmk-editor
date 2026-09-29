@@ -63,6 +63,8 @@ mkdirSync(OUT, { recursive: true });
 try {
   for (const shot of shots) {
     const page = await browser.newPage({ viewport: VIEWPORT, colorScheme: 'dark', locale: 'en-US' });
+    // Each shot is a first visit; skip the welcome dialog so it doesn't cover the page.
+    await page.addInitScript(() => localStorage.setItem('zmk-editor.preferences.v1', JSON.stringify({ welcomed: true })));
     await page.goto(url);
     await page.getByRole('group', { name: 'Keyboard layout' }).waitFor();
     await shot.setup(page);
