@@ -1,10 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { searchKeycodes } from '../catalog/keycodes.ts';
-import { demoConfig } from '../../ui/state/demo.ts';
+import { importKeymap } from './importer.ts';
 import { behaviorTiles } from './palette.ts';
 import { paletteSections } from './paletteSections.ts';
 
-const tiles = behaviorTiles(demoConfig().config.keymap);
+const SOURCE = `
+#include <behaviors.dtsi>
+/ {
+    keymap {
+        compatible = "zmk,keymap";
+        base { display-name = "Base"; bindings = <&kp A &mo 1>; };
+        nav { display-name = "Nav"; bindings = <&trans &trans>; };
+    };
+};`;
+
+const tiles = behaviorTiles(importKeymap(SOURCE).model);
 const titles = (query: string) => paletteSections(query, tiles).map((s) => s.title);
 
 describe('paletteSections', () => {
