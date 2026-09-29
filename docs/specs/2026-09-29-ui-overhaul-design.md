@@ -27,6 +27,7 @@ The editor's features are done, but the UI is utilitarian: every control has the
   - Dark values: bg `#121212`, surface `#1b1b1d`, surface-2 `#242427`, surface-3 `#2e2e32`, text `#f1f1ee`, muted `#9a9a94`, accent `#d7f46c`, accent-contrast `#1a1f05`.
   - Light values: bg `#efefeb`, surface `#fff`, accent fill `#c8e650` with dark text, and `--accent-text: #4f6a00`.
   - The `.print-sheet` light override stays.
+- **Design system.** Tokens have two layers: a palette of raw, theme-independent values, and semantic roles per theme. Components use only the semantic roles. Raw colours live only in `tokens.css`, and a test enforces it. `controls.css` is the component layer, and the React primitives render its classes. A living reference page at `/#design` shows every token and component in both themes; each phase adds its new primitives there. How to extend it: `docs/design-system.md`.
 - **Shared primitives**, new and small, in `src/ui/components/ui/`:
   - `IconButton.tsx`: round button with `aria-label`. An optional `label` expands on hover or focus with a CSS width transition. Disabled buttons keep their `title` reason.
   - `Menu.tsx`: an accessible dropdown (`aria-haspopup="menu"`, `role=menu/menuitem`). It supports arrow keys, Home/End and Esc, closes on outside click and returns focus to the trigger. No library.
