@@ -56,7 +56,7 @@ export function paletteSections(query: string, tiles: BehaviorTile[]): PaletteSe
   const behaviorSections: PaletteSection[] = BEHAVIOR_GROUPS.map((g) => ({
     id: `behaviors-${g.id}`,
     // "Keys" is taken by the key search results; say what this group is.
-    title: g.id === 'keys' ? 'Key behaviors' : g.label,
+    title: g.id === 'keys' ? 'Key behaviors' : g.id === 'system' ? 'System behaviors' : g.label,
     kind: 'behaviors',
     tiles: shown.filter((t) => t.group === g.id),
   }));

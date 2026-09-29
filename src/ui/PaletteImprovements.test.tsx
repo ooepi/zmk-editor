@@ -127,3 +127,33 @@ describe('encoder drops', () => {
     expect(screen.getByRole('status').textContent).toMatch(/Only keys, Transparent and None/);
   });
 });
+
+describe('palette loose ends', () => {
+  it('stops placing with Esc from the search box, after clearing the search', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(palette().getByRole('button', { name: 'Place A (A)' }));
+    expect(palette().getByText(/Placing A/)).toBeTruthy();
+    const search = palette().getByRole('searchbox', { name: 'Search the palette' });
+    await user.type(search, 'esc');
+    await user.keyboard('{Escape}');
+    expect((search as HTMLInputElement).value).toBe('');
+    expect(palette().getByText(/Placing A/)).toBeTruthy();
+    await user.keyboard('{Escape}');
+    expect(palette().queryByText(/Placing A/)).toBeNull();
+  });
+
+  it('says the palette is hidden while it’s folded', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(palette().getByRole('button', { name: 'Hide palette' }));
+    expect(palette().getByText(/The palette is hidden/)).toBeTruthy();
+  });
+
+  it('moves focus to the section a rail entry jumps to', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(palette().getByRole('button', { name: 'Numbers' }));
+    expect(document.activeElement?.textContent).toBe('Numbers');
+  });
+});
