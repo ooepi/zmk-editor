@@ -161,7 +161,7 @@ describe('palette layout', () => {
 });
 
 describe('palette status', () => {
-  const status = () => within(palette().getByRole('status'));
+  const status = () => within(palette().getByText(/Select a key|Click a tile|Placing/).closest('p') as HTMLElement);
 
   it('says what a click will do in each mode', async () => {
     const user = userEvent.setup();
