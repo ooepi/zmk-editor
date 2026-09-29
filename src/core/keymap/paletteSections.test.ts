@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { searchKeycodes } from '../catalog/keycodes.ts';
 import { importKeymap } from './importer.ts';
 import { behaviorTiles } from './palette.ts';
-import { paletteSections } from './paletteSections.ts';
+import { paletteSections, sectionInView } from './paletteSections.ts';
 
 const SOURCE = `
 #include <behaviors.dtsi>
@@ -41,5 +41,41 @@ describe('paletteSections', () => {
 
   it('returns nothing when nothing matches', () => {
     expect(paletteSections('zzzz', tiles)).toEqual([]);
+  });
+});
+
+describe('palette section titles', () => {
+  it('never shows two sections with the same title while searching', () => {
+    for (const query of ['esc', 'caps', 'a', 'sticky']) {
+      const found = titles(query);
+      expect(new Set(found).size, query).toBe(found.length);
+    }
+  });
+
+  it('calls the key behaviors group "Key behaviors"', () => {
+    expect(titles('')).toContain('Key behaviors');
+  });
+});
+
+describe('sectionInView', () => {
+  const tops = [
+    { id: 'a', top: 100 },
+    { id: 'b', top: 300 },
+    { id: 'c', top: 500 },
+  ];
+
+  it('picks the last section whose top has reached the top of the list, allowing for rounding', () => {
+    expect(sectionInView(tops, 100, false, null)).toBe('a');
+    expect(sectionInView(tops, 299.2, false, null)).toBe('b');
+    expect(sectionInView(tops, 150, false, null)).toBe('a');
+  });
+
+  it('keeps the section jumped to when the list is scrolled to the bottom', () => {
+    expect(sectionInView(tops, 100, true, 'c')).toBe('c');
+    expect(sectionInView(tops, 100, true, null)).toBe('c');
+  });
+
+  it('is empty before the first section', () => {
+    expect(sectionInView(tops, 0, false, null)).toBeNull();
   });
 });

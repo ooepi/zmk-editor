@@ -202,6 +202,50 @@ describe('modifiers on palette tiles', () => {
   });
 });
 
+describe('palette search', () => {
+  it('starts a search at the top of the list and clears the highlighted category', async () => {
+    Element.prototype.scrollIntoView = () => undefined;
+    const user = userEvent.setup();
+    render(<App />);
+    const list = palette().getByRole('region', { name: 'Palette tiles' });
+    let top = 0;
+    Object.defineProperty(list, 'scrollTop', { get: () => top, set: (v: number) => (top = v), configurable: true });
+    const rail = within(palette().getByRole('navigation', { name: 'Palette categories' }));
+    await user.click(rail.getByRole('button', { name: 'Layers' }));
+    top = 1500;
+    await user.type(palette().getByRole('searchbox', { name: 'Search the palette' }), 'a');
+    expect(top).toBe(0);
+    expect(rail.queryAllByRole('button').filter((b) => b.getAttribute('aria-current') === 'true')).toEqual([]);
+  });
+
+  it('finds Transparent and None by name', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const search = palette().getByRole('searchbox', { name: 'Search the palette' });
+    await user.type(search, 'trans');
+    expect(within(palette().getByRole('group', { name: 'Special' })).getByRole('button', { name: 'Place Transparent' })).toBeTruthy();
+    await user.clear(search);
+    await user.type(search, 'esc');
+    expect(palette().queryByRole('group', { name: 'Special' })).toBeNull();
+  });
+});
+
+describe('armed tile names', () => {
+  it('names special tiles in words', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(palette().getByRole('button', { name: 'Place Transparent' }));
+    expect(palette().getByText(/Placing Transparent: click keys/)).toBeTruthy();
+  });
+
+  it('includes the small line, so a Shift hold-tap is not just "A"', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(palette().getByRole('button', { name: 'Place NUM (mo)' }));
+    expect(palette().getByText(/Placing NUM \(mo\): click keys/)).toBeTruthy();
+  });
+});
+
 describe('collapsing the palette', () => {
   it('collapses to its status line, remembers it, and still places an armed tile', async () => {
     const user = userEvent.setup();

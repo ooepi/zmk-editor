@@ -11,7 +11,7 @@ import { formatBinding } from '../../core/keymap/bindings.ts';
 import { describeBinding, displayContext, type KeycapLabel } from '../../core/keymap/display.ts';
 import type { KeymapModel } from '../../core/keymap/model.ts';
 import { behaviorTiles, type PaletteItem } from '../../core/keymap/palette.ts';
-import { paletteSections } from '../../core/keymap/paletteSections.ts';
+import { paletteSections, sectionInView } from '../../core/keymap/paletteSections.ts';
 import { sensorCount } from '../../core/keymap/sensorEdit.ts';
 import { setPaletteDrag } from '../dnd.ts';
 import { setPreferences, usePreferences } from '../state/preferences.ts';
@@ -36,12 +36,23 @@ const NONE: PaletteItem = { kind: 'binding', binding: { behavior: 'none', params
 
 const sameItem = (a: PaletteItem | null, b: PaletteItem) => a !== null && JSON.stringify(a) === JSON.stringify(b);
 
+/** Transparent and None, with the words a search can find them by. */
+const SPECIALS = [
+  { item: TRANSPARENT, label: { main: '▽', sub: 'Trans' }, name: 'Transparent', words: 'transparent trans ▽ lower layer', title: 'Transparent: uses the binding of the next active layer below.', kind: 'trans' },
+  { item: NONE, label: { main: '✕', sub: 'None' }, name: 'None', words: 'none nothing ✕ blank disabled', title: 'None: does nothing.', kind: 'none' },
+];
+
+/** How long a rail jump's smooth scroll may take before the scroll-spy takes over again. */
+const JUMP_SETTLE_MS = 800;
+
 /** Keys and behaviors laid out as tiles in one list: drag one onto a key, or click it and then keys. */
 export function KeyPalette({ keymap, armed, selection, onPick, onDisarm }: KeyPaletteProps) {
   const [query, setQuery] = useState('');
   const [mods, setMods] = useState<ModifierFunction[]>([]);
   const [current, setCurrent] = useState<string | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
+  /** The section last jumped to from the rail, and until when its smooth scroll is left alone. */
+  const jumped = useRef<{ id: string; until: number } | null>(null);
   const { recent, paletteCollapsed: collapsed } = usePreferences();
   const hasEncoders = sensorCount(keymap) > 0;
   const searching = query.trim() !== '';
@@ -71,20 +82,33 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm }: KeyPa
   ];
 
   const jump = (id: string) => {
-    document.getElementById(`palette-${id}`)?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+    jumped.current = { id, until: performance.now() + JUMP_SETTLE_MS };
+    scroller.current?.querySelector(`[data-section="${id}"]`)?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
     setCurrent(id);
   };
 
-  // Highlight the section at the top of the list while scrolling.
+  // Highlight the section at the top of the list while scrolling, but not while a jump is still scrolling there.
   const onScroll = () => {
     const box = scroller.current;
-    if (!box) return;
-    let inView: string | null = null;
-    for (const el of box.querySelectorAll<HTMLElement>('[data-section]')) {
-      if (el.offsetTop - box.offsetTop <= box.scrollTop + 8) inView = el.dataset.section ?? null;
-    }
-    setCurrent(inView);
+    if (!box || (jumped.current && performance.now() < jumped.current.until)) return;
+    const tops = [...box.querySelectorAll<HTMLElement>('[data-section]')].map((el) => ({
+      id: el.dataset.section ?? '',
+      top: el.getBoundingClientRect().top,
+    }));
+    const atBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 2;
+    setCurrent(sectionInView(tops, box.getBoundingClientRect().top, atBottom, jumped.current?.id ?? null));
   };
+
+  // A new search starts at the top of the list, with no category highlighted.
+  const search = (text: string) => {
+    setQuery(text);
+    setCurrent(null);
+    jumped.current = null;
+    if (scroller.current) scroller.current.scrollTop = 0;
+  };
+
+  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const specials = SPECIALS.filter((s) => words.every((w) => s.words.includes(w)));
 
   const toggleMod = (mod: ModifierFunction) =>
     setMods((held) => (held.includes(mod) ? held.filter((m) => m !== mod) : [...held, mod]));
@@ -125,7 +149,14 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm }: KeyPa
     );
   };
 
-  const armedName = armed && (armed.kind === 'keycode' ? keyExpressionLabel(armed.token) : describeBinding(armed.binding, displayContext(keymap)).main);
+  const armedName = (() => {
+    if (!armed) return null;
+    if (armed.kind === 'keycode') return keyExpressionLabel(armed.token);
+    const special = SPECIALS.find((s) => sameItem(armed, s.item));
+    if (special) return special.name;
+    const label = describeBinding(armed.binding, displayContext(keymap));
+    return label.sub ? `${label.main} (${label.sub})` : label.main;
+  })();
 
   return (
     <section className={`palette${collapsed ? ' collapsed' : ''}`} aria-label="Key palette">
@@ -149,15 +180,14 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm }: KeyPa
                 placeholder="Search keys and behaviors: a, esc, volume, bluetooth…"
                 aria-label="Search the palette"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => search(e.target.value)}
               />
               <ModifierBar mods={mods} onToggle={toggleMod} onClear={() => setMods([])} />
             </div>
-            <div className="palette-scroll" ref={scroller} onScroll={onScroll}>
-              {!searching && (
+            <div className="palette-scroll" role="region" aria-label="Palette tiles" ref={scroller} onScroll={onScroll}>
+              {specials.length > 0 && (
                 <div className="palette-special" role="group" aria-label="Special">
-                  {tile(TRANSPARENT, { main: '▽', sub: 'Trans' }, 'Transparent', 'Transparent: uses the binding of the next active layer below.', 'trans')}
-                  {tile(NONE, { main: '✕', sub: 'None' }, 'None', 'None: does nothing.', 'none')}
+                  {specials.map((s) => tile(s.item, s.label, s.name, s.title, s.kind))}
                 </div>
               )}
               {showRecent && (
@@ -191,7 +221,7 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm }: KeyPa
                   </div>
                 </div>
               ))}
-              {searching && sections.length === 0 && <p className="muted">Nothing matches “{query.trim()}”.</p>}
+              {searching && sections.length === 0 && specials.length === 0 && <p className="muted">Nothing matches “{query.trim()}”.</p>}
             </div>
           </div>
         </div>
