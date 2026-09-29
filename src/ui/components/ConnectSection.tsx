@@ -39,7 +39,8 @@ export function ConnectSection({
   onDisconnect,
   onLoad,
 }: ConnectSectionProps) {
-  const config = authConfig();
+  // Made once: LoginPanel's login effect depends on it, and a new object each render would restart the login.
+  const [config] = useState(authConfig);
   const saved = loadGitHubSettings();
 
   if (!connection && reconnecting) {

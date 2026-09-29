@@ -15,6 +15,8 @@ export interface Preferences {
   paletteCollapsed: boolean;
   /** The first-visit "Get started" card was answered or dismissed. */
   welcomed: boolean;
+  /** This browser's first visit showed the card and it's still unanswered (it survives a reload). */
+  welcomePending: boolean;
 }
 
 const STORAGE_KEY = 'zmk-editor.preferences.v1';
@@ -25,6 +27,7 @@ const DEFAULTS: Preferences = {
   recent: [],
   paletteCollapsed: false,
   welcomed: false,
+  welcomePending: false,
 };
 
 /** Drops recent items that aren't shaped like palette items (hand-edited or older storage). */
@@ -48,6 +51,7 @@ function load(): Preferences {
       recent: validRecent(stored.recent),
       paletteCollapsed: stored.paletteCollapsed === true,
       welcomed: stored.welcomed === true,
+      welcomePending: stored.welcomePending === true,
     };
   } catch {
     return DEFAULTS;

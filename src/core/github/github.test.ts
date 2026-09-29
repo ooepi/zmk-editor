@@ -180,6 +180,21 @@ describe('build failures', () => {
     expect(errorLines(LOG)).toEqual(["devicetree error: /keymap/base: undefined node label 'nav_layer'"]);
   });
 
+  it('skips build chatter and keeps the Kconfig warnings that stop a build', () => {
+    const log = [
+      '-- Found devicetree overlay: /config/lily58.keymap',
+      'Cache not found for input keys: zephyr-abc',
+      'warning: UNKNOWN_SETTING (defined at Kconfig:1) was assigned the value y but got the value n',
+      'error: Aborting due to Kconfig warnings',
+      "main.c:10:5: error: implicit declaration of function 'foo' [-Werror=implicit-function-declaration]",
+    ].join('\n');
+    expect(errorLines(log)).toEqual([
+      'warning: UNKNOWN_SETTING (defined at Kconfig:1) was assigned the value y but got the value n',
+      'error: Aborting due to Kconfig warnings',
+      "main.c:10:5: error: implicit declaration of function 'foo' [-Werror=implicit-function-declaration]",
+    ]);
+  });
+
   it('names the failed job and step, with a hint and the error lines', async () => {
     const { fake, client } = setup();
     fake.runs.push(failedRun);

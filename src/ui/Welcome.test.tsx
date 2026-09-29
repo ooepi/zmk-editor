@@ -27,6 +27,15 @@ describe('the first-visit card', () => {
     expect(welcome()).toBeNull();
   });
 
+  it('comes back after a reload until it’s answered', () => {
+    render(<App />);
+    expect(welcome()).not.toBeNull();
+    cleanup();
+    reloadPreferences();
+    render(<App />);
+    expect(welcome()).not.toBeNull();
+  });
+
   it('can be dismissed to keep exploring', async () => {
     const user = userEvent.setup();
     render(<App />);

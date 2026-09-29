@@ -181,7 +181,10 @@ export function useBuildSession() {
       setBuild({ phase: 'failed', message: failedMessage, run });
       // Then say why, as far as GitHub lets the page read it.
       const jobs = await buildFailure(conn.client, conn.ref, run.id);
-      if (current(g) && jobs.length > 0) setBuild({ phase: 'failed', message: failedMessage, run, jobs });
+      // Only onto this run's failure: the user may have started another build meanwhile.
+      if (current(g) && jobs.length > 0) {
+        setBuild((now) => (now.phase === 'failed' && now.run?.id === run.id ? { ...now, jobs } : now));
+      }
       return;
     }
     setBuild({ phase: 'downloading', run });

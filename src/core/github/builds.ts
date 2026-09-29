@@ -120,8 +120,9 @@ export interface FailedJob {
   lines: string[];
 }
 
-const LOG_ERROR = /\berror\b|\bFATAL\b|undefined reference|not found|No such file|devicetree/i;
-const LOG_NOISE = /-Werror|--error|error-format|ignore-error|^\s*\d+ errors? generated/i;
+const LOG_ERROR = /\berror\b|\bFATAL\b|undefined reference|not found|No such file|devicetree error|^warning:.*(CONFIG_|Kconfig)/i;
+/** Lines that match but explain nothing: CMake progress, cache misses, counts. */
+const LOG_NOISE = /^-- |Cache not found|--error|error-format|ignore-error|^\s*\d+ errors? generated/i;
 
 /** The lines of a job log that say what went wrong: GitHub's timestamps and colour codes removed, at most `max`. */
 export function errorLines(log: string, max = 12): string[] {
@@ -168,7 +169,7 @@ export function failureHint(step: string | null, lines: string[]): string | null
 export async function buildFailure(client: GitHubClient, ref: RepoRef, runId: number): Promise<FailedJob[]> {
   let jobs: { id: number; name: string; conclusion: string | null; html_url: string; steps?: { name: string; conclusion: string | null }[] }[];
   try {
-    jobs = (await client.request<{ jobs: typeof jobs }>(`${repoPath(ref)}/actions/runs/${runId}/jobs?per_page=50&filter=latest`)).jobs;
+    jobs = (await client.request<{ jobs?: typeof jobs }>(`${repoPath(ref)}/actions/runs/${runId}/jobs?per_page=50&filter=latest`)).jobs ?? [];
   } catch {
     return [];
   }

@@ -39,6 +39,7 @@ import { HelpView } from './help/HelpView.tsx';
 import { SHORTCUTS } from './shortcuts.ts';
 import { hasStoredConfig, useEditor } from './state/useEditor.ts';
 import { loadGitHubSettings } from './state/github.ts';
+import { demoConfig } from './state/demo.ts';
 import { isLoginCallback } from './state/githubLogin.ts';
 import { setPreferences, usePreferences } from './state/preferences.ts';
 import { useTheme } from './useTheme.ts';
@@ -110,6 +111,10 @@ function Editor() {
   const [paletteStart, setPaletteStart] = useState<string | null>(null);
   /** First time here: no config from before and no repository to reopen. */
   const [newcomer] = useState(() => !hasStoredConfig() && !loadGitHubSettings());
+  // The demo is saved on the first load too, so remember that this browser is still to be welcomed.
+  useEffect(() => {
+    if (newcomer) setPreferences({ welcomePending: true });
+  }, [newcomer]);
   /** The GitHub repository and build, kept while you move between tabs. */
   const buildSession = useBuildSession();
   // A jump request is for the next Keymap visit only; going anywhere else drops it.
@@ -126,8 +131,10 @@ function Editor() {
   );
   const buildStatus = tabStatus(buildSession.build, pendingCount);
   const keyCount = keymap.layers[0]?.bindings.length ?? 0;
-  const { layouts, recent, welcomed } = usePreferences();
-  const showWelcome = newcomer && !welcomed;
+  const { layouts, recent, welcomed, welcomePending } = usePreferences();
+  // Not once they've moved on from the demo some other way (opened files, a keyboard, a repository).
+  const onDemo = config.keyboard === DEMO_KEYBOARD && !buildSession.connection;
+  const showWelcome = (newcomer || welcomePending) && !welcomed && onDemo;
   const layout = physicalLayoutFor(config.keyboard, keyCount, layouts[config.keyboard], customLayout(config));
 
   /** Remembers a palette item placed from the palette for its Recent row. */
@@ -456,7 +463,7 @@ function Editor() {
                 />
               )}
             </section>
-            <aside className="panel" aria-label="Details">
+            <aside className="panel" aria-label="Details" tabIndex={-1}>
               {view === 'combos' ? (
                 <CombosPanel
                   keymap={keymap}
@@ -491,7 +498,11 @@ function Editor() {
                         setPreferences({ welcomed: true });
                         setView('build');
                       }}
-                      onDismiss={() => setPreferences({ welcomed: true })}
+                      onDismiss={() => {
+                        setPreferences({ welcomed: true });
+                        // The card and its focused button go away; keep keyboard focus in the panel.
+                        document.querySelector<HTMLElement>('.panel')?.focus();
+                      }}
                     />
                   )}
                   <Overview warnings={state.warnings} />
@@ -511,9 +522,13 @@ type TabStatus = { kind: 'pending'; count: number } | { kind: 'building' } | { k
 /** What the Build & flash tab shows beside its name: a build in progress or its outcome, else what's waiting to commit. */
 function tabStatus(build: BuildState, pending: number): TabStatus | null {
   if (build.phase === 'committing' || build.phase === 'waiting' || build.phase === 'downloading') return { kind: 'building' };
-  if (build.phase === 'done') return { kind: 'ready' };
-  if (build.phase === 'failed' || build.phase === 'blocked') return { kind: 'failed' };
-  return pending > 0 ? { kind: 'pending', count: pending } : null;
+  // New edits since the last build matter more than how that build went.
+  if (pending > 0) return { kind: 'pending', count: pending };
+  // Blocked: the firmware built fine, only the browser couldn't download it.
+  if (build.phase === 'done' || build.phase === 'blocked') return { kind: 'ready' };
+  // Only a build that ran and failed; not "no builds yet" or a network error.
+  if (build.phase === 'failed' && build.run && build.run.conclusion !== 'success') return { kind: 'failed' };
+  return null;
 }
 
 const TAB_STATUS_TEXT = {
@@ -583,6 +598,8 @@ function ShortcutKeys({ keys }: { keys: string }) {
     </span>
   );
 }
+
+const DEMO_KEYBOARD = demoConfig().config.keyboard;
 
 /** Shown on a first visit, above the overview: what this is, and where to go from the demo. */
 function GetStarted({ onKeyboard, onConfig, onDismiss }: { onKeyboard: () => void; onConfig: () => void; onDismiss: () => void }) {
