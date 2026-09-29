@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { ThemeToggle } from '../components/ThemeToggle.tsx';
+import { Dialog } from '../components/ui/Dialog.tsx';
 import { IconButton } from '../components/ui/IconButton.tsx';
 import { Menu } from '../components/ui/Menu.tsx';
+import { Switch } from '../components/ui/Switch.tsx';
 import { useTheme } from '../useTheme.ts';
 
 // The living reference for the design system: every token and shared control,
@@ -8,7 +11,7 @@ import { useTheme } from '../useTheme.ts';
 // When you add a token or a control, add it here too (see docs/design-system.md).
 
 const COLOUR_GROUPS: { title: string; tokens: string[] }[] = [
-  { title: 'Surfaces', tokens: ['--bg', '--surface', '--surface-2', '--surface-3', '--border', '--border-strong'] },
+  { title: 'Surfaces', tokens: ['--bg', '--surface', '--surface-2', '--surface-3', '--border', '--border-strong', '--scrim'] },
   { title: 'Text', tokens: ['--text', '--text-muted', '--accent-text'] },
   { title: 'Accent and status', tokens: ['--accent', '--accent-line', '--accent-soft', '--focus-ring', '--danger', '--success', '--warning', '--info'] },
   { title: 'Key kinds', tokens: ['--key-layer', '--key-hold', '--key-macro', '--key-dim'] },
@@ -30,6 +33,8 @@ function Swatch({ token }: { token: string }) {
 
 export default function DesignSystemPage() {
   const [theme, toggleTheme] = useTheme();
+  const [switchOn, setSwitchOn] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
   return (
     <article className="design-system" aria-labelledby="ds-title">
       <header className="ds-header">
@@ -150,6 +155,27 @@ export default function DesignSystemPage() {
         </div>
       </section>
 
+      <section className="ds-section" aria-labelledby="ds-dialogs">
+        <h2 id="ds-dialogs">Dialogs</h2>
+        <p className="muted small">
+          <code>Dialog</code>: a modal over native <code>&lt;dialog&gt;</code>. Esc, the ✕ or a click outside closes it, and focus goes
+          back to the button that opened it.
+        </p>
+        <div className="ds-row">
+          <button type="button" className="button" onClick={() => setDialogOpen(true)}>
+            Open a dialog
+          </button>
+        </div>
+        <Dialog open={dialogOpen} title="Sample dialog" description="One line that says what this is for." onClose={() => setDialogOpen(false)}>
+          <p>Dialog content goes here.</p>
+          <div className="row">
+            <button type="button" className="button primary" data-autofocus onClick={() => setDialogOpen(false)}>
+              Done
+            </button>
+          </div>
+        </Dialog>
+      </section>
+
       <section className="ds-section" aria-labelledby="ds-fields">
         <h2 id="ds-fields">Fields</h2>
         <div className="ds-grid">
@@ -170,6 +196,15 @@ export default function DesignSystemPage() {
             <input className="input invalid" defaultValue="bad value" />
             <span className="field-error">Use letters, digits and _.</span>
           </label>
+          <div className="field checkbox">
+            <Switch id="ds-switch" checked={switchOn} onChange={setSwitchOn} aria-describedby="ds-switch-help" />
+            <span>
+              <label htmlFor="ds-switch">Switch</label>
+              <span id="ds-switch-help" className="field-help">
+                <code>Switch</code>: on/off settings. Still a checkbox underneath.
+              </span>
+            </span>
+          </div>
           <div className="field checkbox">
             <input id="ds-checkbox" type="checkbox" defaultChecked />
             <span>
