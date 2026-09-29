@@ -112,6 +112,7 @@
 
 .settings-nav-count {
   flex: none;
+  white-space: nowrap;
   color: var(--accent-text);
   font-size: var(--fs-xs);
   font-weight: 700;
@@ -374,4 +375,12 @@
   .setting-number .input {
     width: 100%;
   }
+}
+
+/* Long group names give way to the count instead of wrapping under it. */
+.settings-nav-item > .grow {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

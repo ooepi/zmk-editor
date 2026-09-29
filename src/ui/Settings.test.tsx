@@ -98,6 +98,10 @@ describe('Settings tab', () => {
     await user.click(toggle);
     expect(within(bt).getByRole('switch', { name: 'Experimental security' })).toBeTruthy();
     expect(within(bt).getByRole('button', { name: 'Hide advanced settings' }).getAttribute('aria-expanded')).toBe('true');
+    // Each group remembers it while you look at another.
+    await openGroup(user, 'Power & sleep');
+    const again = await openGroup(user, 'Bluetooth');
+    expect(within(again).getByRole('switch', { name: 'Experimental security' })).toBeTruthy();
   });
 
   it('shows every changed setting on one screen with Changed only', async () => {

@@ -84,6 +84,12 @@ export function HelpView({ section }: HelpViewProps) {
   useEffect(() => {
     if (typeof IntersectionObserver === 'undefined') return;
     const visible = new Set<string>();
+    const scroller = sections.current.values().next().value?.closest<HTMLElement>('.workspace') ?? null;
+    /** Scrolled to the very end, the last shown section is the one being read, even if it's too short to reach the top. */
+    const atBottom = () => {
+      if (!scroller || scroller.scrollTop + scroller.clientHeight < scroller.scrollHeight - 4) return null;
+      return [...sections.current].filter(([, element]) => !element.hidden).at(-1)?.[0] ?? null;
+    };
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -94,13 +100,21 @@ export function HelpView({ section }: HelpViewProps) {
         // A jump's smooth scroll passes other sections, and a short last section may never reach the
         // top; the clicked link stays highlighted until the next scroll of the reader's own.
         if (jumping.current !== null) return;
-        const first = HELP_SECTIONS.find((s) => visible.has(s.id));
-        if (first) setCurrent(first.id);
+        const first = atBottom() ?? HELP_SECTIONS.find((s) => visible.has(s.id))?.id;
+        if (first) setCurrent(first);
       },
       { rootMargin: '0px 0px -65% 0px' },
     );
     for (const element of sections.current.values()) observer.observe(element);
-    return () => observer.disconnect();
+    const onScroll = () => {
+      const last = jumping.current === null ? atBottom() : null;
+      if (last) setCurrent(last);
+    };
+    scroller?.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      observer.disconnect();
+      scroller?.removeEventListener('scroll', onScroll);
+    };
   }, []);
 
   const jump = (id: string) => {
