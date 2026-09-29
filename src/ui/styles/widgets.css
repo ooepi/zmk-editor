@@ -1,0 +1,240 @@
+/* Light/dark switch: a sun and a moon, with a knob sliding onto the active one. */
+.theme-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 68px;
+  height: 34px;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  box-shadow: var(--shadow-inset);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent-line);
+}
+
+.theme-toggle-icon {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  transition: color 0.2s;
+}
+
+.theme-toggle-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--toggle-knob-day);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease;
+}
+
+.theme-toggle.dark .theme-toggle-knob {
+  transform: translateX(34px);
+  background: var(--toggle-knob-night);
+}
+
+.theme-toggle:not(.dark) .sun {
+  color: var(--toggle-sun);
+}
+
+.theme-toggle.dark .moon {
+  color: var(--toggle-moon);
+}
+
+.help-link {
+  font-size: inherit;
+  white-space: nowrap;
+}
+
+.help {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 760px);
+  gap: 32px;
+  justify-content: center;
+  padding: 24px;
+}
+
+.help-toc {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.help-toc ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.help-toc-link {
+  width: 100%;
+  padding: 5px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  text-align: left;
+  cursor: pointer;
+}
+
+.help-toc-link:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.help-toc-select {
+  display: none;
+}
+
+.help-content {
+  line-height: 1.6;
+}
+
+.help-title {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+
+.help-content section {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  scroll-margin-top: 12px;
+}
+
+.help-content h2 {
+  margin: 24px 0 8px;
+  font-size: 19px;
+}
+
+.help-content h3 {
+  margin: 18px 0 6px;
+  font-size: 15px;
+  scroll-margin-top: 12px;
+}
+
+.help-content li {
+  margin: 4px 0;
+}
+
+.help-content code,
+.help-content kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.help-ui {
+  font-weight: 600;
+  color: var(--accent-text);
+}
+
+.help-content .link-button {
+  padding: 0;
+  font-size: inherit;
+}
+
+.help-content a {
+  color: var(--accent-text);
+}
+
+.help-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.help-table th,
+.help-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.help-table td:first-child {
+  white-space: nowrap;
+}
+
+.help-faq dt {
+  margin-top: 14px;
+  font-weight: 600;
+}
+
+.help-faq dd {
+  margin: 4px 0 0;
+}
+
+::highlight(help-search) {
+  background-color: var(--accent-soft);
+  color: var(--text);
+  text-decoration: underline 2px var(--accent-line);
+}
+
+@media (max-width: 800px) {
+  .help {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .help-toc {
+    position: static;
+  }
+
+  .help-toc ol {
+    display: none;
+  }
+
+  .help-toc-select {
+    display: block;
+  }
+
+  .help-table td:first-child {
+    white-space: normal;
+  }
+}
+
+/* Open from GitHub */
+
+.popover-anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.popover {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.popover p {
+  margin: 0;
+}
+

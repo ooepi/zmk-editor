@@ -1,0 +1,165 @@
+/* Printable cheat sheet */
+
+.print-view {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 900px);
+  gap: 24px;
+  justify-content: center;
+  padding: 24px;
+}
+
+.print-controls {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.print-controls .fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.print-sheet {
+  padding: 24px;
+  border-radius: 8px;
+  background: var(--print-paper);
+  color: var(--text);
+}
+
+.print-sheet .keycap,
+.print-sheet .encoder {
+  background: none;
+  box-shadow: none;
+}
+
+/* Outlines strong enough to read on paper. */
+.print-sheet .keycap {
+  border: 1.5px solid var(--print-outline);
+}
+
+.print-sheet .encoder {
+  border: 1.5px solid var(--print-outline);
+}
+
+/* The knob picture is only decoration, and it is all fill. */
+.print-sheet .encoder-knob {
+  display: none;
+}
+
+.print-header h1 {
+  margin: 0 0 4px;
+  font-size: 22px;
+}
+
+.print-header p {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.print-layer,
+.print-combos {
+  break-inside: avoid;
+  /* Side room so no key outline touches the page edge. */
+  padding: 8px 4mm 16px;
+}
+
+.print-layer h2,
+.print-combos h2 {
+  margin: 8px 0;
+  font-size: 16px;
+}
+
+.print-layer .keyboard {
+  width: 100%;
+  max-width: none;
+}
+
+.print-layer .keycap {
+  cursor: default;
+  box-shadow: none;
+}
+
+.print-layer .encoders {
+  margin-top: 8px;
+}
+
+.print-combos table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.print-combos th,
+.print-combos td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+@media (max-width: 800px) {
+  .print-view {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .print-controls {
+    position: static;
+  }
+}
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  /* A dark screen theme would otherwise paint the page margins dark. */
+  :root,
+  :root[data-theme='dark'] {
+    color-scheme: light;
+  }
+
+  html,
+  body,
+  #root,
+  .app {
+    height: auto;
+    background: var(--print-paper);
+  }
+
+  .topbar,
+  .viewtabs,
+  .notice,
+  .print-controls {
+    display: none;
+  }
+
+  .workspace.single {
+    overflow: visible;
+  }
+
+  .print-view {
+    display: block;
+    padding: 0;
+  }
+
+  .print-sheet {
+    padding: 0;
+    background: var(--print-paper);
+  }
+
+  /* Two layers fit on an A4 or Letter page. */
+  .print-layer:nth-of-type(2n + 1):not(:first-of-type) {
+    break-before: page;
+  }
+
+  /* Belt and braces: nothing on the sheet prints a background, even with "Background graphics" on. */
+  .print-sheet,
+  .print-sheet * {
+    background: none !important;
+    box-shadow: none !important;
+  }
+}

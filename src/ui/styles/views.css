@@ -1,0 +1,138 @@
+/* Views */
+
+.viewtabs {
+  display: flex;
+  gap: 2px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  /* On a phone the tabs scroll sideways instead of widening the page. */
+  overflow-x: auto;
+}
+
+.viewtab {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.viewtab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.viewtab:hover {
+  color: var(--text);
+}
+
+.viewtab.active {
+  color: var(--text);
+  border-bottom-color: var(--accent-line);
+}
+
+/* Build & flash: the last step, pushed to the far end and filled so it can't be missed. */
+.viewtab.build-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  align-self: center;
+  margin: 5px 0 5px auto;
+  padding: 6px 16px;
+  border: 1px solid var(--accent-line);
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 700;
+}
+
+.viewtab.build-tab:hover {
+  color: var(--accent-contrast);
+  filter: brightness(1.08);
+}
+
+.viewtab.build-tab.active {
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.workspace.single {
+  display: block;
+  overflow: auto;
+}
+
+.canvas {
+  align-content: center;
+  gap: 16px;
+}
+
+.keycap.highlighted {
+  border-color: var(--key-hold);
+  box-shadow:
+    0 0 0 calc(var(--unit) * 0.03) var(--key-hold),
+    0 calc(var(--unit) * 0.08) calc(var(--unit) * 0.14) var(--keycap-shadow);
+}
+
+/* Encoders */
+
+.encoders {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.encoder {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.encoder:hover {
+  border-color: var(--text-muted);
+}
+
+.encoder.selected {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.encoder-knob {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 18%, var(--accent) 0 3px, transparent 4px),
+    repeating-conic-gradient(var(--keycap) 0 6deg, var(--keycap-edge) 6deg 12deg);
+  border: 2px solid var(--keycap-edge);
+}
+
+.encoder-dir {
+  padding: 2px 6px;
+  border: 1px dashed transparent;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.encoder-dir.drop-target {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.encoder-name {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+

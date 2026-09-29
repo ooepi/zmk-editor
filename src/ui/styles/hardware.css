@@ -1,0 +1,477 @@
+/* Keyboard picker */
+
+.badge-button {
+  cursor: pointer;
+  background: transparent;
+  font-family: var(--font-mono);
+}
+
+.badge-button:hover,
+.badge-button.active {
+  color: var(--text);
+  border-color: var(--accent-line);
+}
+
+.keyboard-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px 24px 48px;
+}
+
+.keyboard-picker {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 20px;
+}
+
+.keyboard-list-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.keyboard-list {
+  max-height: 460px;
+  overflow: auto;
+}
+
+.keyboard-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.keyboard-details h3 {
+  margin: 0;
+}
+
+.keyboard-details p {
+  margin: 0;
+}
+
+.layout-preview {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+}
+
+.preview-key {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1.5px solid var(--keycap-edge);
+  border-radius: 4px;
+  background: var(--keycap);
+  scale: 0.88;
+}
+
+@media (max-width: 800px) {
+  .keyboard-picker {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Layout designer */
+
+.designer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 20px;
+  padding: 16px 24px 48px;
+}
+
+.designer-main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.designer-head p {
+  margin: 0;
+}
+
+.designer-canvas {
+  width: 100%;
+  max-height: 70vh;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background:
+    linear-gradient(var(--border) 1px, transparent 1px) 0 0 / 25px 25px,
+    linear-gradient(90deg, var(--border) 1px, transparent 1px) 0 0 / 25px 25px,
+    var(--bg);
+  background-blend-mode: normal;
+  touch-action: none;
+  user-select: none;
+}
+
+.designer-key {
+  cursor: grab;
+  outline: none;
+}
+
+.designer-key rect {
+  fill: var(--keycap);
+  stroke: var(--keycap-edge);
+  stroke-width: 3;
+}
+
+.designer-key:hover rect {
+  stroke: var(--text-muted);
+}
+
+.designer-key.selected rect,
+.designer-key:focus-visible rect {
+  stroke: var(--accent);
+  stroke-width: 6;
+}
+
+.designer-key.flagged rect {
+  stroke: var(--danger);
+  stroke-width: 6;
+}
+
+.designer-label {
+  fill: var(--text);
+  font-size: 26px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.designer-index {
+  fill: var(--text-muted);
+  font-size: 18px;
+  font-family: var(--font-mono);
+  pointer-events: none;
+}
+
+.designer-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.designer-panel .stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .designer {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Keyboard wizard */
+.hardware-wizard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 20px 24px 0;
+}
+
+/* Form-only steps read better in a narrower frame. */
+.hardware-wizard.narrow {
+  max-width: 880px;
+}
+
+.wizard-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.wizard-head .panel-title {
+  margin: 0;
+}
+
+.wizard-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  color: var(--text-muted);
+}
+
+.wizard-steps li {
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.wizard-steps .done {
+  border-color: var(--accent-line);
+}
+
+.wizard-steps .active {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.wizard-step-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.wizard-step-button:hover {
+  color: var(--accent-text);
+}
+
+.wizard-card {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.wizard-card > .stack {
+  gap: 14px;
+}
+
+.wizard-footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0 16px;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.hardware-wizard .designer {
+  padding: 0;
+}
+
+.wiring-step {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.wiring-halves {
+  display: grid;
+  gap: 16px;
+}
+
+.wiring-halves.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.wiring-half {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.wiring-half-title {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.wiring-half-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+}
+
+.wiring-half.right .wiring-half-body {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.wiring-half.right .pinout {
+  order: -1;
+}
+
+.wiring-tables {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.pin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 8px;
+}
+
+.encoder-pins {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(104px, 1fr)) auto;
+  gap: 8px;
+  align-items: end;
+  margin-bottom: 8px;
+}
+
+.pin-grid select.active-pin,
+.encoder-pins select.active-pin {
+  outline: 2px solid var(--accent-line);
+  outline-offset: 1px;
+}
+
+.pinout {
+  margin: 0;
+}
+
+.pinout figcaption {
+  max-width: 330px;
+  margin-bottom: 8px;
+}
+
+.pinout-view {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.pinout-board {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--keycap-edge);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.pinout-column {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 138px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pinout-usb {
+  align-self: start;
+  padding: 4px 10px;
+  border: 1px solid var(--keycap-edge);
+  border-radius: 6px;
+  color: var(--text-muted);
+}
+
+.pinout-pad {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  box-sizing: border-box;
+  width: 100%;
+  overflow: hidden;
+  padding: 2px 8px;
+  border: 1px solid var(--keycap-edge);
+  border-radius: 6px;
+  background: var(--keycap);
+  color: var(--text);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pinout-pad.power {
+  cursor: default;
+  color: var(--text-muted);
+}
+
+.pinout-pad.used {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.pinout-sub,
+.pinout-use {
+  font-size: 0.8em;
+  color: var(--text-muted);
+}
+
+.pinout-use {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.designer-marquee {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-dasharray: 12 8;
+  pointer-events: none;
+}
+
+@media (max-width: 1300px) {
+  .wiring-halves.two {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 800px) {
+  .hardware-wizard {
+    padding: 16px 16px 0;
+  }
+
+  .wiring-half-body,
+  .wiring-half.right .wiring-half-body {
+    grid-template-columns: 1fr;
+  }
+
+  .wiring-half.right .pinout {
+    order: 0;
+  }
+}
+
+/* Tap-dance and conditional layers */
+
+.tap,
+.conditional {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.conditional {
+  margin-bottom: 8px;
+}
+
+/* Help */
+
+.help-button {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+}
+

@@ -1,0 +1,183 @@
+/*
+ * Design tokens: the only place raw colours live (enforced by tokens.test.ts).
+ * 1. Palette: raw values, theme-independent. Rebrand here.
+ * 2. Scales and component tokens: radius, spacing, type, motion. Theme-independent.
+ * 3. Semantic roles per theme: what components use.
+ * Outside this file, use semantic and component tokens only, never palette ones.
+ * See docs/design-system.md.
+ */
+
+/* 1. Palette */
+:root {
+  --graphite-950: #121212;
+  --graphite-900: #1b1b1d;
+  --graphite-850: #202023;
+  --graphite-800: #242427;
+  --graphite-750: #29292d;
+  --graphite-700: #2e2e32;
+  --graphite-650: #36363b;
+  --graphite-600: #404046;
+  --graphite-500: #55555b;
+  --graphite-300: #9a9a94;
+  --graphite-50: #f1f1ee;
+  --paper-0: #ffffff;
+  --paper-50: #f4f4f0;
+  --paper-100: #efefeb;
+  --paper-150: #e8e8e3;
+  --paper-200: #dcdcd5;
+  --paper-250: #d2d2cb;
+  --paper-300: #c4c4bc;
+  --paper-400: #b3b3ab;
+  --paper-600: #62625c;
+  --paper-900: #17171a;
+  --ink-500: #6b7382;
+  --lime-300: #d7f46c;
+  --lime-500: #a8cc2a;
+  --lime-700: #6f8f0a;
+  --lime-800: #4f6a00;
+  --lime-950: #1a1f05;
+  --blue-300: #7aa7ff;
+  --blue-600: #2f6fe0;
+  --amber-300: #f5b86b;
+  --amber-700: #b86a0b;
+  --violet-300: #c792ea;
+  --violet-700: #8a3fc4;
+  --pink-300: #f38ba8;
+  --pink-700: #c2386b;
+  --cyan-300: #67d8ef;
+  --cyan-700: #0f8aa3;
+  --red-300: #ff6b6b;
+  --red-600: #d43d3d;
+  --green-300: #6ee7a8;
+  --green-700: #1f9d5c;
+
+  /* 2. Scales */
+  --font-sans: 'Plus Jakarta Sans Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Code', Consolas, monospace;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-pill: 999px;
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 20px;
+  --fs-2xl: 26px;
+  --dur-fast: 140ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* 2. Component tokens that look the same in both themes */
+  --toggle-knob-day: linear-gradient(180deg, var(--paper-0), var(--paper-200));
+  --toggle-knob-night: linear-gradient(180deg, var(--graphite-500), var(--graphite-800));
+  --toggle-sun: var(--amber-700);
+  --toggle-moon: var(--graphite-50);
+  --print-paper: var(--paper-0);
+  --print-outline: var(--ink-500);
+}
+
+/* 3. Semantic roles: dark (default) */
+:root,
+:root[data-theme='dark'] {
+  --bg: var(--graphite-950);
+  --surface: var(--graphite-900);
+  --surface-2: var(--graphite-800);
+  --surface-3: var(--graphite-700);
+  --border: var(--graphite-700);
+  --border-strong: var(--graphite-600);
+  --text: var(--graphite-50);
+  --text-muted: var(--graphite-300);
+  --accent: var(--lime-300);
+  --accent-text: var(--lime-300);
+  --accent-soft: color-mix(in srgb, var(--lime-300) 13%, transparent);
+  --accent-contrast: var(--lime-950);
+  --focus-ring: var(--lime-300);
+  --accent-line: var(--lime-300);
+  --danger: var(--red-300);
+  --danger-soft: color-mix(in srgb, var(--red-300) 12%, transparent);
+  --success: var(--green-300);
+  --success-soft: color-mix(in srgb, var(--green-300) 12%, transparent);
+  --warning: var(--amber-300);
+  --info: var(--blue-300);
+  --keycap: var(--graphite-850);
+  --keycap-top: var(--graphite-750);
+  --keycap-edge: var(--graphite-650);
+  --keycap-shadow: rgb(0 0 0 / 50%);
+  --key-layer: var(--blue-300);
+  --key-hold: var(--amber-300);
+  --key-macro: var(--violet-300);
+  --key-dim: var(--graphite-500);
+  --kind-holdtap: var(--amber-300);
+  --kind-modmorph: var(--pink-300);
+  --kind-tapdance: var(--cyan-300);
+  --kind-encoder: var(--blue-300);
+  --kind-macro: var(--violet-300);
+  --kind-module: var(--graphite-300);
+  --shadow-sm: 0 2px 5px rgb(0 0 0 / 35%);
+  --shadow-md: 0 8px 24px rgb(0 0 0 / 25%);
+  --shadow-inset: inset 0 2px 4px rgb(0 0 0 / 25%);
+  --shadow-float: 0 10px 30px rgb(0 0 0 / 35%), inset 0 1px 0 rgb(255 255 255 / 4%);
+  --chevron-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239a9a94' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  color-scheme: dark;
+}
+
+/* 3. Semantic roles: light. The printed cheat sheet is always light, whatever the screen theme. */
+:root[data-theme='light'],
+.print-sheet {
+  --bg: var(--paper-100);
+  --surface: var(--paper-0);
+  --surface-2: var(--paper-50);
+  --surface-3: var(--paper-150);
+  --border: var(--paper-200);
+  --border-strong: var(--paper-300);
+  --text: var(--paper-900);
+  --text-muted: var(--paper-600);
+  --accent: var(--lime-500);
+  --accent-text: var(--lime-800);
+  --accent-soft: color-mix(in srgb, var(--lime-500) 18%, transparent);
+  --accent-contrast: var(--lime-950);
+  --focus-ring: var(--lime-800);
+  --accent-line: var(--lime-700);
+  --danger: var(--red-600);
+  --danger-soft: color-mix(in srgb, var(--red-600) 10%, transparent);
+  --success: var(--green-700);
+  --success-soft: color-mix(in srgb, var(--green-700) 12%, transparent);
+  --warning: var(--amber-700);
+  --info: var(--blue-600);
+  --keycap: var(--paper-0);
+  --keycap-top: var(--paper-0);
+  --keycap-edge: var(--paper-250);
+  --keycap-shadow: rgb(30 30 20 / 12%);
+  --key-layer: var(--blue-600);
+  --key-hold: var(--amber-700);
+  --key-macro: var(--violet-700);
+  --key-dim: var(--paper-400);
+  --kind-holdtap: var(--amber-700);
+  --kind-modmorph: var(--pink-700);
+  --kind-tapdance: var(--cyan-700);
+  --kind-encoder: var(--blue-600);
+  --kind-macro: var(--violet-700);
+  --kind-module: var(--paper-600);
+  --shadow-sm: 0 2px 5px rgb(30 30 20 / 12%);
+  --shadow-md: 0 8px 24px rgb(30 30 20 / 10%);
+  --shadow-inset: inset 0 2px 4px rgb(30 30 20 / 10%);
+  --shadow-float: 0 10px 30px rgb(30 30 20 / 10%), 0 1px 2px rgb(30 30 20 / 6%);
+  --chevron-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2362625c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  color-scheme: light;
+}
+
+/* Printed cheat sheet: plain white paper, no fills, so printing only uses ink for outlines and text. */
+.print-sheet {
+  --bg: var(--print-paper);
+  --surface: var(--print-paper);
+  --surface-2: var(--print-paper);
+  --keycap: var(--print-paper);
+  --keycap-top: var(--print-paper);
+}

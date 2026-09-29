@@ -1,0 +1,400 @@
+/*
+ * Shared controls: the component layer of the design system. Generic classes any
+ * view can use; area files refine them in context. Tokens only (see tokens.css).
+ * Every control here is shown on the design system page (/#design).
+ */
+
+/* Text */
+
+.muted {
+  color: var(--text-muted);
+}
+
+.small {
+  font-size: var(--fs-xs);
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.panel-title {
+  margin: 0 0 var(--s-3);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+/* Buttons */
+
+.button,
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: 36px;
+  padding: var(--s-1) var(--s-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.icon {
+  flex-shrink: 0;
+}
+
+.icon-button {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.button:hover:not(:disabled),
+.icon-button:hover:not(:disabled) {
+  background: var(--surface-3);
+  border-color: var(--border-strong);
+}
+
+.button:active:not(:disabled),
+.icon-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.button:disabled,
+.icon-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.icon-button.danger:hover:not(:disabled) {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-color: var(--danger);
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: var(--accent-text);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 0 0 var(--s-2);
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}
+
+.button.primary {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--accent-contrast);
+}
+
+.button.primary:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: transparent;
+  filter: brightness(1.06);
+}
+
+.button.active {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+}
+
+.button.danger {
+  color: var(--danger);
+}
+
+.button.danger:hover:not(:disabled) {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* Fields */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.input {
+  width: 100%;
+  min-height: 40px;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  line-height: 1.4;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.input:hover {
+  border-color: var(--border-strong);
+}
+
+.input:focus {
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+select.input {
+  appearance: none;
+  padding-right: 36px;
+  background-image: var(--chevron-down);
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  cursor: pointer;
+}
+
+.input.invalid {
+  border-color: var(--danger);
+}
+
+input[type='checkbox'],
+input[type='radio'] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.field.checkbox {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: var(--s-2);
+}
+
+.field.checkbox .field-help {
+  display: block;
+}
+
+.field-help {
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.field-error {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin: 0;
+  padding: var(--s-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+
+.fieldset legend {
+  padding: 0 var(--s-1);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Chips and segments */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 var(--s-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: transparent;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.chip:hover:not(:disabled) {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+
+.chip.active,
+.chip.active:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--accent-contrast);
+}
+
+.chip:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.segmented {
+  display: inline-flex;
+  gap: 2px;
+  padding: var(--s-1);
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+}
+
+.segment {
+  min-height: 30px;
+  padding: 0 var(--s-4);
+  border: none;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.segment:hover {
+  color: var(--text);
+}
+
+.segment.active {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+/* Lists and badges */
+
+.item-list {
+  list-style: none;
+  margin: 0 0 var(--s-3);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.item {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.item:hover {
+  background: var(--surface-3);
+}
+
+.item.active {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--s-2);
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Layout helpers */
+
+.row {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.row.wrap {
+  flex-wrap: wrap;
+}
+
+.grow {
+  flex: 1;
+}
+
+/* Notices: a tinted card with a coloured bar on the left. */
+
+.notice {
+  margin: var(--s-3) 0;
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  box-shadow: inset 4px 0 0 var(--warning);
+  font-size: var(--fs-sm);
+}
+
+.notice.warn {
+  box-shadow: inset 4px 0 0 var(--danger);
+}
+
+/* The app-wide status message floats as a toast. */
+.app > .notice {
+  position: fixed;
+  bottom: var(--s-6);
+  left: 50%;
+  z-index: 50;
+  width: max-content;
+  max-width: min(640px, calc(100vw - 2 * var(--s-4)));
+  margin: 0;
+  transform: translateX(-50%);
+  box-shadow:
+    inset 4px 0 0 var(--accent-line),
+    var(--shadow-float);
+}

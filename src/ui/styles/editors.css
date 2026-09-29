@@ -1,0 +1,146 @@
+/* Lists and editors */
+
+.editor-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.split {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px 24px 48px;
+}
+
+.split-list .stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.behavior-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 560px;
+}
+
+.editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.binding-editor,
+.property-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.source {
+  margin: 0;
+  padding: 10px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+/* Macro steps */
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.step {
+  display: flex;
+  gap: 4px;
+}
+
+.step-main {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  padding: 5px 8px;
+  text-align: left;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.step.active .step-main {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+
+/* Drag to reorder: a grip hint and a line where the item will land. */
+.grip {
+  align-self: center;
+  padding: 0 2px;
+  color: var(--text-muted);
+  font-size: 14px;
+  letter-spacing: -1px;
+  cursor: grab;
+  user-select: none;
+}
+
+.step[draggable='true'],
+.tap-header[draggable='true'] {
+  cursor: grab;
+}
+
+.step.drop-before,
+.tap.drop-before {
+  box-shadow: 0 -3px 0 var(--accent-line);
+}
+
+.step.drop-after,
+.tap.drop-after {
+  box-shadow: 0 3px 0 var(--accent-line);
+}
+
+.layer-tab.drop-before {
+  box-shadow: -3px 0 0 var(--accent-line);
+}
+
+.layer-tab.drop-after {
+  box-shadow: 3px 0 0 var(--accent-line);
+}
+
+.step-index {
+  min-width: 18px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.step-label {
+  font-weight: 600;
+}
+
+.step-label.kind-other {
+  color: var(--key-macro);
+}
+
+@media (max-width: 900px) {
+  .split {
+    grid-template-columns: 1fr;
+  }
+}
