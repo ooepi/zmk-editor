@@ -80,20 +80,6 @@
   padding: 16px 24px 48px;
 }
 
-.screens-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.screens-head .button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
 .screen-slots {
   display: flex;
   flex-wrap: wrap;
@@ -291,10 +277,6 @@ img.pixel-art {
 @media (max-width: 900px) {
   .screens {
     padding: 12px 16px 40px;
-  }
-
-  .screens-head {
-    flex-direction: column;
   }
 
   .screens-layout {
@@ -547,4 +529,11 @@ img.pixel-art {
 
 .keyboard-badges {
   display: flex;
+}
+
+.module-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
 }

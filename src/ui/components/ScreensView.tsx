@@ -13,13 +13,12 @@ import {
 } from '../../core/screens.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
 import { HelpLink } from '../help/HelpLink.tsx';
-import { Icon } from './Icon.tsx';
 import { httpsUrl } from '../../core/url.ts';
+import { Section } from './ui/Section.tsx';
 
 interface ScreensViewProps {
   config: ZmkConfig;
   dispatch: Dispatch<EditorAction>;
-  onBuild: () => void;
   onKeyboard: () => void;
 }
 
@@ -28,7 +27,7 @@ const imageUrl = (preview: ScreenPreview) => `${import.meta.env.BASE_URL}screens
 const onWhere = (slots: ScreenSlot[], id: string) => slots.filter((s) => s.screen?.id === id).map((s) => s.label);
 
 /** Pick what each half's nice!view shows, from whoop-t's nice-shield-collection. */
-export function ScreensView({ config, dispatch, onBuild, onKeyboard }: ScreensViewProps) {
+export function ScreensView({ config, dispatch, onKeyboard }: ScreensViewProps) {
   const slots = screenSlots(config);
   const [selected, setSelected] = useState<string>(() => slots.find((s) => s.screen)?.screen?.id ?? SCREENS[0]?.id ?? '');
   const [error, setError] = useState<string | null>(null);
@@ -56,10 +55,12 @@ export function ScreensView({ config, dispatch, onBuild, onKeyboard }: ScreensVi
 
   return (
     <div className="screens">
-      <header className="screens-head">
-        <div>
-          <h2 className="panel-title">nice!view screens</h2>
-          <p className="muted">
+      <Section
+        variant="flat"
+        title="nice!view screens"
+        icon="monitor"
+        description={
+          <>
             Choose what each nice!view shows. The designs come from the{' '}
             <a href={COLLECTION_CREDIT.url} target="_blank" rel="noopener noreferrer">
               nice-shield-collection
@@ -73,12 +74,9 @@ export function ScreensView({ config, dispatch, onBuild, onKeyboard }: ScreensVi
               licenses
             </a>
             ). <HelpLink to="screens" />
-          </p>
-        </div>
-        <button type="button" className="button primary" onClick={onBuild}>
-          <Icon name="rocket" /> Build &amp; flash
-        </button>
-      </header>
+          </>
+        }
+      />
 
       {version !== 'v0.3' && (
         <div className="notice warn" role="alert">

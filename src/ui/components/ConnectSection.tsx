@@ -6,6 +6,7 @@ import { loadGitHubSettings, saveGitHubSettings } from '../state/github.ts';
 import { authConfig, beginLogin, clearTokens, completeLogin, isLoginCallback, loadTokens, saveTokens } from '../state/githubLogin.ts';
 import { HelpLink } from '../help/HelpLink.tsx';
 import { httpsUrl } from '../../core/url.ts';
+import { Section } from './ui/Section.tsx';
 
 export interface Connection {
   client: GitHubClient;
@@ -38,15 +39,19 @@ export function ConnectSection({ connection, onConnected, onDisconnect, onLoad }
 
   if (connection) {
     return (
-      <section className="build-section" aria-label="Repository">
-        <h2 className="panel-title">Repository</h2>
-        <p>
-          Connected to{' '}
-          <a href={httpsUrl(connection.repoUrl)} target="_blank" rel="noreferrer" className="mono">
-            {connection.ref.owner}/{connection.ref.repo}
-          </a>{' '}
-          on <span className="mono">{connection.ref.branch}</span> at <span className="mono">{connection.headSha.slice(0, 7)}</span>.
-        </p>
+      <Section
+        title="Repository"
+        icon="github"
+        description={
+          <>
+            Connected to{' '}
+            <a href={httpsUrl(connection.repoUrl)} target="_blank" rel="noreferrer" className="mono">
+              {connection.ref.owner}/{connection.ref.repo}
+            </a>{' '}
+            on <span className="mono">{connection.ref.branch}</span> at <span className="mono">{connection.headSha.slice(0, 7)}</span>.
+          </>
+        }
+      >
         <div className="row wrap">
           <button type="button" className="button" onClick={onLoad}>
             Load config from repo
@@ -65,16 +70,20 @@ export function ConnectSection({ connection, onConnected, onDisconnect, onLoad }
             Disconnect
           </button>
         </div>
-      </section>
+      </Section>
     );
   }
 
   return (
-    <section className="build-section" aria-label="Connect to GitHub">
-      <h2 className="panel-title">Connect to GitHub</h2>
-      <p className="muted small">
-        The editor commits to your zmk-config repository and GitHub Actions builds the firmware. <HelpLink to="building" />
-      </p>
+    <Section
+      title="Connect to GitHub"
+      icon="github"
+      description={
+        <>
+          The editor commits to your zmk-config repository and GitHub Actions builds the firmware. <HelpLink to="building" />
+        </>
+      }
+    >
       {config ? (
         <>
           <LoginPanel config={config} onConnected={onConnected} />
@@ -86,7 +95,7 @@ export function ConnectSection({ connection, onConnected, onDisconnect, onLoad }
       ) : (
         <TokenForm onConnected={onConnected} />
       )}
-    </section>
+    </Section>
   );
 }
 

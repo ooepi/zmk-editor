@@ -372,7 +372,7 @@ function Editor() {
           </main>
         ) : view === 'screens' ? (
           <main className="workspace single">
-            <ScreensView config={config} dispatch={dispatch} onBuild={() => setView('build')} onKeyboard={() => setView('keyboard')} />
+            <ScreensView config={config} dispatch={dispatch} onKeyboard={() => setView('keyboard')} />
           </main>
         ) : view === 'behaviors' || view === 'macros' ? (
           <main className="workspace single">

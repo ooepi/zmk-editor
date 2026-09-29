@@ -42,6 +42,8 @@ function matchRanges(root: Node, words: string[]): Range[] {
 /** The user guide: contents, search, and every section. */
 export function HelpView({ section }: HelpViewProps) {
   const [query, setQuery] = useState('');
+  /** The section being read, highlighted in the contents. */
+  const [current, setCurrent] = useState<string | null>(null);
   const sections = useRef(new Map<string, HTMLElement>());
   const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const wordsKey = words.join(' ');
@@ -73,7 +75,30 @@ export function HelpView({ section }: HelpViewProps) {
     return () => cancelAnimationFrame(frame);
   }, [section]);
 
-  const jump = (id: string) => document.getElementById(`help-${id}`)?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+  // Follow the reading position: the first section in the top third of the screen is the current one.
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return;
+    const visible = new Set<string>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const id = entry.target.id.replace(/^help-/, '');
+          if (entry.isIntersecting) visible.add(id);
+          else visible.delete(id);
+        }
+        const first = HELP_SECTIONS.find((s) => visible.has(s.id));
+        if (first) setCurrent(first.id);
+      },
+      { rootMargin: '0px 0px -65% 0px' },
+    );
+    for (const element of sections.current.values()) observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  const jump = (id: string) => {
+    setCurrent(id);
+    document.getElementById(`help-${id}`)?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+  };
   const shown = HELP_SECTIONS.filter((s) => !hidden.has(s.id));
 
   return (
@@ -90,7 +115,12 @@ export function HelpView({ section }: HelpViewProps) {
         <ol>
           {shown.map((s) => (
             <li key={s.id}>
-              <button type="button" className="help-toc-link" onClick={() => jump(s.id)}>
+              <button
+                type="button"
+                className={`help-toc-link${current === s.id ? ' active' : ''}`}
+                aria-current={current === s.id ? 'true' : undefined}
+                onClick={() => jump(s.id)}
+              >
                 {s.title}
               </button>
             </li>
