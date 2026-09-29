@@ -10,7 +10,7 @@
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--surface-2);
-  box-shadow: inset 0 2px 4px rgb(0 0 0 / 25%);
+  box-shadow: var(--shadow-inset);
   color: var(--text-muted);
   cursor: pointer;
 }
@@ -33,22 +33,22 @@
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: linear-gradient(180deg, #ffffff, #dfe3ea);
-  box-shadow: 0 2px 5px rgb(0 0 0 / 35%);
+  background: var(--toggle-knob-day);
+  box-shadow: var(--shadow-sm);
   transition: transform 0.2s ease;
 }
 
 .theme-toggle.dark .theme-toggle-knob {
   transform: translateX(34px);
-  background: linear-gradient(180deg, #4a5160, #2a2f3a);
+  background: var(--toggle-knob-night);
 }
 
 .theme-toggle:not(.dark) .sun {
-  color: #b86a0b;
+  color: var(--toggle-sun);
 }
 
 .theme-toggle.dark .moon {
-  color: #e6e9ef;
+  color: var(--toggle-moon);
 }
 
 .help-link {
@@ -141,7 +141,7 @@
 
 .help-ui {
   font-weight: 600;
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .help-content .link-button {
@@ -150,7 +150,7 @@
 }
 
 .help-content a {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .help-table {
@@ -231,7 +231,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 25%);
+  box-shadow: var(--shadow-md);
 }
 
 .popover p {

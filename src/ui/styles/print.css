@@ -24,15 +24,9 @@
 }
 
 .print-sheet {
-  /* Plain white paper: no fills anywhere, so printing only uses ink for outlines and text. */
-  --bg: #ffffff;
-  --surface: #ffffff;
-  --surface-2: #ffffff;
-  --keycap: #ffffff;
-  --keycap-top: #ffffff;
   padding: 24px;
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--print-paper);
   color: var(--text);
 }
 
@@ -44,11 +38,11 @@
 
 /* Outlines strong enough to read on paper. */
 .print-sheet .keycap {
-  border: 1.5px solid #6b7382;
+  border: 1.5px solid var(--print-outline);
 }
 
 .print-sheet .encoder {
-  border: 1.5px solid #6b7382;
+  border: 1.5px solid var(--print-outline);
 }
 
 /* The knob picture is only decoration, and it is all fill. */
@@ -133,7 +127,7 @@
   #root,
   .app {
     height: auto;
-    background: #ffffff;
+    background: var(--print-paper);
   }
 
   .topbar,
@@ -154,7 +148,7 @@
 
   .print-sheet {
     padding: 0;
-    background: #ffffff;
+    background: var(--print-paper);
   }
 
   /* Two layers fit on an A4 or Letter page. */

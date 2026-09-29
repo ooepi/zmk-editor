@@ -218,7 +218,7 @@ img.pixel-art {
 }
 
 .badge.in-use {
-  color: var(--accent);
+  color: var(--accent-text);
   border-color: var(--accent);
 }
 
@@ -414,7 +414,7 @@ img.pixel-art {
 }
 
 .build-section a {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .connect-form {
@@ -473,11 +473,11 @@ img.pixel-art {
 }
 
 .diff-added {
-  background: rgb(94 224 193 / 12%);
+  background: var(--success-soft);
 }
 
 .diff-removed {
-  background: rgb(255 107 107 / 12%);
+  background: var(--danger-soft);
 }
 
 .diff-fold {
@@ -485,7 +485,7 @@ img.pixel-art {
 }
 
 .diff-added-text {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .diff-removed-text {

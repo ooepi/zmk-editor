@@ -225,7 +225,7 @@
 .wizard-steps .active {
   border-color: var(--accent);
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 600;
 }
 
@@ -239,7 +239,7 @@
 }
 
 .wizard-step-button:hover {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .wizard-card {

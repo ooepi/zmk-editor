@@ -31,7 +31,7 @@
 }
 
 .brand-mark {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* The keyboard and ZMK version controls: labelled, full-size, easy to spot. */
@@ -81,8 +81,9 @@
   height: 32px;
   padding: 0 12px;
   border-radius: 8px;
-  background: #5f7fff;
-  color: #ffffff;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
@@ -90,7 +91,7 @@
 }
 
 .coffee-link:hover {
-  background: #4d6dee;
+  background: var(--surface-3);
 }
 
 .toolbar {
