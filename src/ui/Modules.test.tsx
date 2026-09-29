@@ -28,19 +28,13 @@ describe('module catalog', () => {
     expect(screen.getAllByRole('article').map((a) => a.getAttribute('aria-label'))).toEqual(['Tri-state (swapper)']);
   });
 
-  it('swaps the nice!view shield when adding nice!view Gem', async () => {
+  it('sends nice!view screens to the Screens tab', async () => {
     const user = userEvent.setup();
     render(<App />);
     await user.click(screen.getByRole('button', { name: 'Modules (2)' }));
-    const card = screen.getByRole('article', { name: 'nice!view Gem' });
-    await user.click(within(card).getByRole('button', { name: 'Add' }));
-    const targets = within(screen.getByRole('article', { name: 'nice!view Gem' })).getAllByRole('checkbox');
-    expect(targets.map((t) => (t as HTMLInputElement).checked)).toEqual([true, true]);
-    await user.click(targets[1] as HTMLElement);
-    expect(within(screen.getByRole('article', { name: 'nice!view Gem' })).getAllByRole('checkbox').map((t) => (t as HTMLInputElement).checked)).toEqual([
-      true,
-      false,
-    ]);
+    expect(screen.queryByRole('article', { name: 'nice!view Gem' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Screens tab' }));
+    expect(screen.getByRole('heading', { name: 'nice!view screens' })).toBeTruthy();
   });
 
   it('adds a leader key from the example and edits its sequences', async () => {

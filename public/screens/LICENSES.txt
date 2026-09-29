@@ -1,0 +1,40 @@
+The images in this folder are downscaled previews of nice!view screen designs,
+made from each project's own images by scripts/gen-screen-previews.mjs.
+The list of designs comes from https://github.com/whoop-t/nice-shield-collection (curated by whoop-t).
+
+- gem.webp: nice!view Gem by M165437 (https://github.com/M165437/nice-view-gem). Copyright (c) 2024 Michael Schmidt-Voigt.
+- battery.webp, battery-layer.webp: nice!view Battery by infely (https://github.com/infely/nice-view-battery). Copyright (c) 2024 Oleksandr Vasyliev.
+- elemental.webp, elemental-2.webp: nice!view Elemental by kevinpastor (https://github.com/kevinpastor/nice-view-elemental). Copyright (c) 2024 Kevin Pastor.
+- press-start.webp: nice!view Press Start by Ziembski (https://github.com/Ziembski/nice-view-press-start). Copyright (c) 2025 Ziembski.
+- bongo-cat.webp: Bongo Cat with FURIOUS mode by dsifry (https://github.com/dsifry/nice-view-mod). Copyright (c) 2024 GPeye.
+- spacemarine.webp, spacemarine-2.webp: WH40K Space Marine insignia by Jestar342 (https://github.com/Jestar342/nice-shield-spacemarine). Copyright (c) 2025 whoop-t.
+- one-punch-ok.webp: One Punch Man OK by whoop-t (https://github.com/whoop-t/nice-one-punch-ok). Copyright (c) 2025 whoop-t.
+- adventure-time.webp: Adventure Time by whoop-t (https://github.com/whoop-t/nice-adventure-time). Copyright (c) 2024 Michael Schmidt-Voigt.
+- futurama-sus.webp: Futurama: Fry squint by whoop-t (https://github.com/whoop-t/nice-futurama-sus). Copyright (c) 2024 Michael Schmidt-Voigt.
+- fry-button-miss.webp: Futurama: Fry misses the button by whoop-t (https://github.com/whoop-t/nice-fry-button-miss). Copyright (c) 2025 whoop-t.
+- luffy-wanted.webp: One Piece: Luffy wanted poster by whoop-t (https://github.com/whoop-t/nice-luffy-wanted). Copyright (c) 2025 whoop-t.
+- luffy-gear-five.webp: One Piece: Luffy Gear Five by whoop-t (https://github.com/whoop-t/nice-luffy-gear-five). Copyright (c) 2025 whoop-t.
+- hammerbeam.webp, hammerbeam-2.webp: Hammerbeam slideshow by GPeye (https://github.com/GPeye/hammerbeam-slideshow). Copyright (c) 2024 GPeye.
+- urchin.webp: Urchin corro animation by GPeye (https://github.com/GPeye/urchin-peripheral-animation). Copyright (c) 2024 GPeye.
+- mario.webp: Mario animation by GPeye (https://github.com/GPeye/mario-peripheral-animation). Copyright (c) 2024 GPeye.
+- nice-epaper.webp: nice!epaper by mctechnology17 (https://github.com/mctechnology17/zmk-nice-oled). Copyright (c) 2024 Marcos Chow Castro.
+
+Each project is licensed under the MIT License:
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

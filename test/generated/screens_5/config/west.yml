@@ -1,0 +1,29 @@
+manifest:
+  remotes:
+    - name: zmkfirmware
+      url-base: https://github.com/zmkfirmware
+    - name: urob
+      url-base: https://github.com/urob
+    - name: mctechnology17
+      url-base: https://github.com/mctechnology17
+    - name: whoop-t
+      url-base: https://github.com/whoop-t
+  projects:
+    - name: zmk
+      remote: zmkfirmware
+      revision: v0.3
+      import: app/west.yml
+    - name: zmk-helpers
+      remote: urob
+      revision: v0.3
+    - name: zmk-unicode
+      remote: urob
+      revision: v0.3
+    - name: zmk-nice-oled
+      remote: mctechnology17
+      revision: v0.0.2
+    - name: nice-luffy-gear-five
+      remote: whoop-t
+      revision: 1d203a9b60d2b537f308186fe8dc247df6633b23
+  self:
+    path: config

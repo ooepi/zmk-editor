@@ -8,6 +8,7 @@ import {
   type BehaviorTemplate,
   type ModuleDef,
 } from './catalog/modules.ts';
+import { SCREENS, STOCK_SCREEN_SHIELD } from './catalog/screens.ts';
 import { DEFAULT_UNICODE_MODE } from './catalog/unicode.ts';
 import type { BuildModel } from './files/build.ts';
 import { writeKconfigValue } from './files/kconfig.ts';
@@ -77,6 +78,15 @@ export function removeModule(config: ZmkConfig, id: string): { config: ZmkConfig
   const west = { ...config.west, modules: config.west.modules.filter((m) => m.name !== id) };
   let next: ZmkConfig = { ...config, west, keymap };
   if (module?.shield) next.build.include.forEach((_, index) => (next = setModuleShield(next, id, index, false)));
+  // Builds showing one of its nice!view screens go back to the stock screen.
+  const screens = new Set(SCREENS.filter((s) => s.moduleId === id).map((s) => s.shield));
+  if (screens.size > 0) {
+    const include = next.build.include.map((t) => {
+      const list = shieldNames(t.shield);
+      return list.some((n) => screens.has(n)) ? { ...t, shield: list.map((n) => (screens.has(n) ? STOCK_SCREEN_SHIELD : n)).join(' ') } : t;
+    });
+    next = { ...next, build: { ...next.build, include } };
+  }
   return { config: next, replaced };
 }
 

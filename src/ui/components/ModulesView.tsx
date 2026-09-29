@@ -8,6 +8,7 @@ import {
   type ModuleCategory,
   type ModuleDef,
 } from '../../core/catalog/modules.ts';
+import { isScreenModule } from '../../core/catalog/screens.ts';
 import { UNICODE_MODES } from '../../core/catalog/unicode.ts';
 import {
   addModule,
@@ -31,6 +32,9 @@ interface ModulesViewProps {
   dispatch: Dispatch<EditorAction>;
 }
 
+/** nice!view screen modules are picked on the Screens tab instead. */
+const LISTED = MODULES.filter((m) => !isScreenModule(m.id));
+
 type Filter = ModuleCategory | 'all' | 'installed';
 
 function matches(module: ModuleDef, text: string): boolean {
@@ -42,7 +46,7 @@ function matches(module: ModuleDef, text: string): boolean {
 }
 
 /** The module catalog: add/remove modules, their setup, version warnings, and finding more on GitHub. */
-export function ModulesView({ config, dispatch }: ModulesViewProps) {
+export function ModulesView({ config, dispatch, onScreens }: ModulesViewProps & { onScreens: () => void }) {
   const [filter, setFilter] = useState<Filter>('all');
   const [text, setText] = useState('');
   const installedIds = new Set(config.west.modules.map((m) => m.name));
@@ -50,7 +54,7 @@ export function ModulesView({ config, dispatch }: ModulesViewProps) {
   const others = config.west.modules.filter((m) => !catalogIds.has(m.name));
   const mismatches = moduleVersionMismatches(config);
   const version = config.west.zmkVersion;
-  const shown = MODULES.filter(
+  const shown = LISTED.filter(
     (m) =>
       (filter === 'all' || (filter === 'installed' ? installedIds.has(m.id) : m.category === filter)) && matches(m, text),
   );
@@ -69,7 +73,7 @@ export function ModulesView({ config, dispatch }: ModulesViewProps) {
   const filters: { id: Filter; label: string }[] = [
     { id: 'all', label: 'All' },
     ...MODULE_CATEGORIES,
-    { id: 'installed', label: `Installed (${MODULES.filter((m) => installedIds.has(m.id)).length})` },
+    { id: 'installed', label: `Installed (${LISTED.filter((m) => installedIds.has(m.id)).length})` },
   ];
 
   return (
@@ -123,6 +127,16 @@ export function ModulesView({ config, dispatch }: ModulesViewProps) {
           ))}
         </div>
       </div>
+
+      {(filter === 'all' || filter === 'display') && (
+        <div className="notice" role="note">
+          Looking for nice!view art and status screens (Gem, Battery, Luffy, Bongo Cat…)? Pick them per half on the{' '}
+          <button type="button" className="link-button" onClick={onScreens}>
+            Screens tab
+          </button>
+          .
+        </div>
+      )}
 
       <div className="module-grid">
         {shown.map((module) => (

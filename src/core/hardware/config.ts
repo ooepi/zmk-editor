@@ -1,3 +1,4 @@
+import { NICE_VIEW_ADAPTER, SCREEN_SHIELDS, STOCK_SCREEN_SHIELD } from '../catalog/screens.ts';
 import type { ZmkConfig } from '../config.ts';
 import type { BuildTarget } from '../files/build.ts';
 import { parseKconfig } from '../files/kconfig.ts';
@@ -11,16 +12,17 @@ export function shieldNames(hw: KeyboardHardware): string[] {
   return hw.split ? [`${hw.name}_left`, `${hw.name}_right`] : [hw.name];
 }
 
-/** Shields ZMK and modules use for a nice!view; `nice_view_gem` (a module) takes the place of `nice_view`. */
-const NICE_VIEW_SHIELDS = ['nice_view_adapter', 'nice_view', 'nice_view_gem'];
+/** Shields for a nice!view: the adapter and a screen (ZMK's `nice_view` or one from the Screens catalog). */
+const NICE_VIEW_SHIELDS = [NICE_VIEW_ADAPTER, ...SCREEN_SHIELDS];
 
-/** A target's shield list with the half's nice!view shields added or removed; other extras are kept. */
+/** A target's shield list with the half's nice!view shields added or removed; other extras (and a chosen screen) are kept. */
 function withDisplayShields(shield: string, niceView: boolean): string {
   const [base = '', ...rest] = shield.split(' ').filter(Boolean);
-  const hasView = rest.includes('nice_view_adapter') && (rest.includes('nice_view') || rest.includes('nice_view_gem'));
+  const screen = rest.find((s) => SCREEN_SHIELDS.includes(s));
+  const hasView = rest.includes(NICE_VIEW_ADAPTER) && screen !== undefined;
   if (niceView ? hasView : !rest.some((s) => NICE_VIEW_SHIELDS.includes(s))) return shield;
   const others = rest.filter((s) => !NICE_VIEW_SHIELDS.includes(s));
-  const view = niceView ? ['nice_view_adapter', rest.includes('nice_view_gem') ? 'nice_view_gem' : 'nice_view'] : [];
+  const view = niceView ? [NICE_VIEW_ADAPTER, screen ?? STOCK_SCREEN_SHIELD] : [];
   return [base, ...view, ...others].join(' ');
 }
 

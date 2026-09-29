@@ -21,7 +21,7 @@ export function VersionSelect({ config, dispatch }: VersionSelectProps) {
     const names = result.blockedBy.map((id) => findModule(id)?.name ?? id).join(', ');
     dispatch({
       type: 'notify',
-      notice: `Can't switch to ZMK ${next}: ${names} has no release for it. Remove ${result.blockedBy.length > 1 ? 'them' : 'it'} in Modules first.`,
+      notice: `Can't switch to ZMK ${next}: ${names} has no release for it. Remove ${result.blockedBy.length > 1 ? 'them' : 'it'} in Modules (or Screens) first.`,
     });
   };
   return (

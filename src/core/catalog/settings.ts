@@ -1,4 +1,5 @@
 import type { ZmkConfig } from '../config.ts';
+import { SCREEN_SHIELDS } from './screens.ts';
 import { readKconfigValue, writeKconfigValue, type KconfigModel } from '../files/kconfig.ts';
 import { hasDisplay } from '../hardware/displays.ts';
 import { sensorOrder } from '../hardware/encoders.ts';
@@ -246,7 +247,7 @@ const HARDWARE_FEATURES: { name: string; label: string; part: string }[] = [
 ];
 
 /** Shields that add a screen to any Pro Micro keyboard, so the display setting is fine with them. */
-const DISPLAY_SHIELDS = ['nice_view', 'nice_view_gem', 'nice_oled'];
+const DISPLAY_SHIELDS = [...SCREEN_SHIELDS, 'nice_oled'];
 
 export interface UnsupportedSetting {
   name: string;

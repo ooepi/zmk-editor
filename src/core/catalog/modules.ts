@@ -1,4 +1,5 @@
 import type { BehaviorDef } from './behaviors.ts';
+import { SCREEN_MODULES } from './screens.ts';
 
 /** ZMK releases the editor can target, newest first. */
 export const ZMK_VERSIONS = ['v0.3', 'v0.2', 'v0.1'];
@@ -204,20 +205,8 @@ export const MODULES: ModuleDef[] = [
       help: 'Add it to builds on boards with an RGB LED: Seeed XIAO BLE or RP2040, nRF52840 M.2, nRF52840 MDK dongle.',
     },
   },
-  {
-    id: 'nice-view-gem',
-    name: 'nice!view Gem',
-    category: 'display',
-    description: 'A sleek nice!view status screen: WPM gauge, battery, connection and an animated crystal on the right half.',
-    homepage: 'https://github.com/M165437/nice-view-gem',
-    remote: { name: 'm165437', urlBase: 'https://github.com/M165437' },
-    revisions: { 'v0.3': 'v0.3.0' },
-    includes: [],
-    includePrefixes: [],
-    behaviors: [],
-    shield: { name: 'nice_view_gem', replaces: 'nice_view', help: 'Use it instead of nice_view on the builds with a nice!view.' },
-    kconfig: STATUS_SCREEN,
-  },
+  // nice!view screens, managed on the Screens tab.
+  ...SCREEN_MODULES,
   {
     id: 'zmk-nice-oled',
     name: 'nice!oled widgets',
