@@ -77,15 +77,18 @@ export const CONFIG: HelpSection[] = [
     body: (
       <>
         <p>
-          The <Ui>Settings</Ui> tab edits your keyboard's <code>.conf</code> file with plain descriptions: power and sleep,
-          Bluetooth, battery and split, RGB underglow, backlight, display, encoders and pointing, and keyboard and USB
-          options. Empty fields use ZMK's default, shown in the help under each field; <Ui>reset</Ui> empties a field
-          again. Settings take effect after you build and flash.
+          The <Ui>Settings</Ui> tab edits your keyboard's <code>.conf</code> file with plain descriptions. Pick a group on
+          the left (power and sleep, Bluetooth, battery and split, RGB underglow, backlight, display, encoders and
+          pointing, keyboard and USB) to see its settings; each group shows how many you've changed. Rarely needed
+          settings sit under <Ui>Show advanced settings</Ui>. Empty fields use ZMK's default, shown in the help under
+          each setting; changed ones are marked, and the reset button next to one returns it to the default.{' '}
+          <Ui>Changed only</Ui> lists every setting you've changed, across all groups. Settings take effect after you
+          build and flash.
         </p>
         <p>
           At the top, the editor warns about settings that don't match your keymap or keyboard, for example mouse keys
-          on a key while pointing is off, or underglow on a keyboard without LEDs, with a button to fix each.{' '}
-          <Ui>Edit the .conf file directly</Ui> lets you edit the file as text.
+          on a key while pointing is off, or underglow on a keyboard without LEDs, with a link to the group and a button
+          to fix each. <Ui>Raw .conf</Ui> lets you edit the file as text.
         </p>
       </>
     ),
