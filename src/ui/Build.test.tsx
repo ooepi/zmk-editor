@@ -47,7 +47,23 @@ async function connect(user: ReturnType<typeof userEvent.setup>, token = 'good-t
   await user.click(screen.getByRole('button', { name: 'Connect' }));
 }
 
+const tabStatus = () => document.getElementById('build-tab-status')?.textContent ?? null;
+
 describe('Build tab', () => {
+  it('shows on its tab what is waiting to commit, then the build’s outcome', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    expect(tabStatus()).toBeNull();
+    await connect(user);
+    await screen.findByText(/Connected to/);
+    // The repo differs from the demo in one key.
+    expect(tabStatus()).toBe('1 change to commit');
+    expect(screen.getByRole('button', { name: 'Build & flash' }).getAttribute('aria-describedby')).toBe('build-tab-status');
+    await user.click(screen.getByRole('button', { name: 'Commit & build' }));
+    expect(await screen.findByText('Firmware ready: 2 files.')).toBeTruthy();
+    expect(tabStatus()).toBe('Firmware ready to download');
+  });
+
   it('shows a clear error for a bad token', async () => {
     const user = userEvent.setup();
     render(<App />);

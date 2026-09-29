@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
-import { customLayout, type ZmkConfig } from '../core/config.ts';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { customLayout, generateConfig, type ZmkConfig } from '../core/config.ts';
 import { toggleComboKey, replaceCombo } from '../core/keymap/comboEdit.ts';
 import { behaviorKind } from '../core/keymap/model.ts';
 import { applyToEncoder, pushRecent, type EncoderDirection, type PaletteItem } from '../core/keymap/palette.ts';
@@ -8,7 +8,8 @@ import { physicalLayoutFor } from '../core/layouts/index.ts';
 import { BehaviorsView } from './components/BehaviorsView.tsx';
 import { BindingPanel } from './components/BindingPanel.tsx';
 import { BuildView } from './components/BuildView.tsx';
-import { useBuildSession } from './state/buildSession.ts';
+import { useBuildSession, type BuildState } from './state/buildSession.ts';
+import { pendingChanges } from '../core/github/changes.ts';
 import { ComboBanner } from './components/ComboBanner.tsx';
 import { CombosPanel } from './components/CombosPanel.tsx';
 import { ConditionalLayersPanel } from './components/ConditionalLayersPanel.tsx';
@@ -114,6 +115,13 @@ function Editor() {
   const [armed, setArmed] = useState<PaletteItem | null>(null);
   const { config, layer, key, selection, clipboard, sensor } = state;
   const { keymap } = config;
+  // What a commit would change, for the Build & flash tab's badge (only while a repository is open).
+  const repoFiles = buildSession.connection?.files;
+  const pendingCount = useMemo(
+    () => (repoFiles ? pendingChanges(generateConfig(config), repoFiles, config.keyboard).length : 0),
+    [config, repoFiles],
+  );
+  const buildStatus = tabStatus(buildSession.build, pendingCount);
   const keyCount = keymap.layers[0]?.bindings.length ?? 0;
   const { layouts, recent } = usePreferences();
   const layout = physicalLayoutFor(config.keyboard, keyCount, layouts[config.keyboard], customLayout(config));
@@ -304,12 +312,20 @@ function Editor() {
             type="button"
             className={`viewtab build-tab${view === 'build' ? ' active' : ''}`}
             aria-current={view === 'build' ? 'page' : undefined}
+            aria-describedby={buildStatus ? 'build-tab-status' : undefined}
             title="Commit to GitHub, build the firmware and flash it"
             onClick={() => setView('build')}
           >
             <Icon name="rocket" />
             Build &amp; flash
+            {buildStatus && <BuildTabStatus status={buildStatus} />}
           </button>
+          {/* Outside the button, so it describes it without becoming part of its name. */}
+          {buildStatus && (
+            <span id="build-tab-status" className="sr-only">
+              {tabStatusText(buildStatus)}
+            </span>
+          )}
         </nav>
         {state.notice && (
           <div className="notice" role="status">
@@ -470,6 +486,35 @@ function Editor() {
         )}
       </div>
     </HelpContext.Provider>
+  );
+}
+
+type TabStatus = { kind: 'pending'; count: number } | { kind: 'building' } | { kind: 'ready' } | { kind: 'failed' };
+
+/** What the Build & flash tab shows beside its name: a build in progress or its outcome, else what's waiting to commit. */
+function tabStatus(build: BuildState, pending: number): TabStatus | null {
+  if (build.phase === 'committing' || build.phase === 'waiting' || build.phase === 'downloading') return { kind: 'building' };
+  if (build.phase === 'done') return { kind: 'ready' };
+  if (build.phase === 'failed' || build.phase === 'blocked') return { kind: 'failed' };
+  return pending > 0 ? { kind: 'pending', count: pending } : null;
+}
+
+const TAB_STATUS_TEXT = {
+  building: 'Building the firmware…',
+  ready: 'Firmware ready to download',
+  failed: 'The build failed',
+} as const;
+
+const tabStatusText = (status: TabStatus) =>
+  status.kind === 'pending' ? `${status.count} change${status.count === 1 ? '' : 's'} to commit` : TAB_STATUS_TEXT[status.kind];
+
+function BuildTabStatus({ status }: { status: TabStatus }) {
+  return (
+    <span className={`build-tab-status ${status.kind}`} aria-hidden="true">
+      {status.kind === 'pending' && status.count}
+      {status.kind === 'ready' && <Icon name="check" size={12} strokeWidth={3} />}
+      {status.kind === 'failed' && <Icon name="x" size={12} strokeWidth={3} />}
+    </span>
   );
 }
 
