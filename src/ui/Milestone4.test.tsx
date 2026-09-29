@@ -19,10 +19,12 @@ describe('combos, encoders, behaviors and macros', () => {
     await user.click(screen.getByRole('button', { name: 'Key 13: Q' }));
     await user.click(screen.getByRole('button', { name: 'Key 14: W' }));
     expect(screen.getByRole('button', { name: 'Key 13: Q' }).className).toContain('highlighted');
-    const list = screen.getByRole('list', { name: 'Combos' });
-    expect(within(list).getByText(/13\+14 → Esc/)).toBeTruthy();
     expect(screen.queryByText('A combo needs at least two keys.')).toBeNull();
+    await user.click(screen.getAllByRole('button', { name: 'Done' })[0] as HTMLElement);
+    const item = within(screen.getByRole('list', { name: 'Combos' })).getByRole('button');
+    expect(item.textContent).toMatch(/Q\+W→Esc/);
 
+    await user.click(item);
     await user.click(screen.getByRole('button', { name: 'NAV' }));
     expect(screen.getByRole('button', { name: 'NAV' }).getAttribute('aria-pressed')).toBe('true');
   });

@@ -24,6 +24,8 @@ export interface EditorState {
   future: ZmkConfig[];
   /** A one-off message, e.g. combos removed with a layer. */
   notice: string | null;
+  /** The notice is a short confirmation that clears itself after a few seconds. */
+  noticeTransient: boolean;
 }
 
 export type EditorAction =
@@ -60,11 +62,11 @@ export type EditorAction =
   | { type: 'deleteLayer'; index: number }
   | { type: 'undo' }
   | { type: 'redo' }
-  | { type: 'notify'; notice: string }
+  | { type: 'notify'; notice: string; transient?: boolean }
   | { type: 'dismissNotice' };
 
 export function initialState(config: ZmkConfig, warnings: string[] = []): EditorState {
-  return { config, warnings, layer: 0, key: null, selection: [], clipboard: null, sensor: null, past: [], future: [], notice: null };
+  return { config, warnings, layer: 0, key: null, selection: [], clipboard: null, sensor: null, past: [], future: [], notice: null, noticeTransient: false };
 }
 
 /** The state fields for a new key selection; `key` follows it. */
@@ -100,6 +102,19 @@ function clampLayer(index: number, config: ZmkConfig): number {
 }
 
 export function editorReducer(state: EditorState, action: EditorAction): EditorState {
+  const next = reduce(state, action);
+  // A notice from a transient notify clears itself; any other new notice stays. An action that
+  // leaves the notice alone keeps its kind.
+  const noticeTransient =
+    action.type === 'notify'
+      ? action.transient === true
+      : next.notice === state.notice
+        ? state.noticeTransient
+        : false;
+  return next.noticeTransient === noticeTransient || next === state ? next : { ...next, noticeTransient };
+}
+
+function reduce(state: EditorState, action: EditorAction): EditorState {
   const { keymap } = state.config;
   switch (action.type) {
     case 'load':

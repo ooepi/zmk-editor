@@ -8,6 +8,7 @@ import { physicalLayoutFor } from '../core/layouts/index.ts';
 import { BehaviorsView } from './components/BehaviorsView.tsx';
 import { BindingPanel } from './components/BindingPanel.tsx';
 import { BuildView } from './components/BuildView.tsx';
+import { ComboBanner } from './components/ComboBanner.tsx';
 import { CombosPanel } from './components/CombosPanel.tsx';
 import { ConditionalLayersPanel } from './components/ConditionalLayersPanel.tsx';
 import { EncoderPanel } from './components/EncoderPanel.tsx';
@@ -79,6 +80,9 @@ export function App() {
   return <Editor />;
 }
 
+/** How long a short confirmation stays on screen. */
+const TRANSIENT_NOTICE_MS = 4000;
+
 function isTyping(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|SELECT|TEXTAREA)$/.test(target.tagName));
 }
@@ -94,6 +98,8 @@ function Editor() {
     setView('help');
   };
   const [combo, setCombo] = useState<string | null>(null);
+  /** Done was refused because the open combo has fewer than two keys. */
+  const [comboBlocked, setComboBlocked] = useState(false);
   const [behavior, setBehavior] = useState<string | null>(null);
   const [macro, setMacro] = useState<string | null>(null);
   /** A palette tile placed on each clicked key, until Esc. */
@@ -148,7 +154,35 @@ function Editor() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [dispatch, view, keyCount, hasSelection, hasClipboard]);
 
+  // Short confirmations ("Combo saved.") clear themselves; other notices wait to be dismissed.
+  useEffect(() => {
+    if (!state.notice || !state.noticeTransient) return;
+    const timer = window.setTimeout(() => dispatch({ type: 'dismissNotice' }), TRANSIENT_NOTICE_MS);
+    return () => window.clearTimeout(timer);
+  }, [state.notice, state.noticeTransient, dispatch]);
+
+  // After an undo the open combo may be gone; then nothing is open, and a redo won't reopen it.
   const selectedCombo = keymap.combos.find((c) => c.name === combo);
+  if (combo !== null && !selectedCombo) {
+    setCombo(null);
+    setComboBlocked(false);
+  }
+
+  const openCombo = (name: string | null) => {
+    setCombo(name);
+    setComboBlocked(false);
+  };
+
+  /** Done, Esc or a click on empty keyboard space: close the combo and say it's saved (edits apply as you go). */
+  const finishCombo = () => {
+    if (!selectedCombo) return;
+    if (selectedCombo.keyPositions.length < 2) {
+      setComboBlocked(true);
+      return;
+    }
+    openCombo(null);
+    dispatch({ type: 'notify', notice: 'Combo saved.', transient: true });
+  };
   const macroCount = keymap.behaviors.filter((b) => behaviorKind(b) === 'macro').length;
   // Help isn't a tab: the ? button in the top bar and the Learn more links open it.
   const tabs: { id: View; label: string; icon: IconName; count?: number }[] = [
@@ -165,6 +199,7 @@ function Editor() {
     if (view === 'combos') {
       if (selectedCombo) {
         dispatch({ type: 'edit', keymap: replaceCombo(keymap, selectedCombo.name, toggleComboKey(selectedCombo, index)) });
+        setComboBlocked(false);
       }
       return;
     }
@@ -345,16 +380,25 @@ function Editor() {
         ) : (
           <main className="workspace">
             <section className="canvas-area" aria-label="Keymap">
+              {view === 'combos' && selectedCombo && (
+                <ComboBanner keys={selectedCombo.keyPositions.length} blocked={comboBlocked} onDone={finishCombo} />
+              )}
               <div className="canvas-row">
                 {view === 'keymap' && <LayerRail layers={keymap.layers} active={layer} dispatch={dispatch} />}
-                <div className="canvas">
+                {/* In the combos view a click beside the keyboard (not in a gap between keys) finishes the combo. */}
+                <div
+                  className="canvas"
+                  onClick={view === 'combos' ? (event) => event.target === event.currentTarget && finishCombo() : undefined}
+                >
                   <KeyboardCanvas
                     keymap={keymap}
                     layout={layout}
                     layer={view === 'combos' ? 0 : layer}
                     selection={view === 'keymap' ? selection : []}
                     onSelectBox={
-                      view === 'keymap' ? (indices, additive) => dispatch({ type: 'selectKeys', indices, additive }) : undefined
+                      view === 'keymap'
+                        ? (indices, additive) => dispatch({ type: 'selectKeys', indices, additive })
+                        : undefined
                     }
                     highlighted={view === 'combos' && selectedCombo ? new Set(selectedCombo.keyPositions.map(Number)) : undefined}
                     onSelectKey={onKeyClick}
@@ -378,7 +422,14 @@ function Editor() {
             </section>
             <aside className="panel" aria-label="Details">
               {view === 'combos' ? (
-                <CombosPanel keymap={keymap} selected={combo} onSelect={setCombo} dispatch={dispatch} />
+                <CombosPanel
+                  keymap={keymap}
+                  selected={selectedCombo?.name ?? null}
+                  blocked={comboBlocked}
+                  onSelect={openCombo}
+                  onDone={finishCombo}
+                  dispatch={dispatch}
+                />
               ) : key !== null ? (
                 <BindingPanel
                   key={`${layer}-${key}`}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createCombo, deleteCombo, renameCombo, replaceCombo, toggleComboKey } from './comboEdit.ts';
+import { comboParts, createCombo, deleteCombo, renameCombo, replaceCombo, toggleComboKey } from './comboEdit.ts';
 import { generateKeymap } from './generator.ts';
 import { importKeymap } from './importer.ts';
 import { emptyKeymap } from './model.ts';
@@ -34,5 +34,31 @@ describe('combos', () => {
   it('generates combos that import back the same', () => {
     const model = { ...emptyKeymap(), combos: [createCombo(emptyKeymap(), [0, 1])] };
     expect(importKeymap(generateKeymap(model)).model).toEqual(model);
+  });
+});
+
+describe('comboParts', () => {
+  const SOURCE = `
+#include <behaviors.dtsi>
+/ {
+    keymap {
+        compatible = "zmk,keymap";
+        base { display-name = "Base"; bindings = <&kp A &kp B &trans &mo 1>; };
+        nav { display-name = "Nav"; bindings = <&trans &trans &trans &trans>; };
+    };
+};`;
+  const model = importKeymap(SOURCE).model;
+
+  it('names the keys by their base-layer labels and says what the combo sends', () => {
+    expect(comboParts(createCombo(model, [0, 1]), model)).toEqual({ keys: ['A', 'B'], sends: 'Esc' });
+  });
+
+  it('shows a transparent key as ▽, and no keys as an empty list', () => {
+    expect(comboParts(createCombo(model, [2]), model).keys).toEqual(['▽']);
+    expect(comboParts(createCombo(model, []), model).keys).toEqual([]);
+  });
+
+  it('names a layer the combo switches to', () => {
+    expect(comboParts(createCombo(model, [0, 1], { behavior: 'mo', params: ['1'] }), model).sends).toBe('Nav');
   });
 });
