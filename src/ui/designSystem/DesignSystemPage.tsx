@@ -1,4 +1,5 @@
 import { ThemeToggle } from '../components/ThemeToggle.tsx';
+import { IconButton } from '../components/ui/IconButton.tsx';
 import { useTheme } from '../useTheme.ts';
 
 // The living reference for the design system: every token and shared control,
@@ -110,6 +111,20 @@ export default function DesignSystemPage() {
           <button type="button" className="link-button">
             Link button
           </button>
+        </div>
+      </section>
+
+      <section className="ds-section" aria-labelledby="ds-icon-buttons">
+        <h2 id="ds-icon-buttons">Icon buttons</h2>
+        <p className="muted small">
+          <code>IconButton</code>: round, named by its label. With <code>expand</code> the label slides out on hover or focus.
+        </p>
+        <div className="ds-row">
+          <IconButton icon="undo" label="Undo" />
+          <IconButton icon="print" label="Print keymap" expand />
+          <IconButton icon="trash" label="Delete" tone="danger" />
+          <IconButton icon="redo" label="Redo (disabled)" disabled />
+          <IconButton icon="more" label="More actions" />
         </div>
       </section>
 

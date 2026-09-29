@@ -13,7 +13,7 @@ describe('design system page', () => {
   it('shows the token swatches and every base control', () => {
     render(<DesignSystemPage />);
     expect(screen.getByRole('heading', { level: 1, name: 'Design system' })).toBeTruthy();
-    for (const section of ['Colours', 'Type', 'Radius and spacing', 'Buttons', 'Fields', 'Chips and segments', 'Lists', 'Notices', 'Keycaps']) {
+    for (const section of ['Colours', 'Type', 'Radius and spacing', 'Buttons', 'Icon buttons', 'Fields', 'Chips and segments', 'Lists', 'Notices', 'Keycaps']) {
       expect(screen.getByRole('heading', { level: 2, name: section })).toBeTruthy();
     }
     expect(screen.getByText('--accent')).toBeTruthy();
