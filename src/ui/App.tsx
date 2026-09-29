@@ -22,6 +22,7 @@ import { PrintView } from './components/PrintView.tsx';
 import { SelectionPanel } from './components/SelectionPanel.tsx';
 import { ThemeToggle } from './components/ThemeToggle.tsx';
 import { Icon } from './components/Icon.tsx';
+import { IconButton } from './components/ui/IconButton.tsx';
 import { ModulesView } from './components/ModulesView.tsx';
 import { ScreensView } from './components/ScreensView.tsx';
 import { SettingsView } from './components/SettingsView.tsx';
@@ -226,22 +227,22 @@ function Editor() {
             </div>
             <VersionSelect config={config} dispatch={dispatch} />
           </div>
-          <Toolbar
-            config={config}
-            canUndo={state.past.length > 0}
-            canRedo={state.future.length > 0}
-            locked={view === 'newKeyboard' || view === 'editHardware'}
-            onPrint={() => setView('print')}
-            dispatch={dispatch}
-          />
-          <div className="topbar-end">
-            <ThemeToggle theme={theme} onToggle={toggleTheme} />
-            <button type="button" className="button help-button" aria-label="Open help" title="Help" onClick={() => openHelp()}>
-              <Icon name="help" size={18} />
-            </button>
-            <a className="coffee-link" href="https://www.buymeacoffee.com/gristone" target="_blank" rel="noopener noreferrer">
-              <span aria-hidden="true">☕</span> Buy me a coffee
-            </a>
+          <div className="topbar-actions">
+            <Toolbar
+              config={config}
+              canUndo={state.past.length > 0}
+              canRedo={state.future.length > 0}
+              locked={view === 'newKeyboard' || view === 'editHardware'}
+              onPrint={() => setView('print')}
+              dispatch={dispatch}
+            />
+            <div className="topbar-end">
+              <ThemeToggle theme={theme} onToggle={toggleTheme} />
+              <IconButton icon="help" label="Open help" title="Help" onClick={() => openHelp()} />
+              <a className="coffee-link" href="https://www.buymeacoffee.com/gristone" target="_blank" rel="noopener noreferrer">
+                <span aria-hidden="true">☕</span> Buy me a coffee
+              </a>
+            </div>
           </div>
         </header>
         <nav className="viewtabs" aria-label="Views">

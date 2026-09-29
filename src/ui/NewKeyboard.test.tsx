@@ -132,9 +132,14 @@ describe('Design your own keyboard', () => {
     expect(stored()).toEqual(before);
     expect(screen.getByText('Edit hardware · Test Pad')).toBeTruthy();
 
-    for (const name of ['Undo', 'Redo', 'Open files', 'Reset to demo']) {
+    for (const name of ['Undo', 'Redo', 'Open from GitHub', 'Print keymap']) {
       expect(screen.getByRole('button', { name })).toHaveProperty('disabled', true);
     }
+    await user.click(screen.getByRole('button', { name: 'More actions' }));
+    for (const name of ['Open files', 'Reset to demo']) {
+      expect(screen.getByRole('menuitem', { name })).toHaveProperty('disabled', true);
+    }
+    expect(screen.getByRole('menuitem', { name: 'Download .keymap' })).toHaveProperty('disabled', false);
   });
 
   it('confirms before rebuilding the grid when keys were rearranged, even with no pins picked', async () => {

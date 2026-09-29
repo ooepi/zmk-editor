@@ -5,7 +5,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--s-3);
+  gap: var(--s-4);
   padding: var(--s-3) var(--s-5);
   background: var(--bg);
 }
@@ -77,8 +77,8 @@
   min-height: 34px;
   padding: 0 var(--s-3);
   border-radius: var(--r-pill);
-  background: var(--surface-2);
-  color: var(--text);
+  background: transparent;
+  color: var(--text-muted);
   border: 1px solid var(--border);
   font-size: var(--fs-sm);
   font-weight: 600;
@@ -87,29 +87,52 @@
 }
 
 .coffee-link:hover {
-  background: var(--surface-3);
+  background: var(--surface-2);
+  color: var(--text);
 }
 
-.toolbar {
+.topbar-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--s-1);
+  justify-content: flex-end;
+  gap: var(--s-3);
+  margin-left: auto;
 }
 
-/* Many actions share this row until they move into a menu; keep them compact. */
-.toolbar .button {
-  min-height: 34px;
-  padding: 0 10px;
-  gap: 6px;
-  font-weight: 500;
+/* The everyday actions: a floating pill of round icon buttons. */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: var(--s-1);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
+}
+
+.toolbar .icon-button {
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  border-color: transparent;
+  background: transparent;
+}
+
+.toolbar .icon-button.expandable {
+  width: auto;
+}
+
+.toolbar .icon-button:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--surface-3);
 }
 
 .toolbar-sep {
   width: 1px;
   height: 20px;
+  margin: 0 var(--s-1);
   background: var(--border);
-  margin: 0 4px;
 }
 
 /* Workspace */

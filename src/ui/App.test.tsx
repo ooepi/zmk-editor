@@ -77,6 +77,20 @@ describe('App', () => {
     expect(tabs()).toHaveLength(6);
   });
 
+  it('keeps everyday actions in the top bar and the rest in the More menu', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    for (const name of ['Undo', 'Redo', 'Open from GitHub', 'Print keymap']) expect(screen.getByRole('button', { name })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Download .keymap' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'More actions' }));
+    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual([
+      'Open files',
+      'Download .keymap',
+      'Download config (.zip)',
+      'Reset to demo',
+    ]);
+  });
+
   it('keeps edits after a reload', async () => {
     const user = userEvent.setup();
     const { unmount } = render(<App />);
