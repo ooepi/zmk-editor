@@ -160,6 +160,32 @@ describe('palette layout', () => {
   });
 });
 
+describe('palette status', () => {
+  const status = () => within(palette().getByRole('status'));
+
+  it('says what a click will do in each mode', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    expect(status().getByText(/Select a key, then click a tile/)).toBeTruthy();
+    await user.click(keyButton('Key 25: A'));
+    expect(status().getByText(/Click a tile to put it on key 25, or drag a tile onto any key\./)).toBeTruthy();
+    await user.keyboard('{Control>}');
+    await user.click(keyButton('Key 26: R'));
+    await user.keyboard('{/Control}');
+    expect(status().getByText(/on the 2 selected keys/)).toBeTruthy();
+  });
+
+  it('names the armed tile and stops placing it', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const tab = palette().getByRole('button', { name: 'Place Tab (TAB)' });
+    await user.click(tab);
+    expect(status().getByText(/Placing Tab: click keys to put it on them\./)).toBeTruthy();
+    await user.click(status().getByRole('button', { name: 'Stop placing' }));
+    expect(tab.getAttribute('aria-pressed')).toBe('false');
+  });
+});
+
 describe('modifiers on palette tiles', () => {
   it('keeps the key readable and shows the held modifiers on the small line', async () => {
     const user = userEvent.setup();

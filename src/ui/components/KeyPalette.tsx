@@ -15,8 +15,8 @@ import { paletteSections } from '../../core/keymap/paletteSections.ts';
 import { sensorCount } from '../../core/keymap/sensorEdit.ts';
 import { setPaletteDrag } from '../dnd.ts';
 import { setPreferences, usePreferences } from '../state/preferences.ts';
-import { HelpLink } from '../help/HelpLink.tsx';
 import { CategoryRail, type RailEntry } from './palette/CategoryRail.tsx';
+import { PaletteStatus } from './palette/PaletteStatus.tsx';
 
 interface KeyPaletteProps {
   keymap: KeymapModel;
@@ -25,6 +25,8 @@ interface KeyPaletteProps {
   selection: readonly number[];
   /** A tile was clicked. */
   onPick: (item: PaletteItem) => void;
+  /** Stop placing the armed tile. */
+  onDisarm: () => void;
 }
 
 const TRANSPARENT: PaletteItem = { kind: 'binding', binding: { behavior: 'trans', params: [] } };
@@ -33,7 +35,7 @@ const NONE: PaletteItem = { kind: 'binding', binding: { behavior: 'none', params
 const sameItem = (a: PaletteItem | null, b: PaletteItem) => a !== null && JSON.stringify(a) === JSON.stringify(b);
 
 /** Keys and behaviors laid out as tiles in one list: drag one onto a key, or click it and then keys. */
-export function KeyPalette({ keymap, armed, selection, onPick }: KeyPaletteProps) {
+export function KeyPalette({ keymap, armed, selection, onPick, onDisarm }: KeyPaletteProps) {
   const [query, setQuery] = useState('');
   const [mods, setMods] = useState<ModifierFunction[]>([]);
   const [current, setCurrent] = useState<string | null>(null);
@@ -121,21 +123,12 @@ export function KeyPalette({ keymap, armed, selection, onPick }: KeyPaletteProps
     );
   };
 
-  const hint = armed
-    ? 'Click keys to place the highlighted tile · Esc or click the tile again to stop'
-    : selection.length > 1
-      ? `Click a tile to put it on the ${selection.length} selected keys, or drag it onto any key`
-      : selection.length === 1
-        ? `Click a tile to put it on key ${selection[0]}, or drag it onto any key`
-        : 'Drag a tile onto a key, or click a tile and then keys · Drag keys onto each other to swap (hold Alt to copy)' +
-          (hasEncoders ? " · Drop keys on an encoder's ↺ or ↻ side" : '');
+  const armedName = armed && (armed.kind === 'keycode' ? keyExpressionLabel(armed.token) : describeBinding(armed.binding, displayContext(keymap)).main);
 
   return (
     <section className="palette" aria-label="Key palette">
       <div className="palette-head">
-        <p className="palette-hint muted small">
-          {hint} <HelpLink to="palette" />
-        </p>
+        <PaletteStatus armed={armedName ? { name: armedName } : null} selection={selection} hasEncoders={hasEncoders} onStop={onDisarm} />
       </div>
       <div className="palette-body">
         <CategoryRail entries={railEntries} current={current} onJump={jump} />

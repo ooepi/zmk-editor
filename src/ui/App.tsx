@@ -374,7 +374,7 @@ function Editor() {
                   )}
                 </div>
               </div>
-              {view === 'keymap' && <KeyPalette keymap={keymap} armed={armed} selection={selection} onPick={onPaletteClick} />}
+              {view === 'keymap' && <KeyPalette keymap={keymap} armed={armed} selection={selection} onPick={onPaletteClick} onDisarm={() => setArmed(null)} />}
             </section>
             <aside className="panel" aria-label="Details">
               {view === 'combos' ? (
