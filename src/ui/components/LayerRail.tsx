@@ -95,8 +95,11 @@ export function LayerRail({ layers, active, dispatch }: LayerRailProps) {
   };
 
   const onTabKey = (event: KeyboardEvent<HTMLButtonElement>, index: number, layer: Layer) => {
-    if (!event.altKey || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return;
-    const to = event.key === 'ArrowUp' ? index - 1 : index + 1;
+    // Along the rail: up/down when it stands, left/right too when it runs across the top.
+    const back = event.key === 'ArrowUp' || (across && event.key === 'ArrowLeft');
+    const forward = event.key === 'ArrowDown' || (across && event.key === 'ArrowRight');
+    if (!event.altKey || (!back && !forward)) return;
+    const to = back ? index - 1 : index + 1;
     if (to < 0 || to >= layers.length) return;
     event.preventDefault();
     refocus.current = layer.name;

@@ -87,7 +87,8 @@ export function HelpView({ section }: HelpViewProps) {
     const scroller = sections.current.values().next().value?.closest<HTMLElement>('.workspace') ?? null;
     /** Scrolled to the very end, the last shown section is the one being read, even if it's too short to reach the top. */
     const atBottom = () => {
-      if (!scroller || scroller.scrollTop + scroller.clientHeight < scroller.scrollHeight - 4) return null;
+      if (!scroller || scroller.scrollHeight <= scroller.clientHeight) return null;
+      if (scroller.scrollTop + scroller.clientHeight < scroller.scrollHeight - 4) return null;
       return [...sections.current].filter(([, element]) => !element.hidden).at(-1)?.[0] ?? null;
     };
     const observer = new IntersectionObserver(

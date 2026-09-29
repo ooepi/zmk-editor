@@ -8,6 +8,8 @@
   background: var(--bg);
   /* On a phone the tabs scroll sideways instead of widening the page. */
   overflow-x: auto;
+  /* A tab scrolled into view stops short of the sticky Build & flash at the right. */
+  scroll-padding-inline-end: 180px;
 }
 
 /* The views sit together in one pill; the active one is filled. */

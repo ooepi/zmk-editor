@@ -41,9 +41,9 @@ export default defineConfig(({ mode }) => {
           // cache across releases, and no single file is huge.
           codeSplitting: {
             groups: [
-              { name: 'react', test: /node_modules[\/](react|react-dom|scheduler)[\/]/ },
-              { name: 'vendor', test: /node_modules[\/]/ },
-              { name: 'catalogs', test: /src[\/]core[\/]catalog[\/][^\/]+\.data\.ts$/ },
+              { name: 'react', test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/ },
+              { name: 'vendor', test: /node_modules[\\/]/ },
+              { name: 'catalogs', test: /src[\\/]core[\\/]catalog[\\/][^\\/]+\.data\.ts$/ },
             ],
           },
         },

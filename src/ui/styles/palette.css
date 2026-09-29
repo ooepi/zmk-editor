@@ -310,7 +310,12 @@
   font-weight: 400;
 }
 
-/* A rail jump focuses the section's title; the ring would be noise there. */
+/* A rail jump focuses the section's title: a quiet underline instead of the ring. */
 .palette-group-title:focus {
   outline: none;
+}
+
+.palette-group-title:focus-visible {
+  text-decoration: underline 2px var(--accent-line);
+  text-underline-offset: 4px;
 }

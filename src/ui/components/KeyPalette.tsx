@@ -107,7 +107,8 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm, startAt
     ...shown.map((s) => ({ id: s.id, title: s.title, kind: s.kind === 'keys' ? ('Keys' as const) : ('Behaviors' as const) })),
   ];
 
-  const jump = (id: string) => {
+  /** `focus`: a jump from the rail, where keyboard users should land in the section. */
+  const jump = (id: string, focus = false) => {
     const target = { id, settling: true };
     jumped.current = target;
     // scrollend isn't everywhere yet; stop waiting for it after a while.
@@ -115,7 +116,7 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm, startAt
     const section = scroller.current?.querySelector<HTMLElement>(`[data-section="${id}"]`);
     section?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
     // Keyboard users land where they jumped, so Tab continues with that section's tiles.
-    section?.querySelector<HTMLElement>('.palette-group-title')?.focus({ preventScroll: true });
+    if (focus) section?.querySelector<HTMLElement>('.palette-group-title')?.focus({ preventScroll: true });
     setCurrent(id);
   };
 
@@ -257,7 +258,7 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm, startAt
                 </button>
               ))}
             </div>
-            <CategoryRail entries={railEntries} current={current} onJump={jump} headings={searching} />
+            <CategoryRail entries={railEntries} current={current} onJump={(id) => jump(id, true)} headings={searching} />
           </div>
           <div className="palette-main">
             <div className="palette-tools">

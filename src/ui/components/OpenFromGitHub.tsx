@@ -58,7 +58,14 @@ export function OpenFromGitHub({ disabled, title, onOpened }: OpenFromGitHubProp
   };
 
   return (
-    <span className="popover-anchor" ref={anchor}>
+    <span
+      className="popover-anchor"
+      ref={anchor}
+      onBlur={(e) => {
+        // Tabbing out (e.g. to the More menu) closes it too, not only a press elsewhere.
+        if (open && e.relatedTarget && !e.currentTarget.contains(e.relatedTarget as Node)) close();
+      }}
+    >
       <IconButton
         icon="github"
         label="Open from GitHub"
