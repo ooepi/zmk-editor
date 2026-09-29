@@ -1,0 +1,321 @@
+/* Layer bar */
+
+.layerbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.layer-tabs,
+.layer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.layer-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 14px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.layer-tab:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.layer-tab.active {
+  color: var(--accent-contrast);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.layer-tab.active .layer-index {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.layerbar-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.layerbar .layer-tabs {
+  flex: 1;
+  gap: 6px;
+}
+
+.layer-actions {
+  gap: 6px;
+}
+
+.layer-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.layer-action:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.layer-action.danger:hover:not(:disabled) {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.layer-action:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.layer-tab.drag-hover {
+  color: var(--text);
+  border-color: var(--accent);
+  border-style: dashed;
+}
+
+.layer-index {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.layer-rename {
+  width: 130px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+/* Keyboard */
+
+.keyboard {
+  position: relative;
+  /* As wide as fits, but never so wide that its height overflows the canvas. */
+  width: min(100%, calc((100cqh - var(--encoder-space, 0px)) * var(--ratio, 3)));
+  max-width: 1100px;
+  container-type: inline-size;
+}
+
+.keycap {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--unit) * 0.02);
+  padding: calc(var(--unit) * 0.05);
+  margin: 0;
+  border: calc(var(--unit) * 0.015) solid var(--keycap-edge);
+  border-radius: calc(var(--unit) * 0.12);
+  background: linear-gradient(180deg, var(--keycap-top), var(--keycap));
+  box-shadow:
+    0 calc(var(--unit) * 0.04) 0 var(--keycap-edge),
+    0 calc(var(--unit) * 0.08) calc(var(--unit) * 0.14) var(--keycap-shadow);
+  cursor: pointer;
+  overflow: hidden;
+  line-height: 1.05;
+  text-align: center;
+  transition:
+    border-color 0.1s,
+    transform 0.1s;
+  /* Inset so neighbouring keys have a gap. */
+  scale: 0.92;
+}
+
+.keycap:hover {
+  border-color: var(--text-muted);
+}
+
+.keycap.selected {
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 calc(var(--unit) * 0.03) var(--accent),
+    0 calc(var(--unit) * 0.08) calc(var(--unit) * 0.2) var(--accent-soft);
+}
+
+.keycap-main {
+  width: 100%;
+  overflow-wrap: break-word;
+  font-weight: 600;
+}
+
+.keycap-main.size-l {
+  font-size: calc(var(--unit) * 0.3);
+}
+
+.keycap-main.size-m {
+  font-size: calc(var(--unit) * 0.21);
+}
+
+.keycap-main.size-s {
+  font-size: calc(var(--unit) * 0.16);
+}
+
+.keycap-main.size-xs {
+  font-size: calc(var(--unit) * 0.13);
+}
+
+.keycap-sub {
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: calc(var(--unit) * 0.15);
+  color: var(--key-hold);
+}
+
+.keycap.kind-trans .keycap-main,
+.keycap.kind-none .keycap-main {
+  color: var(--key-dim);
+  font-weight: 400;
+}
+
+.keycap.kind-layer .keycap-main {
+  color: var(--key-layer);
+}
+
+.keycap.kind-layer .keycap-sub {
+  color: var(--key-layer);
+  opacity: 0.8;
+}
+
+.keycap.kind-macro .keycap-main,
+.keycap.kind-mod-morph .keycap-sub {
+  color: var(--key-macro);
+}
+
+.keycap.kind-other .keycap-sub {
+  color: var(--text-muted);
+}
+
+.keycap.drop-target {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 calc(var(--unit) * 0.04) var(--accent);
+}
+
+/* Box select on the keymap. */
+.select-box {
+  position: absolute;
+  border: 1px dashed var(--accent);
+  background: var(--accent-soft);
+  pointer-events: none;
+}
+
+/* Let drags over a key's labels count as over the key. */
+.keycap > span {
+  pointer-events: none;
+}
+
+.clipboard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.clipboard p {
+  margin: 0;
+}
+
+/* Searchable behavior field */
+
+.behavior-select {
+  position: relative;
+}
+
+.behavior-list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 320px;
+  margin: 0;
+  padding: 4px;
+  overflow: auto;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 25%);
+}
+
+.behavior-list ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.behavior-group-title {
+  padding: 6px 8px 2px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.behavior-option {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.behavior-option.active {
+  background: var(--accent-soft);
+}
+
+.behavior-option.current .behavior-option-name {
+  color: var(--accent);
+}
+
+.behavior-option-name {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.behavior-option-description {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.behavior-empty {
+  padding: 6px 8px;
+}
+

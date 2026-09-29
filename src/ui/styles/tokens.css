@@ -1,0 +1,48 @@
+:root,
+:root[data-theme='dark'] {
+  --bg: #0b0d11;
+  --surface: #13161c;
+  --surface-2: #1a1e26;
+  --border: #262b35;
+  --text: #e6e9ef;
+  --text-muted: #8b93a3;
+  --accent: #5ee0c1;
+  --accent-soft: rgb(94 224 193 / 14%);
+  --accent-contrast: #0b0d11;
+  --danger: #ff6b6b;
+  --keycap: #1d222b;
+  --keycap-top: #232935;
+  --keycap-edge: #303744;
+  --keycap-shadow: rgb(0 0 0 / 45%);
+  --key-layer: #7aa7ff;
+  --key-hold: #f5b86b;
+  --key-macro: #c792ea;
+  --key-dim: #4a5160;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+  color-scheme: dark;
+}
+
+:root[data-theme='light'],
+/* The printed cheat sheet is always light, whatever the screen theme. */
+.print-sheet {
+  --bg: #f3f4f7;
+  --surface: #ffffff;
+  --surface-2: #eef0f4;
+  --border: #d9dde5;
+  --text: #161a22;
+  --text-muted: #5b6475;
+  --accent: #0f9b7f;
+  --accent-soft: rgb(15 155 127 / 12%);
+  --accent-contrast: #ffffff;
+  --danger: #d43d3d;
+  --keycap: #ffffff;
+  --keycap-top: #ffffff;
+  --keycap-edge: #c9ced8;
+  --keycap-shadow: rgb(20 30 50 / 14%);
+  --key-layer: #2f6fe0;
+  --key-hold: #b86a0b;
+  --key-macro: #8a3fc4;
+  --key-dim: #b3b9c5;
+  color-scheme: light;
+}

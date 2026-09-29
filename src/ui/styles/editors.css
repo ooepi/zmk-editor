@@ -1,0 +1,229 @@
+/* Lists and editors */
+
+.item-list {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.item {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 6px 10px;
+  text-align: left;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.item:hover {
+  border-color: var(--text-muted);
+}
+
+.item.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.editor-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.split {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px 24px 48px;
+}
+
+.split-list .stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.behavior-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 560px;
+}
+
+.editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 12px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.fieldset legend {
+  padding: 0 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.binding-editor,
+.property-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.field.checkbox {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.field.checkbox .field-help {
+  display: block;
+}
+
+.field-help {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.field-error {
+  font-size: 12px;
+  color: var(--danger);
+}
+
+.button.danger:hover:not(:disabled) {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.row.wrap {
+  flex-wrap: wrap;
+}
+
+.grow {
+  flex: 1;
+}
+
+.source {
+  margin: 0;
+  padding: 10px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+/* Macro steps */
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.step {
+  display: flex;
+  gap: 4px;
+}
+
+.step-main {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  padding: 5px 8px;
+  text-align: left;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.step.active .step-main {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Drag to reorder: a grip hint and a line where the item will land. */
+.grip {
+  align-self: center;
+  padding: 0 2px;
+  color: var(--text-muted);
+  font-size: 14px;
+  letter-spacing: -1px;
+  cursor: grab;
+  user-select: none;
+}
+
+.step[draggable='true'],
+.tap-header[draggable='true'] {
+  cursor: grab;
+}
+
+.step.drop-before,
+.tap.drop-before {
+  box-shadow: 0 -3px 0 var(--accent);
+}
+
+.step.drop-after,
+.tap.drop-after {
+  box-shadow: 0 3px 0 var(--accent);
+}
+
+.layer-tab.drop-before {
+  box-shadow: -3px 0 0 var(--accent);
+}
+
+.layer-tab.drop-after {
+  box-shadow: 3px 0 0 var(--accent);
+}
+
+.step-index {
+  min-width: 18px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.step-label {
+  font-weight: 600;
+}
+
+.step-label.kind-other {
+  color: var(--key-macro);
+}
+
+@media (max-width: 900px) {
+  .split {
+    grid-template-columns: 1fr;
+  }
+}
+
