@@ -77,6 +77,16 @@ describe('App', () => {
     expect(tabs()).toHaveLength(6);
   });
 
+  it('never has the GitHub popover and the More menu open together', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Open from GitHub' }));
+    expect(screen.getByRole('dialog', { name: 'Open from GitHub' })).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'More actions' }));
+    expect(screen.queryByRole('dialog', { name: 'Open from GitHub' })).toBeNull();
+    expect(screen.getByRole('menu')).toBeTruthy();
+  });
+
   it('keeps everyday actions in the top bar and the rest in the More menu', async () => {
     const user = userEvent.setup();
     render(<App />);
