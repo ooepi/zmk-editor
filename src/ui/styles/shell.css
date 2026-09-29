@@ -144,7 +144,7 @@
 }
 
 .panel {
-  margin: 0 var(--s-3) var(--s-3) 0;
+  margin: var(--s-3) var(--s-3) var(--s-3) 0;
   padding: var(--s-5);
   border-radius: var(--r-lg);
   background: var(--surface);
