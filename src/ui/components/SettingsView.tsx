@@ -18,6 +18,7 @@ import { HelpLink } from '../help/HelpLink.tsx';
 import { Icon, type IconName } from './Icon.tsx';
 import { IconButton } from './ui/IconButton.tsx';
 import { Switch } from './ui/Switch.tsx';
+import { NumberInput } from './ui/NumberInput.tsx';
 
 interface SettingsViewProps {
   config: ZmkConfig;
@@ -373,16 +374,15 @@ function SettingRow({
   } else if (type.kind === 'int') {
     control = (
       <span className="setting-number">
-        <input
+        <NumberInput
           {...common}
           className="input"
-          type="number"
           aria-label={`${def.label}${unit ? ` (${unit})` : ''}`}
           min={type.min}
           max={type.max}
           placeholder={def.default === undefined ? '' : String(def.default)}
-          value={typeof value === 'number' ? value : ''}
-          onChange={(e) => onChange(e.target.value === '' ? undefined : Number(e.target.value))}
+          value={typeof value === 'number' ? value : undefined}
+          onCommit={onChange}
         />
         {unit && <span className="setting-unit">{unit}</span>}
       </span>

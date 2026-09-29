@@ -8,6 +8,7 @@ import {
 } from '../../core/catalog/properties.ts';
 import type { DtProperty } from '../../core/dts/ast.ts';
 import { Switch } from './ui/Switch.tsx';
+import { NumberInput } from './ui/NumberInput.tsx';
 
 interface PropertyFieldsProps {
   schemas: PropertySchema[];
@@ -52,14 +53,13 @@ function PropertyField({
             {schema.label}
             {type.unit ? ` (${type.unit})` : ''}
           </label>
-          <input
+          <NumberInput
             id={id}
             className="input"
-            type="number"
             placeholder={defaultText(schema)}
             aria-describedby={`${id}-help`}
-            value={typeof value === 'number' ? value : ''}
-            onChange={(e) => onChange(e.target.value === '' ? undefined : Number(e.target.value))}
+            value={typeof value === 'number' ? value : undefined}
+            onCommit={onChange}
           />
           {help}
         </div>

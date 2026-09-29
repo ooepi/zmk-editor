@@ -15,6 +15,7 @@ import type { Binding, KeymapModel } from '../../core/keymap/model.ts';
 import { BehaviorSelect } from './BehaviorSelect.tsx';
 import { KeycodePicker } from './KeycodePicker.tsx';
 import { UnicodePicker } from './UnicodePicker.tsx';
+import { NumberInput } from './ui/NumberInput.tsx';
 
 const PARAM_NAMES: Record<string, string[]> = {
   mt: ['Hold (modifier)', 'Tap'],
@@ -168,12 +169,11 @@ function ParamField({ name, type, value, extra, keymap, pickerOpen, onChange, on
                 {option.number.label}
                 {option.number.offset ? ` (0 = ${option.number.label.toLowerCase()} ${option.number.offset})` : ''}
               </span>
-              <input
+              <NumberInput
                 className="input"
-                type="number"
                 min={0}
-                value={extra ?? ''}
-                onChange={(e) => onEnumChange([value, e.target.value || '0'])}
+                value={extra === undefined || extra === '' ? undefined : Number(extra)}
+                onCommit={(n) => onEnumChange([value, String(n ?? 0)])}
               />
             </label>
           )}

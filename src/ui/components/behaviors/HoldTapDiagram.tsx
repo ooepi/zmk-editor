@@ -3,6 +3,7 @@ import { BUILTIN_BEHAVIORS } from '../../../core/catalog/behaviors.ts';
 import { HOLD_TAP_PROPERTIES, readProperty, writeProperty, type PropertySchema } from '../../../core/catalog/properties.ts';
 import type { Behavior } from '../../../core/keymap/model.ts';
 import { Icon } from '../Icon.tsx';
+import { NumberInput } from '../ui/NumberInput.tsx';
 
 /** Hold-tap bindings are behavior references without params, like `<&kp>, <&kp>`. */
 const HOLD_TAP_REFS = BUILTIN_BEHAVIORS.filter((d) => d.params.length === 1 && (d.group === 'keys' || d.group === 'layers'));
@@ -130,14 +131,13 @@ export function HoldTapDiagram({ behavior, label, onChange }: HoldTapDiagramProp
             <Icon name="timer" size={16} /> Timing
           </h3>
           <label className="timing-value">
-            <input
+            <NumberInput
               className="input compact"
-              type="number"
               min={0}
               aria-label="Tapping term (ms)"
-              value={typeof term === 'number' ? term : ''}
+              value={typeof term === 'number' ? term : undefined}
               placeholder={String(TERM.default)}
-              onChange={(e) => write(TERM, e.target.value === '' ? undefined : Number(e.target.value))}
+              onCommit={(ms) => write(TERM, ms)}
             />
             <span className="muted small">ms</span>
           </label>
