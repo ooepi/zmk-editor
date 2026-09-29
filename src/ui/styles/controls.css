@@ -668,6 +668,18 @@ input.switch:disabled {
   gap: var(--s-2);
 }
 
+/* On narrow screens the actions go under the title instead of squeezing it. */
+@media (max-width: 600px) {
+  .section-head {
+    flex-wrap: wrap;
+  }
+
+  .section-actions {
+    flex-basis: 100%;
+    flex-wrap: wrap;
+  }
+}
+
 /* Badge tones */
 
 .badge.tone-accent {
@@ -676,23 +688,23 @@ input.switch:disabled {
 }
 
 .badge.tone-success {
-  background: var(--success-soft);
-  color: var(--success);
+  background: color-mix(in srgb, var(--success) 16%, transparent);
+  color: var(--success-text);
 }
 
 .badge.tone-warning {
   background: color-mix(in srgb, var(--warning) 16%, transparent);
-  color: var(--warning);
+  color: var(--warning-text);
 }
 
 .badge.tone-danger {
-  background: var(--danger-soft);
-  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+  color: var(--danger-text);
 }
 
 .badge.tone-info {
   background: color-mix(in srgb, var(--info) 16%, transparent);
-  color: var(--info);
+  color: var(--info-text);
 }
 
 .section p {

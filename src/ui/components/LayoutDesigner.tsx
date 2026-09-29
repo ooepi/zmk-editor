@@ -91,7 +91,7 @@ export function LayoutDesigner({ config, dispatch, onClose }: LayoutDesignerProp
             title={`Key ${selected}`}
             lead={
               <kbd className="mini-key panel-key" aria-hidden="true">
-                {labels[selected] ?? ''}
+                {labels[selected] || selected}
               </kbd>
             }
           >

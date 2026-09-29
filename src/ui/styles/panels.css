@@ -367,10 +367,14 @@
 
 /* The key being edited, as a small keycap beside the title. */
 .panel-key {
-  display: inline-grid;
-  place-items: center;
+  display: inline-block;
   flex: none;
   min-width: 36px;
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 34px;
   height: 36px;
   padding: 0 var(--s-2);
   font-size: var(--fs-sm);
@@ -398,7 +402,7 @@
   color: var(--accent-text);
 }
 
-.panel-knob {
+.knob.panel-knob {
   width: 32px;
   height: 32px;
 }

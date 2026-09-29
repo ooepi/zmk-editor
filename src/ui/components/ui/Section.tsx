@@ -12,6 +12,8 @@ interface SectionProps {
   actions?: ReactNode;
   /** Something before the title, like a mini keycap (use it instead of `icon`). */
   lead?: ReactNode;
+  /** The heading level; 2 unless the section sits under another h2. */
+  level?: 2 | 3;
   /** `flat`: no card background or border, for a section inside something that already is one. */
   variant?: 'card' | 'flat';
   className?: string;
@@ -19,7 +21,19 @@ interface SectionProps {
 }
 
 /** A titled card: an optional icon, a title and description, header actions, then content. */
-export function Section({ title, label, icon, description, actions, lead, variant = 'card', className, children }: SectionProps) {
+export function Section({
+  title,
+  label,
+  icon,
+  description,
+  actions,
+  lead,
+  level = 2,
+  variant = 'card',
+  className,
+  children,
+}: SectionProps) {
+  const Heading = level === 3 ? 'h3' : 'h2';
   const name = label ?? (typeof title === 'string' ? title : undefined);
   const classes = ['section', variant === 'flat' && 'flat', className].filter(Boolean).join(' ');
   return (
@@ -32,7 +46,7 @@ export function Section({ title, label, icon, description, actions, lead, varian
             </span>
           ))}
         <div className="section-heading">
-          <h2 className="section-title">{title}</h2>
+          <Heading className="section-title">{title}</Heading>
           {description && <div className="section-description">{description}</div>}
         </div>
         {actions && <div className="section-actions">{actions}</div>}

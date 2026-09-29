@@ -42,26 +42,18 @@ export function KeyboardView({ config, dispatch, onCreated, onDesign, onNewKeybo
       <Section
         label="Current keyboard"
         icon="keyboard"
-        title={
-          <span className="keyboard-title">
-            {config.hardware?.displayName ?? current?.name ?? config.keyboard}
+        title={config.hardware?.displayName ?? current?.name ?? config.keyboard}
+        description={
+          <span className="keyboard-badges">
             <Badge>{keyCount} keys</Badge>
             {current?.split && <Badge>split</Badge>}
             {config.hardware && <Badge tone="accent">your design</Badge>}
-          </span>
-        }
-        description={
-          <>
-            This config
             {current?.url && (
-              <>
-                {' · '}
-                <a href={httpsUrl(current.url)} target="_blank" rel="noreferrer">
-                  keyboard page
-                </a>
-              </>
+              <a href={httpsUrl(current.url)} target="_blank" rel="noreferrer">
+                keyboard page
+              </a>
             )}
-          </>
+          </span>
         }
         actions={
           config.hardware

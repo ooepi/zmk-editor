@@ -130,6 +130,7 @@ export default function DesignSystemPage() {
         </p>
         <Section
           title="Build"
+          level={3}
           icon="rocket"
           description="GitHub Actions builds the firmware from your repository."
           actions={

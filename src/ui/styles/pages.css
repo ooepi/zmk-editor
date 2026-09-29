@@ -381,24 +381,6 @@ img.pixel-art {
   padding: 16px 24px 48px;
 }
 
-.build-section {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 14px 16px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-}
-
-.build-section p {
-  margin: 0;
-}
-
-.build-section a {
-  color: var(--accent-text);
-}
-
 .connect-form {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -519,16 +501,11 @@ img.pixel-art {
 
 /* Keyboard page */
 
-.keyboard-title,
 .keyboard-badges {
-  display: inline-flex;
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--s-2);
-}
-
-.keyboard-badges {
-  display: flex;
 }
 
 .module-meta {

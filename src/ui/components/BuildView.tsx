@@ -366,7 +366,7 @@ function BuildBadge({ build }: { build: BuildState }) {
             ? ['info', 'Committing']
             : build.phase === 'downloading'
               ? ['info', 'Downloading']
-              : build.phase === 'waiting' && (!build.run || build.run.status === 'queued')
+              : build.phase === 'waiting' && build.run?.status !== 'in_progress'
                 ? ['warning', 'Queued']
                 : ['info', 'Building'];
   return <Badge tone={tone}>{text}</Badge>;

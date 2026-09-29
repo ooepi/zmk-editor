@@ -20,6 +20,11 @@ describe('Section', () => {
     expect(within(region).getByText('Body')).toBeTruthy();
   });
 
+  it('can sit one heading level down', () => {
+    render(<Section title="Nested" level={3} />);
+    expect(screen.getByRole('heading', { level: 3, name: 'Nested' })).toBeTruthy();
+  });
+
   it('keeps a separate region name when given one', () => {
     render(<Section title="This config" label="Current keyboard" />);
     expect(screen.getByRole('region', { name: 'Current keyboard' })).toBeTruthy();

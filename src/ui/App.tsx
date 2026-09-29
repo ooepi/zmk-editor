@@ -505,6 +505,7 @@ function Overview({ warnings }: { warnings: string[] }) {
       <Section
         variant="flat"
         title="Details"
+        label="Keymap overview"
         icon="keyboard"
         description={
           <>

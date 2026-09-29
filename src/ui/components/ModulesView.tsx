@@ -199,6 +199,7 @@ function ModuleCard({ module, config, dispatch, installed, onRemove }: ModuleCar
     .map((v) => (module.revisions[v] === v ? v : `${v} (as ${module.revisions[v]})`))
     .join(', ');
   const own = config.keymap.behaviors.filter((b) => b.label && module.compatibles?.includes(b.compatible));
+  const category = MODULE_CATEGORIES.find((c) => c.id === module.category)?.label;
 
   return (
     <article className={`module-card${installed ? ' installed' : ''}`} aria-label={module.name}>
@@ -206,7 +207,11 @@ function ModuleCard({ module, config, dispatch, installed, onRemove }: ModuleCar
         <div>
           <h3>{module.name}</h3>
           <span className="module-meta">
-            <Badge tone={installed ? 'accent' : 'neutral'}>{installed ? 'Installed' : MODULE_CATEGORIES.find((c) => c.id === module.category)?.label}</Badge>
+            {installed ? (
+              <Badge tone="accent">Installed</Badge>
+            ) : (
+              category && <Badge>{category}</Badge>
+            )}
             <a className="mono small" href={httpsUrl(module.homepage)} target="_blank" rel="noreferrer">
               {module.id}
             </a>

@@ -18,7 +18,10 @@ export function ConditionalLayersPanel({ keymap, dispatch }: { keymap: KeymapMod
   const add = () => {
     const n = keymap.layers.length;
     const name = nodeName('tri layer', new Set(list.map((c) => c.name)), 'conditional');
-    save([...list, { name, ifLayers: [String(Math.min(1, n - 1)), String(Math.min(2, n - 1))], thenLayer: String(Math.min(3, n - 1)) }]);
+    save([
+      ...list,
+      { name, ifLayers: [String(Math.min(1, n - 1)), String(Math.min(2, n - 1))], thenLayer: String(Math.min(3, n - 1)) },
+    ]);
   };
 
   return (
@@ -54,7 +57,11 @@ export function ConditionalLayersPanel({ keymap, dispatch }: { keymap: KeymapMod
           <div className="row conditional-then">
             <label className="field grow">
               <span className="field-label">Turn on ({c.ifLayers.map(layerName).join(' + ') || 'choose layers'})</span>
-              <select className="input" value={c.thenLayer} onChange={(e) => save(list.with(i, { ...c, thenLayer: e.target.value }))}>
+              <select
+                className="input"
+                value={c.thenLayer}
+                onChange={(e) => save(list.with(i, { ...c, thenLayer: e.target.value }))}
+              >
                 {keymap.layers.map((layer, index) => (
                   <option key={layer.name} value={String(index)}>
                     {layer.displayName ?? layer.name}
@@ -62,7 +69,12 @@ export function ConditionalLayersPanel({ keymap, dispatch }: { keymap: KeymapMod
                 ))}
               </select>
             </label>
-            <IconButton icon="trash" label={`Remove ${c.name}`} tone="danger" onClick={() => save(list.filter((_, j) => j !== i))} />
+            <IconButton
+              icon="trash"
+              label={`Remove ${c.name}`}
+              tone="danger"
+              onClick={() => save(list.filter((_, j) => j !== i))}
+            />
           </div>
           {c.ifLayers.length < 2 && <span className="field-error">Choose at least two layers.</span>}
         </div>
