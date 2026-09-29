@@ -1,4 +1,8 @@
-/* Shared controls: generic classes any view can use. Area files refine them in context. */
+/*
+ * Shared controls: the component layer of the design system. Generic classes any
+ * view can use; area files refine them in context. Tokens only (see tokens.css).
+ * Every control here is shown on the design system page (/#design).
+ */
 
 /* Text */
 
@@ -7,7 +11,7 @@
 }
 
 .small {
-  font-size: 12px;
+  font-size: var(--fs-xs);
 }
 
 .mono {
@@ -15,11 +19,11 @@
 }
 
 .panel-title {
-  margin: 4px 0 10px;
-  font-size: 11px;
-  font-weight: 600;
+  margin: 0 0 var(--s-3);
+  font-size: var(--fs-xs);
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   color: var(--text-muted);
 }
 
@@ -27,20 +31,24 @@
 
 .button,
 .icon-button {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 5px 10px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-/* Buttons with an icon: icon and text side by side. */
-.button:has(> .icon) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: var(--s-2);
+  min-height: 36px;
+  padding: var(--s-1) var(--s-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
 }
 
 .icon {
@@ -48,22 +56,34 @@
 }
 
 .icon-button {
-  min-width: 30px;
-  padding: 4px 8px;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 50%;
 }
 
 .button:hover:not(:disabled),
 .icon-button:hover:not(:disabled) {
-  border-color: var(--accent);
+  background: var(--surface-3);
+  border-color: var(--border-strong);
+}
+
+.button:active:not(:disabled),
+.icon-button:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .button:disabled,
 .icon-button:disabled {
-  opacity: 0.4;
+  opacity: 0.45;
   cursor: default;
 }
 
 .icon-button.danger:hover:not(:disabled) {
+  color: var(--danger);
+  background: var(--danger-soft);
   border-color: var(--danger);
 }
 
@@ -71,15 +91,25 @@
   background: none;
   border: none;
   color: var(--accent-text);
+  font-weight: 600;
   cursor: pointer;
-  padding: 0 0 0 8px;
+  padding: 0 0 0 var(--s-2);
+}
+
+.link-button:hover {
+  text-decoration: underline;
 }
 
 .button.primary {
   background: var(--accent);
-  border-color: var(--accent);
+  border-color: transparent;
   color: var(--accent-contrast);
-  font-weight: 600;
+}
+
+.button.primary:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: transparent;
+  filter: brightness(1.06);
 }
 
 .button.active {
@@ -87,7 +117,12 @@
   border-color: var(--accent);
 }
 
+.button.danger {
+  color: var(--danger);
+}
+
 .button.danger:hover:not(:disabled) {
+  background: var(--danger-soft);
   border-color: var(--danger);
   color: var(--danger);
 }
@@ -97,36 +132,68 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .field-label {
-  font-size: 12px;
-  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text);
 }
 
 .input {
   width: 100%;
-  line-height: 1.4;
+  min-height: 40px;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
   background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 6px 8px;
+  line-height: 1.4;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.input:hover {
+  border-color: var(--border-strong);
 }
 
 .input:focus {
-  border-color: var(--accent);
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 3px var(--accent-soft);
   outline: none;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+select.input {
+  appearance: none;
+  padding-right: 36px;
+  background-image: var(--chevron-down);
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  cursor: pointer;
 }
 
 .input.invalid {
   border-color: var(--danger);
 }
 
+input[type='checkbox'],
+input[type='radio'] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
 .field.checkbox {
   flex-direction: row;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--s-2);
 }
 
 .field.checkbox .field-help {
@@ -134,29 +201,33 @@
 }
 
 .field-help {
-  font-size: 11px;
+  font-size: var(--fs-xs);
+  line-height: 1.45;
   color: var(--text-muted);
 }
 
 .field-error {
-  font-size: 12px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
   color: var(--danger);
 }
 
 .fieldset {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--s-3);
   margin: 0;
-  padding: 10px 12px 12px;
+  padding: var(--s-4);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
 }
 
 .fieldset legend {
-  padding: 0 4px;
-  font-size: 12px;
-  color: var(--text-muted);
+  padding: 0 var(--s-1);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text);
 }
 
 /* Chips and segments */
@@ -164,80 +235,105 @@
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
 }
 
 .chip {
-  background: var(--surface-2);
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 var(--s-3);
   border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 2px 8px;
-  font-size: 11px;
+  border-radius: var(--r-pill);
+  background: transparent;
+  font-size: var(--fs-sm);
+  font-weight: 500;
   cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
 }
 
-.chip.active {
-  background: var(--accent-soft);
-  border-color: var(--accent);
+.chip:hover:not(:disabled) {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+
+.chip.active,
+.chip.active:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--accent-contrast);
 }
 
 .chip:disabled {
-  opacity: 0.4;
+  opacity: 0.45;
   cursor: default;
 }
 
 .segmented {
   display: inline-flex;
-  padding: 2px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  gap: 2px;
+  padding: var(--s-1);
+  border-radius: var(--r-pill);
   background: var(--surface-2);
 }
 
 .segment {
-  padding: 4px 12px;
-  border: 1px solid transparent;
-  border-radius: 6px;
+  min-height: 30px;
+  padding: 0 var(--s-4);
+  border: none;
+  border-radius: var(--r-pill);
   background: transparent;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
   cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.segment:hover {
+  color: var(--text);
 }
 
 .segment.active {
-  color: var(--text);
-  background: var(--accent-soft);
-  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
 }
 
 /* Lists and badges */
 
 .item-list {
   list-style: none;
-  margin: 0 0 8px;
+  margin: 0 0 var(--s-3);
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .item {
   width: 100%;
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  padding: 6px 10px;
-  text-align: left;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid transparent;
+  border-radius: var(--r-md);
   background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  text-align: left;
   cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
 }
 
 .item:hover {
-  border-color: var(--text-muted);
+  background: var(--surface-3);
 }
 
 .item.active {
@@ -246,19 +342,22 @@
 }
 
 .badge {
-  font-size: 11px;
-  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--s-2);
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
   color: var(--text-muted);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 1px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 /* Layout helpers */
 
 .row {
   display: flex;
-  gap: 6px;
+  gap: var(--s-2);
 }
 
 .row.wrap {
@@ -269,19 +368,33 @@
   flex: 1;
 }
 
-/* Notices */
+/* Notices: a tinted card with a coloured bar on the left. */
 
 .notice {
-  margin: 8px 16px 0;
-  padding: 8px 12px;
+  margin: var(--s-2) var(--s-4) 0;
+  padding: var(--s-3) var(--s-4);
   border: 1px solid var(--border);
-  border-left: 3px solid var(--key-hold);
-  border-radius: 6px;
-  background: var(--surface);
-  font-size: 13px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  box-shadow: inset 4px 0 0 var(--warning);
+  font-size: var(--fs-sm);
 }
 
 .notice.warn {
-  margin: 12px 0;
-  border-left-color: var(--danger);
+  margin: var(--s-3) 0;
+  box-shadow: inset 4px 0 0 var(--danger);
+}
+
+/* The app-wide status message floats as a toast. */
+.app > .notice {
+  position: fixed;
+  bottom: var(--s-6);
+  left: 50%;
+  z-index: 50;
+  max-width: min(640px, 90vw);
+  margin: 0;
+  transform: translateX(-50%);
+  box-shadow:
+    inset 4px 0 0 var(--accent),
+    var(--shadow-float);
 }

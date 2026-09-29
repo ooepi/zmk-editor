@@ -97,6 +97,7 @@
   --accent-text: var(--lime-300);
   --accent-soft: color-mix(in srgb, var(--lime-300) 13%, transparent);
   --accent-contrast: var(--lime-950);
+  --focus-ring: var(--lime-300);
   --danger: var(--red-300);
   --danger-soft: color-mix(in srgb, var(--red-300) 12%, transparent);
   --success: var(--green-300);
@@ -121,6 +122,7 @@
   --shadow-md: 0 8px 24px rgb(0 0 0 / 25%);
   --shadow-inset: inset 0 2px 4px rgb(0 0 0 / 25%);
   --shadow-float: 0 10px 30px rgb(0 0 0 / 35%), inset 0 1px 0 rgb(255 255 255 / 4%);
+  --chevron-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239a9a94' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   color-scheme: dark;
 }
 
@@ -139,6 +141,7 @@
   --accent-text: var(--lime-800);
   --accent-soft: color-mix(in srgb, var(--lime-500) 18%, transparent);
   --accent-contrast: var(--lime-950);
+  --focus-ring: var(--lime-800);
   --danger: var(--red-600);
   --danger-soft: color-mix(in srgb, var(--red-600) 10%, transparent);
   --success: var(--green-700);
@@ -163,6 +166,7 @@
   --shadow-md: 0 8px 24px rgb(30 30 20 / 10%);
   --shadow-inset: inset 0 2px 4px rgb(30 30 20 / 10%);
   --shadow-float: 0 10px 30px rgb(30 30 20 / 10%), 0 1px 2px rgb(30 30 20 / 6%);
+  --chevron-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2362625c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   color-scheme: light;
 }
 

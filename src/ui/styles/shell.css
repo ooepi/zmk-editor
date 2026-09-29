@@ -5,23 +5,17 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 8px 16px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-5);
+  background: var(--bg);
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-family: var(--font-mono);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.brand {
-  gap: 14px;
+  gap: var(--s-4);
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .brand-name {
@@ -42,28 +36,30 @@
 }
 
 .top-field-label {
-  font-family: var(--font-body, inherit);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-muted);
 }
 
 .top-select {
-  height: 32px;
-  padding: 4px 10px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  min-height: 36px;
+  padding: 0 var(--s-4);
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
   background: var(--surface-2);
   color: var(--text);
-  font-family: var(--font-mono);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--fs-md);
+  font-weight: 700;
   cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out);
 }
 
-.top-select:hover,
+.top-select:hover {
+  border-color: var(--border-strong);
+}
+
 .top-select.active {
   border-color: var(--accent);
 }
@@ -78,13 +74,13 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 32px;
-  padding: 0 12px;
-  border-radius: 8px;
+  min-height: 34px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-pill);
   background: var(--surface-2);
   color: var(--text);
   border: 1px solid var(--border);
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
@@ -98,7 +94,15 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  gap: var(--s-1);
+}
+
+/* Many actions share this row until they move into a menu; keep them compact. */
+.toolbar .button {
+  min-height: 34px;
+  padding: 0 10px;
   gap: 6px;
+  font-weight: 500;
 }
 
 .toolbar-sep {
@@ -113,7 +117,7 @@
 .workspace {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(0, 1fr) 360px;
   min-height: 0;
 }
 
@@ -128,7 +132,7 @@
   flex: 1;
   display: grid;
   place-items: center;
-  padding: 16px 24px 32px;
+  padding: var(--s-4) var(--s-6) var(--s-8);
   overflow: auto;
   /* The keyboard sizes itself to this area's height too (see .keyboard). */
   container-type: size;
@@ -140,9 +144,10 @@
 }
 
 .panel {
-  border-left: 1px solid var(--border);
+  margin: 0 var(--s-3) var(--s-3) 0;
+  padding: var(--s-5);
+  border-radius: var(--r-lg);
   background: var(--surface);
-  padding: 12px 16px;
   overflow: auto;
 }
 

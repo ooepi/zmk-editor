@@ -136,7 +136,7 @@
   padding: calc(var(--unit) * 0.05);
   margin: 0;
   border: calc(var(--unit) * 0.015) solid var(--keycap-edge);
-  border-radius: calc(var(--unit) * 0.12);
+  border-radius: calc(var(--unit) * 0.16);
   background: linear-gradient(180deg, var(--keycap-top), var(--keycap));
   box-shadow:
     0 calc(var(--unit) * 0.04) 0 var(--keycap-edge),
