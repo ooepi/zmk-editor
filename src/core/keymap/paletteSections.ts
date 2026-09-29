@@ -2,6 +2,29 @@ import { BEHAVIOR_GROUPS } from '../catalog/behaviors.ts';
 import { KEYCODE_CATEGORIES, searchKeycodes, type Keycode } from '../catalog/keycodes.ts';
 import { searchTiles, type BehaviorTile } from './palette.ts';
 
+/**
+ * The media keys most people use, in the order they sit on a keyboard's media row.
+ * The rest of the (many) media keys go last, under "More media keys".
+ */
+export const COMMON_MEDIA = [
+  'C_PLAY_PAUSE',
+  'C_PREVIOUS',
+  'C_NEXT',
+  'C_VOLUME_DOWN',
+  'C_VOLUME_UP',
+  'C_MUTE',
+  'C_PLAY',
+  'C_PAUSE',
+  'C_STOP',
+  'C_REWIND',
+  'C_FAST_FORWARD',
+  'C_BRIGHTNESS_DEC',
+  'C_BRIGHTNESS_INC',
+  'C_EJECT',
+] as const;
+
+const COMMON_MEDIA_SET = new Set<string>(COMMON_MEDIA);
+
 export type PaletteSection =
   | { id: string; title: string; kind: 'keys'; keycodes: Keycode[] }
   | { id: string; title: string; kind: 'behaviors'; tiles: BehaviorTile[] };
@@ -14,14 +37,21 @@ export type PaletteSection =
 export function paletteSections(query: string, tiles: BehaviorTile[]): PaletteSection[] {
   const searching = query.trim() !== '';
   const keycodes = searchKeycodes(query);
+  const media = keycodes.filter((k) => k.category === 'media');
   const keySections: PaletteSection[] = searching
     ? [{ id: 'keys', title: 'Keys', kind: 'keys', keycodes }]
-    : KEYCODE_CATEGORIES.map((c) => ({
-        id: `keys-${c.id}`,
-        title: c.label,
-        kind: 'keys',
-        keycodes: keycodes.filter((k) => k.category === c.id),
-      }));
+    : [
+        ...KEYCODE_CATEGORIES.map((c): PaletteSection => ({
+          id: `keys-${c.id}`,
+          title: c.label,
+          kind: 'keys',
+          keycodes:
+            c.id === 'media'
+              ? COMMON_MEDIA.flatMap((name) => media.find((k) => k.name === name) ?? [])
+              : keycodes.filter((k) => k.category === c.id),
+        })),
+        { id: 'keys-media-more', title: 'More media keys', kind: 'keys', keycodes: media.filter((k) => !COMMON_MEDIA_SET.has(k.name)) },
+      ];
   const shown = searchTiles(tiles, query);
   const behaviorSections: PaletteSection[] = BEHAVIOR_GROUPS.map((g) => ({
     id: `behaviors-${g.id}`,

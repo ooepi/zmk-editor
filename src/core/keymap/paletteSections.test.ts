@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { searchKeycodes } from '../catalog/keycodes.ts';
 import { importKeymap } from './importer.ts';
 import { behaviorTiles } from './palette.ts';
-import { paletteSections, sectionInView } from './paletteSections.ts';
+import { COMMON_MEDIA, paletteSections, sectionInView } from './paletteSections.ts';
 
 const SOURCE = `
 #include <behaviors.dtsi>
@@ -77,5 +77,32 @@ describe('sectionInView', () => {
 
   it('is empty before the first section', () => {
     expect(sectionInView(tops, 0, false, null)).toBeNull();
+  });
+});
+
+describe('media keys', () => {
+  const browse = paletteSections('', tiles);
+  const section = (title: string) => browse.find((s) => s.title === title);
+  const tokens = (title: string) => {
+    const s = section(title);
+    return s?.kind === 'keys' ? s.keycodes.map((k) => k.name) : [];
+  };
+
+  it('keeps only the everyday media controls under Media, in a sensible order', () => {
+    expect(tokens('Media')).toEqual([...COMMON_MEDIA]);
+  });
+
+  it('puts the rest under More media keys, last among the keys', () => {
+    const titles = browse.map((s) => s.title);
+    const more = titles.indexOf('More media keys');
+    expect(more).toBeGreaterThan(titles.indexOf('Other'));
+    expect(browse[more + 1]?.kind).toBe('behaviors');
+    expect(tokens('More media keys')).toContain('C_AC_FORWARD');
+    expect(tokens('More media keys')).not.toContain('C_VOLUME_UP');
+  });
+
+  it('still finds every media key by search', () => {
+    const found = paletteSections('forward', tiles)[0];
+    expect(found?.kind === 'keys' && found.keycodes.some((k) => k.name === 'C_AC_FORWARD')).toBe(true);
   });
 });

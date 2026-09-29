@@ -234,6 +234,19 @@ describe('keys and behaviors toggle', () => {
   });
 });
 
+describe('media keys', () => {
+  it('shows the everyday media controls with icons, and the rest under More media keys', () => {
+    render(<App />);
+    const media = within(palette().getByRole('group', { name: 'Media' }));
+    expect(media.getAllByRole('button')).toHaveLength(14);
+    const volume = media.getByRole('button', { name: 'Place Vol+ (C_VOL_UP)' });
+    expect(volume.querySelector('svg')).toBeTruthy();
+    expect(volume.querySelector('.palette-tile-sub')?.textContent).toBe('Vol+');
+    expect(media.getByRole('button', { name: 'Place Play/Pause (C_PP)' })).toBeTruthy();
+    expect(palette().getByRole('group', { name: 'More media keys' })).toBeTruthy();
+  });
+});
+
 describe('palette search', () => {
   it('starts a search at the top of the list and clears the highlighted category', async () => {
     Element.prototype.scrollIntoView = () => undefined;

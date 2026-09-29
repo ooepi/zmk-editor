@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type DragEvent } from 'react';
+import { useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react';
 import {
   formatKeyExpression,
   keyExpressionLabel,
@@ -17,6 +17,7 @@ import { setPaletteDrag } from '../dnd.ts';
 import { setPreferences, usePreferences } from '../state/preferences.ts';
 import { CategoryRail, type RailEntry } from './palette/CategoryRail.tsx';
 import { ModifierBar } from './palette/ModifierBar.tsx';
+import { Icon, type IconName } from './Icon.tsx';
 import { IconButton } from './ui/IconButton.tsx';
 import { PaletteStatus } from './palette/PaletteStatus.tsx';
 
@@ -41,6 +42,24 @@ const SPECIALS = [
   { item: TRANSPARENT, label: { main: '▽', sub: 'Trans' }, name: 'Transparent', words: 'transparent trans ▽ lower layer', title: 'Transparent: uses the binding of the next active layer below.', kind: 'trans' },
   { item: NONE, label: { main: '✕', sub: 'None' }, name: 'None', words: 'none nothing ✕ blank disabled', title: 'None: does nothing.', kind: 'none' },
 ];
+
+/** The everyday media keys get an icon, and a clearer name where the catalog's is ambiguous. */
+const MEDIA_TILES: Record<string, { icon: IconName; name?: string }> = {
+  C_PLAY_PAUSE: { icon: 'playPause', name: 'Play/Pause' },
+  C_PREVIOUS: { icon: 'skipBack' },
+  C_NEXT: { icon: 'skipForward' },
+  C_VOLUME_DOWN: { icon: 'volumeDown' },
+  C_VOLUME_UP: { icon: 'volumeUp' },
+  C_MUTE: { icon: 'volumeMute' },
+  C_PLAY: { icon: 'play' },
+  C_PAUSE: { icon: 'pause' },
+  C_STOP: { icon: 'stop' },
+  C_REWIND: { icon: 'rewind' },
+  C_FAST_FORWARD: { icon: 'fastForward' },
+  C_BRIGHTNESS_DEC: { icon: 'sunDim' },
+  C_BRIGHTNESS_INC: { icon: 'sun' },
+  C_EJECT: { icon: 'eject' },
+};
 
 /** How long a rail jump's smooth scroll may take before the scroll-spy takes over again. */
 const JUMP_SETTLE_MS = 800;
@@ -131,7 +150,13 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm }: KeyPa
   const toggleMod = (mod: ModifierFunction) =>
     setMods((held) => (held.includes(mod) ? held.filter((m) => m !== mod) : [...held, mod]));
 
-  const tile = (item: PaletteItem, label: Pick<KeycapLabel, 'main' | 'sub'>, name: string, title: string, kind = 'key') => {
+  const tile = (
+    item: PaletteItem,
+    label: { main: ReactNode; sub?: string | undefined } | Pick<KeycapLabel, 'main' | 'sub'>,
+    name: string,
+    title: string,
+    kind = 'key',
+  ) => {
     const active = sameItem(armed, item);
     return (
       <button
@@ -157,10 +182,15 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm }: KeyPa
     .join('+');
   const keyTile = (keycode: Keycode) => {
     const token = formatKeyExpression({ mods, key: preferredName(keycode) });
-    const full = mods.length > 0 ? keyExpressionLabel(token) : keycode.label;
+    // In the Media section the everyday keys show an icon, with their name on the small line.
+    const media = !searching ? MEDIA_TILES[keycode.name] : undefined;
+    const label = media?.name ?? keycode.label;
+    const full = mods.length > 0 ? keyExpressionLabel(token) : label;
     return tile(
       { kind: 'keycode', token },
-      { main: keycode.label, sub: mods.length > 0 ? modsText : token },
+      media
+        ? { main: <Icon name={media.icon} size={18} />, sub: mods.length > 0 ? modsText : label }
+        : { main: keycode.label, sub: mods.length > 0 ? modsText : token },
       `${full} (${token})`,
       `${keycode.description}: ${full} (${token})`,
       mods.length > 0 ? 'mods' : 'key',
