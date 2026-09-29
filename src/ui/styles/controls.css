@@ -694,3 +694,11 @@ input.switch:disabled {
   background: color-mix(in srgb, var(--info) 16%, transparent);
   color: var(--info);
 }
+
+.section p {
+  margin: 0;
+}
+
+.section a:not(.button) {
+  color: var(--accent-text);
+}

@@ -15,6 +15,9 @@ import { setPreferences, usePreferences } from '../state/preferences.ts';
 import { LayoutPreview } from './LayoutPreview.tsx';
 import { HelpLink } from '../help/HelpLink.tsx';
 import { httpsUrl } from '../../core/url.ts';
+import { Badge } from './ui/Badge.tsx';
+import { Section } from './ui/Section.tsx';
+import { Switch } from './ui/Switch.tsx';
 
 interface KeyboardViewProps {
   config: ZmkConfig;
@@ -36,20 +39,44 @@ export function KeyboardView({ config, dispatch, onCreated, onDesign, onNewKeybo
 
   return (
     <div className="keyboard-view">
-      <section className="build-section" aria-label="Current keyboard">
-        <h2 className="panel-title">This config</h2>
-        <p>
-          <strong>{config.hardware?.displayName ?? current?.name ?? config.keyboard}</strong> <span className="muted">({keyCount} keys)</span>
-          {current?.url && (
-            <>
-              {' '}
-              ·{' '}
-              <a href={httpsUrl(current.url)} target="_blank" rel="noreferrer">
-                keyboard page
-              </a>
-            </>
-          )}
-        </p>
+      <Section
+        label="Current keyboard"
+        icon="keyboard"
+        title={
+          <span className="keyboard-title">
+            {config.hardware?.displayName ?? current?.name ?? config.keyboard}
+            <Badge>{keyCount} keys</Badge>
+            {current?.split && <Badge>split</Badge>}
+            {config.hardware && <Badge tone="accent">your design</Badge>}
+          </span>
+        }
+        description={
+          <>
+            This config
+            {current?.url && (
+              <>
+                {' · '}
+                <a href={httpsUrl(current.url)} target="_blank" rel="noreferrer">
+                  keyboard page
+                </a>
+              </>
+            )}
+          </>
+        }
+        actions={
+          config.hardware
+            ? onEditHardware && (
+                <button type="button" className="button" onClick={onEditHardware}>
+                  Edit hardware
+                </button>
+              )
+            : onDesign && (
+                <button type="button" className="button" onClick={onDesign}>
+                  Open layout designer
+                </button>
+              )
+        }
+      >
         {config.hardware && (
           <p className="small">Your own keyboard, defined in config/boards/shields/{config.keyboard}/.</p>
         )}
@@ -80,34 +107,25 @@ export function KeyboardView({ config, dispatch, onCreated, onDesign, onNewKeybo
             </select>
           </label>
         )}
-        {config.hardware ? (
-          onEditHardware && (
-            <div className="row">
-              <button type="button" className="button" onClick={onEditHardware}>
-                Edit hardware
-              </button>
-            </div>
-          )
-        ) : (
-          onDesign && (
-            <div className="row">
-              <button type="button" className="button" onClick={onDesign}>
-                Open layout designer
-              </button>
-            </div>
-          )
-        )}
-      </section>
+      </Section>
 
       {onNewKeyboard && (
-        <section className="build-section" aria-label="Design your own keyboard">
-          <h2 className="panel-title">Your own keyboard</h2>
-          <p className="muted small">
-            Built one yourself, or designing a PCB? Describe its controller, wiring and layout, and the editor writes the ZMK
-            files for it. <HelpLink to="wizard" />
-          </p>
-          <button type="button" className="button" onClick={onNewKeyboard}>Design your own keyboard</button>
-        </section>
+        <Section
+          label="Design your own keyboard"
+          title="Your own keyboard"
+          icon="pencil"
+          description={
+            <>
+              Built one yourself, or designing a PCB? Describe its controller, wiring and layout, and the editor writes the ZMK
+              files for it. <HelpLink to="wizard" />
+            </>
+          }
+          actions={
+            <button type="button" className="button" onClick={onNewKeyboard}>
+              Design your own keyboard
+            </button>
+          }
+        />
       )}
 
       <NewConfig config={config} dispatch={dispatch} onCreated={onCreated} />
@@ -124,12 +142,16 @@ function NewConfig({ config, dispatch, onCreated }: KeyboardViewProps) {
   }, [query]);
 
   return (
-    <section className="build-section" aria-label="Start a new config">
-      <h2 className="panel-title">Start a new config</h2>
-      <p className="muted small">
-        Pick a keyboard from ZMK’s list ({KEYBOARDS.length} keyboards). The editor starts from ZMK’s default keymap for it.{' '}
-        <HelpLink to="new-config" />
-      </p>
+    <Section
+      title="Start a new config"
+      icon="plus"
+      description={
+        <>
+          Pick a keyboard from ZMK’s list ({KEYBOARDS.length} keyboards). The editor starts from ZMK’s default keymap for it.{' '}
+          <HelpLink to="new-config" />
+        </>
+      }
+    >
       <div className="keyboard-picker">
         <div className="keyboard-list-column">
           <input
@@ -165,7 +187,7 @@ function NewConfig({ config, dispatch, onCreated }: KeyboardViewProps) {
           <p className="muted">Select a keyboard to see its layout.</p>
         )}
       </div>
-    </section>
+    </Section>
   );
 }
 
@@ -198,16 +220,18 @@ function KeyboardDetails({ keyboard, config, dispatch, onCreated }: KeyboardView
   return (
     <div className="keyboard-details">
       <h3>{keyboard.name}</h3>
-      <p className="muted small">
-        {keyboard.keyCount} keys{keyboard.split ? ' · split' : ''}
-        {features.length > 0 && ` · ${features.join(', ')}`}
+      <p className="keyboard-badges">
+        <Badge>{keyboard.keyCount} keys</Badge>
+        {keyboard.split && <Badge>split</Badge>}
+        {features.map((f) => (
+          <Badge key={f} tone="info">
+            {f}
+          </Badge>
+        ))}
         {keyboard.url && (
-          <>
-            {' · '}
-            <a href={httpsUrl(keyboard.url)} target="_blank" rel="noreferrer">
-              keyboard page
-            </a>
-          </>
+          <a href={httpsUrl(keyboard.url)} target="_blank" rel="noreferrer">
+            keyboard page
+          </a>
         )}
       </p>
       <LayoutPreview layout={layout} label={`${keyboard.name} layout`} />
@@ -228,7 +252,7 @@ function KeyboardDetails({ keyboard, config, dispatch, onCreated }: KeyboardView
       )}
       {supportsNiceView(keyboard) && (
         <label className="field checkbox">
-          <input type="checkbox" checked={niceView} onChange={(e) => setNiceView(e.target.checked)} />
+          <Switch checked={niceView} onChange={setNiceView} />
           <span>nice!view display</span>
         </label>
       )}

@@ -534,3 +534,17 @@ img.pixel-art {
   font-size: 13px;
   margin-bottom: 8px;
 }
+
+/* Keyboard page */
+
+.keyboard-title,
+.keyboard-badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.keyboard-badges {
+  display: flex;
+}

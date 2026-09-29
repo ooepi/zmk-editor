@@ -2,6 +2,7 @@ import { HARDWARE_CONTROLLERS } from '../../core/hardware/controllers.ts';
 import { hardwareName, type HardwareBasics } from '../../core/hardware/grid.ts';
 import type { HardwareIssue } from '../../core/hardware/validate.ts';
 import { HardwareIssueList } from './HardwareIssueList.tsx';
+import { Switch } from './ui/Switch.tsx';
 
 interface Props {
   basics: HardwareBasics;
@@ -53,16 +54,16 @@ export function HardwareBasicsStep({ basics, editing, issues, onChange }: Props)
         </select>
       </div>
       <label className="field checkbox">
-        <input type="checkbox" checked={basics.split} disabled={editing} onChange={(e) => set({ split: e.target.checked })} />
+        <Switch checked={basics.split} disabled={editing} onChange={(split) => set({ split })} />
         <span>Split keyboard (two halves)</span>
       </label>
-      <fieldset className="fieldset">
-        <legend>Wiring</legend>
-        <label className="field checkbox">
+      <fieldset className="choice-cards">
+        <legend className="field-label">Wiring</legend>
+        <label className={`choice-card${basics.wiring === 'matrix' ? ' active' : ''}`}>
           <input type="radio" name="hw-wiring" checked={basics.wiring === 'matrix'} disabled={editing} onChange={() => set({ wiring: 'matrix' })} />
           <span>Matrix with diodes (rows × columns)</span>
         </label>
-        <label className="field checkbox">
+        <label className={`choice-card${basics.wiring === 'direct' ? ' active' : ''}`}>
           <input type="radio" name="hw-wiring" checked={basics.wiring === 'direct'} disabled={editing} onChange={() => set({ wiring: 'direct' })} />
           <span>Direct (one pin per key)</span>
         </label>

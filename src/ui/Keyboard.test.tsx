@@ -46,7 +46,7 @@ describe('Keyboard page', () => {
     await user.click(within(list).getByRole('button', { name: /^Corne42 keys · split/ }));
     expect(screen.getByRole('img', { name: 'Corne layout' }).children).toHaveLength(42);
     expect((screen.getByRole('combobox', { name: 'Controller' }) as HTMLSelectElement).value).toBe('nice_nano_v2');
-    await user.click(screen.getByRole('checkbox', { name: 'nice!view display' }));
+    await user.click(screen.getByRole('switch', { name: 'nice!view display' }));
     await user.click(screen.getByRole('button', { name: 'Create config for Corne' }));
 
     expect(await screen.findByRole('button', { name: 'Corne ▾' })).toBeTruthy();
