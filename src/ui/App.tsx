@@ -37,7 +37,8 @@ import { HelpContext } from './help/helpContext.ts';
 import { HelpLink } from './help/HelpLink.tsx';
 import { HelpView } from './help/HelpView.tsx';
 import { SHORTCUTS } from './shortcuts.ts';
-import { useEditor } from './state/useEditor.ts';
+import { hasStoredConfig, useEditor } from './state/useEditor.ts';
+import { loadGitHubSettings } from './state/github.ts';
 import { isLoginCallback } from './state/githubLogin.ts';
 import { setPreferences, usePreferences } from './state/preferences.ts';
 import { useTheme } from './useTheme.ts';
@@ -107,6 +108,8 @@ function Editor() {
   const [macro, setMacro] = useState<string | null>(null);
   /** The palette section to open on next time the Keymap tab shows, from "Show in palette". */
   const [paletteStart, setPaletteStart] = useState<string | null>(null);
+  /** First time here: no config from before and no repository to reopen. */
+  const [newcomer] = useState(() => !hasStoredConfig() && !loadGitHubSettings());
   /** The GitHub repository and build, kept while you move between tabs. */
   const buildSession = useBuildSession();
   // A jump request is for the next Keymap visit only; going anywhere else drops it.
@@ -123,7 +126,8 @@ function Editor() {
   );
   const buildStatus = tabStatus(buildSession.build, pendingCount);
   const keyCount = keymap.layers[0]?.bindings.length ?? 0;
-  const { layouts, recent } = usePreferences();
+  const { layouts, recent, welcomed } = usePreferences();
+  const showWelcome = newcomer && !welcomed;
   const layout = physicalLayoutFor(config.keyboard, keyCount, layouts[config.keyboard], customLayout(config));
 
   /** Remembers a palette item placed from the palette for its Recent row. */
@@ -477,6 +481,19 @@ function Editor() {
                 <EncoderPanel key={`${layer}-s${sensor}`} keymap={keymap} layer={layer} sensor={sensor} dispatch={dispatch} />
               ) : (
                 <>
+                  {showWelcome && (
+                    <GetStarted
+                      onKeyboard={() => {
+                        setPreferences({ welcomed: true });
+                        setView('keyboard');
+                      }}
+                      onConfig={() => {
+                        setPreferences({ welcomed: true });
+                        setView('build');
+                      }}
+                      onDismiss={() => setPreferences({ welcomed: true })}
+                    />
+                  )}
                   <Overview warnings={state.warnings} />
                   <ConditionalLayersPanel keymap={keymap} dispatch={dispatch} />
                 </>
@@ -564,6 +581,34 @@ function ShortcutKeys({ keys }: { keys: string }) {
         </span>
       ))}
     </span>
+  );
+}
+
+/** Shown on a first visit, above the overview: what this is, and where to go from the demo. */
+function GetStarted({ onKeyboard, onConfig, onDismiss }: { onKeyboard: () => void; onConfig: () => void; onDismiss: () => void }) {
+  return (
+    <Section
+      variant="flat"
+      className="get-started"
+      title="Welcome to ZMK Editor"
+      icon="keyboard"
+      description="This is a Lily58 demo keymap: try anything. Nothing leaves your browser until you commit to GitHub."
+      actions={<IconButton icon="x" label="Dismiss welcome" onClick={onDismiss} />}
+    >
+      <div className="get-started-choices">
+        <button type="button" className="button primary" onClick={onKeyboard}>
+          <Icon name="keyboard" size={16} />
+          Pick your keyboard
+        </button>
+        <button type="button" className="button" onClick={onConfig}>
+          <Icon name="github" size={16} />
+          Open your config from GitHub
+        </button>
+        <button type="button" className="link-button" onClick={onDismiss}>
+          Keep exploring the demo
+        </button>
+      </div>
+    </Section>
   );
 }
 

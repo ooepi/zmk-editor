@@ -464,3 +464,32 @@
 .add-conditional {
   align-self: flex-start;
 }
+
+/* The first-visit welcome: tinted so it reads as a one-off note, not part of the panel. */
+.panel > .section.flat.get-started {
+  margin-bottom: var(--s-4);
+  padding: var(--s-4);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+}
+
+.panel > .section.flat.get-started + .section.flat {
+  margin-top: 0;
+  padding-top: var(--s-4);
+}
+
+.get-started-choices {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--s-2);
+}
+
+.get-started-choices .button {
+  justify-content: flex-start;
+}
+
+.get-started-choices .link-button {
+  align-self: flex-start;
+}
