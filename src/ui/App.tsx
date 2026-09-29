@@ -104,6 +104,8 @@ function Editor() {
   const [macro, setMacro] = useState<string | null>(null);
   /** The palette section to open on next time the Keymap tab shows, from "Show in palette". */
   const [paletteStart, setPaletteStart] = useState<string | null>(null);
+  // A jump request is for the next Keymap visit only; going anywhere else drops it.
+  if (paletteStart && view !== 'keymap' && view !== 'behaviors' && view !== 'macros') setPaletteStart(null);
   /** A palette tile placed on each clicked key, until Esc. */
   const [armed, setArmed] = useState<PaletteItem | null>(null);
   const { config, layer, key, selection, clipboard, sensor } = state;
@@ -121,6 +123,8 @@ function Editor() {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (isTyping(event.target)) return;
+      // A modal dialog handles its own keys; the keymap behind it stays put.
+      if (event.target instanceof Element && event.target.closest('dialog')) return;
       const mod = event.ctrlKey || event.metaKey;
       // The wizard keeps its own draft on top of the live config; a global undo/redo
       // here would change that config behind its back (e.g. undoing the load that

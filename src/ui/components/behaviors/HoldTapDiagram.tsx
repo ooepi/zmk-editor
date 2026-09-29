@@ -63,7 +63,7 @@ export function HoldTapDiagram({ behavior, label, onChange }: HoldTapDiagramProp
   const commitDrag = () => {
     if (dragged === null) return;
     setDragged(null);
-    if (dragged !== term) write(TERM, dragged);
+    if (dragged !== (term ?? TERM.default)) write(TERM, dragged);
   };
   const quickTap = read(QUICK_TAP);
   const priorIdle = read(PRIOR_IDLE);

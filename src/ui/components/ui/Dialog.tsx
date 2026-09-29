@@ -7,6 +7,8 @@ interface DialogProps {
   /** One line under the title. */
   description?: string;
   onClose: () => void;
+  /** Where focus goes on close if the opener is gone (e.g. an empty state's button). */
+  fallbackFocus?: () => HTMLElement | null | undefined;
   children: ReactNode;
 }
 
@@ -15,7 +17,7 @@ interface DialogProps {
  * click on the backdrop closes it, and focus returns to whatever opened it. Mark the control that
  * should take focus first with `data-autofocus`.
  */
-export function Dialog({ open, title, description, onClose, children }: DialogProps) {
+export function Dialog({ open, title, description, onClose, fallbackFocus, children }: DialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const id = useId();
 
@@ -30,8 +32,10 @@ export function Dialog({ open, title, description, onClose, children }: DialogPr
     dialog.querySelector<HTMLElement>('[data-autofocus]')?.focus();
     return () => {
       if (typeof dialog.close === 'function' && dialog.open) dialog.close();
-      opener?.focus();
+      (opener?.isConnected ? opener : fallbackFocus?.())?.focus();
     };
+    // Only opening and closing matter; fallbackFocus is read when it closes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   if (!open) return null;

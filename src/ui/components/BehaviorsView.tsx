@@ -1,4 +1,4 @@
-import { useState, type Dispatch } from 'react';
+import { useRef, useState, type Dispatch } from 'react';
 import {
   createBehavior,
   deleteBehavior,
@@ -28,6 +28,7 @@ interface BehaviorsViewProps {
 /** Lists the keymap's behaviors (or macros) and edits the selected one. */
 export function BehaviorsView({ keymap, kind, selected, onSelect, dispatch, onShowInPalette }: BehaviorsViewProps) {
   const [picking, setPicking] = useState(false);
+  const newButton = useRef<HTMLButtonElement>(null);
   const isMacros = kind === 'macros';
   const list = keymap.behaviors.filter((b) => (behaviorKind(b) === 'macro') === isMacros);
   const behavior = list.find((b) => b.label === selected);
@@ -48,6 +49,7 @@ export function BehaviorsView({ keymap, kind, selected, onSelect, dispatch, onSh
         <div className="behaviors-list-head">
           <h2 className="panel-title">{isMacros ? 'Macros' : 'Behaviors'}</h2>
           <button
+            ref={newButton}
             type="button"
             className="button primary"
             aria-label={isMacros ? '+ New macro' : 'New behavior'}
@@ -101,7 +103,7 @@ export function BehaviorsView({ keymap, kind, selected, onSelect, dispatch, onSh
           </div>
         )}
       </div>
-      {!isMacros && <NewBehaviorDialog open={picking} onClose={() => setPicking(false)} onCreate={add} />}
+      {!isMacros && <NewBehaviorDialog open={picking} onClose={() => setPicking(false)} onCreate={add} fallbackFocus={() => newButton.current} />}
     </div>
   );
 }

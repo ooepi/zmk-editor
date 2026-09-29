@@ -115,3 +115,24 @@ describe('the diagram editors', () => {
     expect(within(palette).getByRole('button', { name: /^Place .*td/ })).toBeTruthy();
   });
 });
+
+describe('review fixes', () => {
+  it('keeps editing the same tap when an earlier one is removed', async () => {
+    const user = await openBehaviors();
+    await create(user, '+ Tap-dance');
+    await user.click(screen.getByRole('button', { name: '+ Add tap' }));
+    await user.click(screen.getByRole('button', { name: 'Edit 2 taps' }));
+    await user.click(screen.getByRole('button', { name: 'Remove 1 tap' }));
+    // B moved to the first card and is still the one being edited.
+    expect(screen.getByRole('button', { name: 'Edit 1 tap' }).getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: 'Edit 1 tap' }).textContent).toContain('B');
+  });
+
+  it('leaves the keymap alone on Ctrl+Z inside the dialog', async () => {
+    const user = await openBehaviors();
+    await create(user, '+ Hold-tap');
+    await user.click(screen.getByRole('button', { name: 'New behavior' }));
+    await user.keyboard('{Control>}z{/Control}');
+    expect(screen.getByRole('list', { name: 'Hold-taps' })).toBeTruthy();
+  });
+});

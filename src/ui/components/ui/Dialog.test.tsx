@@ -45,4 +45,40 @@ describe('Dialog', () => {
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).toBeNull();
   });
+
+  it('focuses the fallback when the opener is gone', async () => {
+    const user = userEvent.setup();
+    function Vanishing() {
+      const [open, setOpen] = useState(false);
+      const [gone, setGone] = useState(false);
+      return (
+        <>
+          <button type="button" id="fallback">
+            Fallback
+          </button>
+          {!gone && (
+            <button type="button" onClick={() => setOpen(true)}>
+              Opens and vanishes
+            </button>
+          )}
+          <Dialog
+            open={open}
+            title="Pick"
+            onClose={() => {
+              // Like an empty state's button once the first behavior exists.
+              setGone(true);
+              setOpen(false);
+            }}
+            fallbackFocus={() => document.getElementById('fallback')}
+          >
+            <p>Body</p>
+          </Dialog>
+        </>
+      );
+    }
+    render(<Vanishing />);
+    await user.click(screen.getByRole('button', { name: 'Opens and vanishes' }));
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Fallback' }));
+  });
 });

@@ -106,20 +106,18 @@ export function BehaviorEditor({ keymap, behavior, label, onChange, onRename, on
         <Icon name={encoder ? 'rotateCw' : 'keyboard'} size={16} />
         <span className="grow">
           {encoder ? (
-            <>Use it on a knob: palette → Encoder</>
+            <>Use it on a knob: on the Keymap tab, select an encoder and choose &amp;{label} for its turns.</>
           ) : (
             <>
               Use it on a key: palette → Your behaviors, <span className="mono">&amp;{label}</span>
             </>
           )}
         </span>
-        <button
-          type="button"
-          className="button"
-          onClick={() => onShowInPalette(encoder ? 'behaviors-sensor' : 'behaviors-custom')}
-        >
-          Show in palette
-        </button>
+        {!encoder && (
+          <button type="button" className="button" onClick={() => onShowInPalette('behaviors-custom')}>
+            Show in palette
+          </button>
+        )}
       </footer>
     </div>
   );

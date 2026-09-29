@@ -73,12 +73,19 @@ interface NewBehaviorDialogProps {
   open: boolean;
   onClose: () => void;
   onCreate: (kind: Creatable) => void;
+  fallbackFocus?: () => HTMLElement | null | undefined;
 }
 
 /** Picks what kind of behavior to make, explaining each one. */
-export function NewBehaviorDialog({ open, onClose, onCreate }: NewBehaviorDialogProps) {
+export function NewBehaviorDialog({ open, onClose, onCreate, fallbackFocus }: NewBehaviorDialogProps) {
   return (
-    <Dialog open={open} title="New behavior" description="What should the key do?" onClose={onClose}>
+    <Dialog
+      open={open}
+      title="New behavior"
+      description="What should the key do?"
+      onClose={onClose}
+      fallbackFocus={fallbackFocus}
+    >
       <div className="type-cards">
         {TYPES.map((t, i) => {
           const look = KIND_LOOK[t.kind];

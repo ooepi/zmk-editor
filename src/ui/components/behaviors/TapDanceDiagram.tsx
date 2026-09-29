@@ -74,7 +74,11 @@ export function TapDanceDiagram({ keymap, behavior, onChange }: TapDanceDiagramP
                   className="small"
                   tone="danger"
                   disabled={taps.length <= 1}
-                  onClick={() => set(taps.filter((_, j) => j !== i))}
+                  onClick={() => {
+                    set(taps.filter((_, j) => j !== i));
+                    // Keep editing the same tap; it shifts left when an earlier one goes.
+                    if (i < selected) setSelectedTap(selected - 1);
+                  }}
                 />
               </div>
               <button
