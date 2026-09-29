@@ -1,6 +1,7 @@
 /* The app's styles, in cascade order. */
 @import './tokens.css';
 @import './base.css';
+@import './controls.css';
 @import './shell.css';
 @import './keyboard.css';
 @import './palette.css';

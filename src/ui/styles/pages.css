@@ -363,23 +363,6 @@ img.pixel-art {
   resize: vertical;
 }
 
-.button.primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-contrast);
-  font-weight: 600;
-}
-
-.button.active {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-}
-
-.notice.warn {
-  margin: 12px 0;
-  border-left-color: var(--danger);
-}
-
 .version-select select {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -551,4 +534,3 @@ img.pixel-art {
   font-size: 13px;
   margin-bottom: 8px;
 }
-

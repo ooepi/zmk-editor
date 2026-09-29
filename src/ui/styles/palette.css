@@ -27,30 +27,6 @@
   gap: 8px 12px;
 }
 
-.segmented {
-  display: inline-flex;
-  padding: 2px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface-2);
-}
-
-.segment {
-  padding: 4px 12px;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.segment.active {
-  color: var(--text);
-  background: var(--accent-soft);
-  border-color: var(--accent);
-}
-
 .palette-fixed {
   display: flex;
   gap: 4px;
@@ -199,4 +175,3 @@
   letter-spacing: 0.08em;
   color: var(--text-muted);
 }
-

@@ -93,15 +93,6 @@
   background: #4d6dee;
 }
 
-.badge {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-muted);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 1px 6px;
-}
-
 .toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -114,56 +105,6 @@
   height: 20px;
   background: var(--border);
   margin: 0 4px;
-}
-
-.button,
-.icon-button {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 5px 10px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-/* Buttons with an icon: icon and text side by side. */
-.button:has(> .icon) {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.icon {
-  flex-shrink: 0;
-}
-
-.icon-button {
-  min-width: 30px;
-  padding: 4px 8px;
-}
-
-.button:hover:not(:disabled),
-.icon-button:hover:not(:disabled) {
-  border-color: var(--accent);
-}
-
-.button:disabled,
-.icon-button:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.icon-button.danger:hover:not(:disabled) {
-  border-color: var(--danger);
-}
-
-.link-button {
-  background: none;
-  border: none;
-  color: var(--accent);
-  cursor: pointer;
-  padding: 0 0 0 8px;
 }
 
 /* Workspace */
@@ -204,37 +145,9 @@
   overflow: auto;
 }
 
-.panel-title {
-  margin: 4px 0 10px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-}
-
-.muted {
-  color: var(--text-muted);
-}
-
-.small {
-  font-size: 12px;
-}
-
 .notes {
   margin: 0;
   padding-left: 18px;
   color: var(--text-muted);
   font-size: 12px;
 }
-
-.notice {
-  margin: 8px 16px 0;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--key-hold);
-  border-radius: 6px;
-  background: var(--surface);
-  font-size: 13px;
-}
-
