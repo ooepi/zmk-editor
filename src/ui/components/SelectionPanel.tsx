@@ -3,6 +3,8 @@ import type { KeyClipboard } from '../../core/keymap/clipboard.ts';
 import type { KeymapModel } from '../../core/keymap/model.ts';
 import type { PaletteItem } from '../../core/keymap/palette.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
+import { Icon } from './Icon.tsx';
+import { Section } from './ui/Section.tsx';
 
 interface ClipboardButtonsProps {
   keymap: KeymapModel;
@@ -18,9 +20,11 @@ export function ClipboardButtons({ keymap, clipboard, dispatch }: ClipboardButto
     <div className="clipboard">
       <div className="row">
         <button type="button" className="button" title="Copy (Ctrl+C)" onClick={() => dispatch({ type: 'copyKeys' })}>
+          <Icon name="copy" size={15} />
           Copy
         </button>
         <button type="button" className="button" title="Cut (Ctrl+X)" onClick={() => dispatch({ type: 'cutKeys' })}>
+          <Icon name="scissors" size={15} />
           Cut
         </button>
         <button
@@ -30,6 +34,7 @@ export function ClipboardButtons({ keymap, clipboard, dispatch }: ClipboardButto
           disabled={!clipboard}
           onClick={() => dispatch({ type: 'pasteKeys' })}
         >
+          <Icon name="clipboard" size={15} />
           Paste
         </button>
       </div>
@@ -57,20 +62,27 @@ export function SelectionPanel({ keymap, layer, selection, clipboard, dispatch }
   const layerName = keymap.layers[layer]?.displayName ?? keymap.layers[layer]?.name;
   return (
     <div className="binding-panel">
-      <h2 className="panel-title">
-        {selection.length} keys selected · {layerName}
-      </h2>
-      <p className="muted small">
-        Click a palette tile to put it on all of them. Ctrl+click a key to add or remove it; Esc clears the selection.
-      </p>
-      <div className="row">
-        <button type="button" className="button" onClick={() => dispatch({ type: 'placeOnSelection', item: TRANSPARENT })}>
-          Transparent
-        </button>
-        <button type="button" className="button" onClick={() => dispatch({ type: 'placeOnSelection', item: NONE })}>
-          None
-        </button>
-      </div>
+      <Section
+        variant="flat"
+        title={`${selection.length} keys selected · ${layerName}`}
+        lead={
+          <span className="mini-key panel-key panel-count" aria-hidden="true">
+            {selection.length}
+          </span>
+        }
+        description="Click a palette tile to put it on all of them. Ctrl+click a key to add or remove it; Esc clears the selection."
+      >
+        <div className="row">
+          <button type="button" className="button" onClick={() => dispatch({ type: 'placeOnSelection', item: TRANSPARENT })}>
+            <span aria-hidden="true">▽</span>
+            Transparent
+          </button>
+          <button type="button" className="button" onClick={() => dispatch({ type: 'placeOnSelection', item: NONE })}>
+            <span aria-hidden="true">✕</span>
+            None
+          </button>
+        </div>
+      </Section>
       <ClipboardButtons keymap={keymap} clipboard={clipboard} dispatch={dispatch} />
     </div>
   );

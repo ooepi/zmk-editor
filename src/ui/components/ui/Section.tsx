@@ -24,7 +24,7 @@ export function Section({ title, label, icon, description, actions, lead, varian
   const classes = ['section', variant === 'flat' && 'flat', className].filter(Boolean).join(' ');
   return (
     <section className={classes} aria-label={name}>
-      <header className="section-head">
+      <header className={`section-head${description ? '' : ' centered'}`}>
         {lead ??
           (icon && (
             <span className="section-icon">

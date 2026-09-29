@@ -614,6 +614,7 @@ input.switch:disabled {
 .section.flat {
   padding: 0;
   border: none;
+  border-radius: 0;
   background: transparent;
 }
 
@@ -649,10 +650,9 @@ input.switch:disabled {
   line-height: 1.3;
 }
 
-/* Centre a one-line title on the icon. */
-.section-head:has(.section-icon) .section-heading {
-  min-height: 32px;
-  justify-content: center;
+/* A title without a description sits level with its icon. */
+.section-head.centered {
+  align-items: center;
 }
 
 .section-description {

@@ -348,3 +348,115 @@
     display: none;
   }
 }
+
+/* The details panel: flat sections split by a line */
+
+.panel > .section.flat + .section.flat,
+.binding-panel > .section.flat + .clipboard {
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--border);
+}
+
+.panel > .section.flat + .section.flat {
+  margin-top: var(--s-4);
+}
+
+.binding-panel {
+  gap: var(--s-4);
+}
+
+/* The key being edited, as a small keycap beside the title. */
+.panel-key {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 var(--s-2);
+  font-size: var(--fs-sm);
+}
+
+.panel-key.kind-layer {
+  color: var(--key-layer);
+}
+
+.panel-key.kind-hold-tap {
+  color: var(--key-hold);
+}
+
+.panel-key.kind-macro,
+.panel-key.kind-mod-morph {
+  color: var(--key-macro);
+}
+
+.panel-key.kind-trans,
+.panel-key.kind-none {
+  color: var(--key-dim);
+}
+
+.panel-count {
+  color: var(--accent-text);
+}
+
+.panel-knob {
+  width: 32px;
+  height: 32px;
+}
+
+/* Keyboard shortcuts as key chips */
+
+.kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border: 1px solid var(--keycap-edge);
+  border-radius: 6px;
+  background: var(--keycap-top);
+  box-shadow: 0 1px 0 var(--keycap-edge);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.shortcut-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: 0;
+}
+
+.shortcut-row {
+  display: grid;
+  grid-template-columns: 8.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.shortcut-row dd {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+
+.shortcut-keys,
+.shortcut-combo {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px;
+}
+
+.shortcut-keys {
+  gap: var(--s-1);
+}
+
+.conditional-then {
+  align-items: flex-end;
+}
+
+.add-conditional {
+  align-self: flex-start;
+}
