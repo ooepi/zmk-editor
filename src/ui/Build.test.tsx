@@ -47,7 +47,23 @@ async function connect(user: ReturnType<typeof userEvent.setup>, token = 'good-t
   await user.click(screen.getByRole('button', { name: 'Connect' }));
 }
 
+const tabStatus = () => document.getElementById('build-tab-status')?.textContent ?? null;
+
 describe('Build tab', () => {
+  it('shows on its tab what is waiting to commit, then the build’s outcome', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    expect(tabStatus()).toBeNull();
+    await connect(user);
+    await screen.findByText(/Connected to/);
+    // The repo differs from the demo in one key.
+    expect(tabStatus()).toBe('1 change to commit');
+    expect(screen.getByRole('button', { name: 'Build & flash' }).getAttribute('aria-describedby')).toBe('build-tab-status');
+    await user.click(screen.getByRole('button', { name: 'Commit & build' }));
+    expect(await screen.findByText('Firmware ready: 2 files.')).toBeTruthy();
+    expect(tabStatus()).toBe('Firmware ready to download');
+  });
+
   it('shows a clear error for a bad token', async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -73,6 +89,38 @@ describe('Build tab', () => {
     expect(firmware.map((f) => f.textContent)).toEqual([expect.stringContaining('lily58_left.uf2'), expect.stringContaining('lily58_right.uf2')]);
     expect(fake.commits.get(fake.headSha ?? '')?.message).toBe('Update keymap with ZMK Editor');
     expect(screen.getByText('The branch already matches the editor.')).toBeTruthy();
+  });
+
+  it('says which half failed and why', async () => {
+    const user = userEvent.setup();
+    fake.onCommit = (sha) => {
+      fake.runs.push({
+        id: 43,
+        head_sha: sha,
+        status: 'completed',
+        conclusion: 'failure',
+        html_url: 'https://github.com/me/zmk-config/actions/runs/43',
+        artifacts: [],
+        jobs: [
+          {
+            id: 431,
+            name: 'build / Build ZMK firmware (lily58_left)',
+            conclusion: 'failure',
+            steps: [{ name: 'West Build (lily58_left)', conclusion: 'failure' }],
+            log: "2026-09-30T10:00:02.0000000Z devicetree error: /keymap/base: undefined node label 'nav_layer'",
+          },
+        ],
+      });
+    };
+    render(<App />);
+    await connect(user);
+    await user.click(await screen.findByRole('button', { name: 'Commit & build' }));
+    const failed = await screen.findByRole('list', { name: 'Failed builds' });
+    expect(within(failed).getByText('Build ZMK firmware (lily58_left)')).toBeTruthy();
+    expect(within(failed).getByText('Failed at: West Build (lily58_left)')).toBeTruthy();
+    expect(within(failed).getByText(/couldn’t read the keymap or the keyboard’s hardware/)).toBeTruthy();
+    expect(within(failed).getByLabelText('Errors from Build ZMK firmware (lily58_left)').textContent).toMatch(/undefined node label/);
+    expect(within(failed).getByRole('link', { name: 'Open this log on GitHub' }).getAttribute('href')).toContain('/job/431');
   });
 
   it('offers the build page and a zip upload when the download is blocked', async () => {

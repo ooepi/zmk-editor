@@ -464,3 +464,63 @@
 .add-conditional {
   align-self: flex-start;
 }
+
+/* The first-visit welcome: three choices as cards in the dialog. */
+.welcome-choices {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-3);
+}
+
+.welcome-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-2);
+  padding: var(--s-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: var(--fs-sm);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.welcome-choice:hover {
+  border-color: var(--accent-line);
+  background: var(--surface-3);
+}
+
+.welcome-choice strong {
+  font-size: var(--fs-md);
+}
+
+.welcome-choice > span:last-child {
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.welcome-choice-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.welcome-choice.primary {
+  border-color: var(--accent-line);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface-2));
+}
+
+@media (max-width: 700px) {
+  .welcome-choices {
+    grid-template-columns: 1fr;
+  }
+}

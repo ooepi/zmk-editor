@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
-import { customLayout, type ZmkConfig } from '../core/config.ts';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { customLayout, generateConfig, type ZmkConfig } from '../core/config.ts';
 import { toggleComboKey, replaceCombo } from '../core/keymap/comboEdit.ts';
 import { behaviorKind } from '../core/keymap/model.ts';
 import { applyToEncoder, pushRecent, type EncoderDirection, type PaletteItem } from '../core/keymap/palette.ts';
@@ -8,7 +8,8 @@ import { physicalLayoutFor } from '../core/layouts/index.ts';
 import { BehaviorsView } from './components/BehaviorsView.tsx';
 import { BindingPanel } from './components/BindingPanel.tsx';
 import { BuildView } from './components/BuildView.tsx';
-import { useBuildSession } from './state/buildSession.ts';
+import { useBuildSession, type BuildState } from './state/buildSession.ts';
+import { pendingChanges } from '../core/github/changes.ts';
 import { ComboBanner } from './components/ComboBanner.tsx';
 import { CombosPanel } from './components/CombosPanel.tsx';
 import { ConditionalLayersPanel } from './components/ConditionalLayersPanel.tsx';
@@ -24,6 +25,7 @@ import { PrintView } from './components/PrintView.tsx';
 import { SelectionPanel } from './components/SelectionPanel.tsx';
 import { ThemeToggle } from './components/ThemeToggle.tsx';
 import { Icon, type IconName } from './components/Icon.tsx';
+import { Dialog } from './components/ui/Dialog.tsx';
 import { IconButton } from './components/ui/IconButton.tsx';
 import { Section } from './components/ui/Section.tsx';
 import { ModulesView } from './components/ModulesView.tsx';
@@ -36,7 +38,9 @@ import { HelpContext } from './help/helpContext.ts';
 import { HelpLink } from './help/HelpLink.tsx';
 import { HelpView } from './help/HelpView.tsx';
 import { SHORTCUTS } from './shortcuts.ts';
-import { useEditor } from './state/useEditor.ts';
+import { hasStoredConfig, useEditor } from './state/useEditor.ts';
+import { loadGitHubSettings } from './state/github.ts';
+import { demoConfig } from './state/demo.ts';
 import { isLoginCallback } from './state/githubLogin.ts';
 import { setPreferences, usePreferences } from './state/preferences.ts';
 import { useTheme } from './useTheme.ts';
@@ -70,7 +74,8 @@ function useHash(): string {
   return hash;
 }
 
-export function App() {
+/** `welcome`: greet a first visit with the welcome dialog (the app turns it on; tests opt in). */
+export function App({ welcome = false }: { welcome?: boolean } = {}) {
   const hash = useHash();
   if (hash === '#design') {
     return (
@@ -79,7 +84,7 @@ export function App() {
       </Suspense>
     );
   }
-  return <Editor />;
+  return <Editor welcome={welcome} />;
 }
 
 /** How long a short confirmation stays on screen. */
@@ -89,7 +94,7 @@ function isTyping(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|SELECT|TEXTAREA)$/.test(target.tagName));
 }
 
-function Editor() {
+function Editor({ welcome }: { welcome: boolean }) {
   const [theme, toggleTheme] = useTheme();
   const [state, dispatch] = useEditor();
   const [view, setView] = useState<View>(() => (isLoginCallback() ? 'build' : 'keymap'));
@@ -106,6 +111,12 @@ function Editor() {
   const [macro, setMacro] = useState<string | null>(null);
   /** The palette section to open on next time the Keymap tab shows, from "Show in palette". */
   const [paletteStart, setPaletteStart] = useState<string | null>(null);
+  /** First time here: no config from before and no repository to reopen. */
+  const [newcomer] = useState(() => !hasStoredConfig() && !loadGitHubSettings());
+  // The demo is saved on the first load too, so remember that this browser is still to be welcomed.
+  useEffect(() => {
+    if (newcomer) setPreferences({ welcomePending: true });
+  }, [newcomer]);
   /** The GitHub repository and build, kept while you move between tabs. */
   const buildSession = useBuildSession();
   // A jump request is for the next Keymap visit only; going anywhere else drops it.
@@ -114,8 +125,18 @@ function Editor() {
   const [armed, setArmed] = useState<PaletteItem | null>(null);
   const { config, layer, key, selection, clipboard, sensor } = state;
   const { keymap } = config;
+  // What a commit would change, for the Build & flash tab's badge (only while a repository is open).
+  const repoFiles = buildSession.connection?.files;
+  const pendingCount = useMemo(
+    () => (repoFiles ? pendingChanges(generateConfig(config), repoFiles, config.keyboard).length : 0),
+    [config, repoFiles],
+  );
+  const buildStatus = tabStatus(buildSession.build, pendingCount);
   const keyCount = keymap.layers[0]?.bindings.length ?? 0;
-  const { layouts, recent } = usePreferences();
+  const { layouts, recent, welcomed, welcomePending } = usePreferences();
+  // Not once they've moved on from the demo some other way (opened files, a keyboard, a repository).
+  const onDemo = config.keyboard === DEMO_KEYBOARD && !buildSession.connection;
+  const showWelcome = welcome && (newcomer || welcomePending) && !welcomed && onDemo;
   const layout = physicalLayoutFor(config.keyboard, keyCount, layouts[config.keyboard], customLayout(config));
 
   /** Remembers a palette item placed from the palette for its Recent row. */
@@ -304,12 +325,20 @@ function Editor() {
             type="button"
             className={`viewtab build-tab${view === 'build' ? ' active' : ''}`}
             aria-current={view === 'build' ? 'page' : undefined}
+            aria-describedby={buildStatus ? 'build-tab-status' : undefined}
             title="Commit to GitHub, build the firmware and flash it"
             onClick={() => setView('build')}
           >
             <Icon name="rocket" />
             Build &amp; flash
+            {buildStatus && <BuildTabStatus status={buildStatus} />}
           </button>
+          {/* Outside the button, so it describes it without becoming part of its name. */}
+          {buildStatus && (
+            <span id="build-tab-status" className="sr-only">
+              {tabStatusText(buildStatus)}
+            </span>
+          )}
         </nav>
         {state.notice && (
           <div className="notice" role="status">
@@ -469,7 +498,52 @@ function Editor() {
           </main>
         )}
       </div>
+      <WelcomeDialog
+        open={showWelcome}
+        onKeyboard={() => {
+          setPreferences({ welcomed: true });
+          setView('keyboard');
+        }}
+        onConfig={() => {
+          setPreferences({ welcomed: true });
+          setView('build');
+        }}
+        onClose={() => setPreferences({ welcomed: true })}
+      />
     </HelpContext.Provider>
+  );
+}
+
+type TabStatus = { kind: 'pending'; count: number } | { kind: 'building' } | { kind: 'ready' } | { kind: 'failed' };
+
+/** What the Build & flash tab shows beside its name: a build in progress or its outcome, else what's waiting to commit. */
+function tabStatus(build: BuildState, pending: number): TabStatus | null {
+  if (build.phase === 'committing' || build.phase === 'waiting' || build.phase === 'downloading') return { kind: 'building' };
+  // New edits since the last build matter more than how that build went.
+  if (pending > 0) return { kind: 'pending', count: pending };
+  // Blocked: the firmware built fine, only the browser couldn't download it.
+  if (build.phase === 'done' || build.phase === 'blocked') return { kind: 'ready' };
+  // Only a build that ran and failed; not "no builds yet" or a network error.
+  if (build.phase === 'failed' && build.run && build.run.conclusion !== 'success') return { kind: 'failed' };
+  return null;
+}
+
+const TAB_STATUS_TEXT = {
+  building: 'Building the firmware…',
+  ready: 'Firmware ready to download',
+  failed: 'The build failed',
+} as const;
+
+const tabStatusText = (status: TabStatus) =>
+  status.kind === 'pending' ? `${status.count} change${status.count === 1 ? '' : 's'} to commit` : TAB_STATUS_TEXT[status.kind];
+
+function BuildTabStatus({ status }: { status: TabStatus }) {
+  return (
+    <span className={`build-tab-status ${status.kind}`} aria-hidden="true">
+      {status.kind === 'pending' && status.count}
+      {status.kind === 'ready' && <Icon name="check" size={12} strokeWidth={3} />}
+      {status.kind === 'failed' && <Icon name="x" size={12} strokeWidth={3} />}
+    </span>
   );
 }
 
@@ -519,6 +593,57 @@ function ShortcutKeys({ keys }: { keys: string }) {
         </span>
       ))}
     </span>
+  );
+}
+
+const DEMO_KEYBOARD = demoConfig().config.keyboard;
+
+/** A first visit's welcome: what this is, and where to go from the demo. Closing it means "try the demo". */
+function WelcomeDialog({ open, onKeyboard, onConfig, onClose }: { open: boolean; onKeyboard: () => void; onConfig: () => void; onClose: () => void }) {
+  return (
+    <Dialog
+      open={open}
+      title="Welcome to ZMK Editor"
+      description="Edit a ZMK keyboard's keymap, combos and settings, then build the firmware on GitHub. Nothing leaves your browser until you commit."
+      onClose={onClose}
+    >
+      <div className="welcome-choices">
+        <button
+          type="button"
+          className="welcome-choice primary"
+          aria-label="Pick your keyboard"
+          aria-describedby="welcome-keyboard"
+          data-autofocus
+          onClick={onKeyboard}
+        >
+          <span className="welcome-choice-icon">
+            <Icon name="keyboard" size={22} />
+          </span>
+          <strong>Pick your keyboard</strong>
+          <span id="welcome-keyboard">Start from ZMK's default keymap for it, or design your own.</span>
+        </button>
+        <button
+          type="button"
+          className="welcome-choice"
+          aria-label="Open your config from GitHub"
+          aria-describedby="welcome-config"
+          onClick={onConfig}
+        >
+          <span className="welcome-choice-icon">
+            <Icon name="github" size={22} />
+          </span>
+          <strong>Open your config from GitHub</strong>
+          <span id="welcome-config">Already have a zmk-config repository? Connect it and edit it here.</span>
+        </button>
+        <button type="button" className="welcome-choice" aria-label="Try the demo" aria-describedby="welcome-demo" onClick={onClose}>
+          <span className="welcome-choice-icon">
+            <Icon name="pointer" size={22} />
+          </span>
+          <strong>Try the demo</strong>
+          <span id="welcome-demo">Look around with a Lily58 keymap first. You can pick your keyboard any time.</span>
+        </button>
+      </div>
+    </Dialog>
   );
 }
 

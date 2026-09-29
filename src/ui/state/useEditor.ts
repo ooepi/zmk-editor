@@ -24,6 +24,11 @@ function loadInitial(): EditorState {
   return initialState(demo.config, demo.warnings);
 }
 
+/** Whether this browser has a config from an earlier visit (else the editor opens on the demo). */
+export function hasStoredConfig(): boolean {
+  return loadStored() !== null;
+}
+
 export function clearStoredConfig(): void {
   try {
     localStorage.removeItem(STORAGE_KEY);

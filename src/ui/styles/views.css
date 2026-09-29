@@ -166,3 +166,52 @@
   color: var(--text-muted);
 }
 
+
+/* What's waiting on Build & flash: a count to commit, a build running, or its outcome. */
+.build-tab-status {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  margin-left: var(--s-1);
+  padding: 0 5px;
+  border-radius: var(--r-pill);
+  background: var(--accent-contrast);
+  color: var(--accent);
+  font-size: var(--fs-xs);
+  font-weight: 800;
+}
+
+.build-tab-status.ready {
+  background: var(--success-text);
+  color: var(--surface);
+}
+
+.build-tab-status.failed {
+  background: var(--danger);
+  color: var(--surface);
+}
+
+/* A ring that turns while the firmware builds. */
+.build-tab-status.building {
+  padding: 0;
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  border: 2.5px solid color-mix(in srgb, var(--accent-contrast) 25%, transparent);
+  border-top-color: var(--accent-contrast);
+  background: transparent;
+  animation: build-spin 0.9s linear infinite;
+}
+
+@keyframes build-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .build-tab-status.building {
+    animation: none;
+  }
+}

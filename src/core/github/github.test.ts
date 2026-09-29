@@ -2,7 +2,7 @@ import { zipSync, strToU8 } from 'fflate';
 import { describe, expect, it } from 'vitest';
 import { lineDiff } from './diff.ts';
 import { GitHubClient, GitHubError } from './client.ts';
-import { ArtifactDownloadError, downloadFirmware, findLatestRun, waitForRun } from './builds.ts';
+import { ArtifactDownloadError, buildFailure, downloadFirmware, errorLines, findLatestRun, waitForRun } from './builds.ts';
 import { extractUf2 } from './firmware.ts';
 import { FakeGitHub, type FakeRun } from './fakeGitHub.ts';
 import { commitFiles, createRepo, loadRepoFiles } from './repo.ts';
@@ -154,6 +154,65 @@ describe('builds', () => {
     const error = await downloadFirmware(client, REPO, 7).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(ArtifactDownloadError);
     expect((error as ArtifactDownloadError).runUrl).toBe('https://github.com/me/zmk-config/actions/runs/7');
+  });
+});
+
+describe('build failures', () => {
+  const LOG = [
+    '2026-09-30T10:00:01.1234567Z -- west build: generating a build system',
+    "2026-09-30T10:00:02.0000000Z \u001b[31mdevicetree error: /keymap/base: undefined node label 'nav_layer'\u001b[0m",
+    "2026-09-30T10:00:02.0000000Z devicetree error: /keymap/base: undefined node label 'nav_layer'",
+    '2026-09-30T10:00:03.0000000Z cc1: all warnings being treated as errors -Werror',
+    '2026-09-30T10:00:04.0000000Z ##[error]Process completed with exit code 1.',
+  ].join('\n');
+  const failedRun = run({
+    id: 8,
+    status: 'completed',
+    conclusion: 'failure',
+    jobs: [
+      { id: 81, name: 'build / Build ZMK firmware (lily58_left)', conclusion: 'failure', steps: [{ name: 'West Build (lily58_left)', conclusion: 'failure' }], log: LOG },
+      { id: 82, name: 'build / Build ZMK firmware (lily58_right)', conclusion: 'success', steps: [], log: '' },
+    ],
+  });
+
+  it('keeps the lines that say what went wrong', () => {
+    // GitHub's own "exit code 1" says nothing about why, so only the real error is kept.
+    expect(errorLines(LOG)).toEqual(["devicetree error: /keymap/base: undefined node label 'nav_layer'"]);
+  });
+
+  it('skips build chatter and keeps the Kconfig warnings that stop a build', () => {
+    const log = [
+      '-- Found devicetree overlay: /config/lily58.keymap',
+      'Cache not found for input keys: zephyr-abc',
+      'warning: UNKNOWN_SETTING (defined at Kconfig:1) was assigned the value y but got the value n',
+      'error: Aborting due to Kconfig warnings',
+      "main.c:10:5: error: implicit declaration of function 'foo' [-Werror=implicit-function-declaration]",
+    ].join('\n');
+    expect(errorLines(log)).toEqual([
+      'warning: UNKNOWN_SETTING (defined at Kconfig:1) was assigned the value y but got the value n',
+      'error: Aborting due to Kconfig warnings',
+      "main.c:10:5: error: implicit declaration of function 'foo' [-Werror=implicit-function-declaration]",
+    ]);
+  });
+
+  it('names the failed job and step, with a hint and the error lines', async () => {
+    const { fake, client } = setup();
+    fake.runs.push(failedRun);
+    const [job, ...rest] = await buildFailure(client, REPO, 8);
+    expect(rest).toEqual([]);
+    expect(job).toMatchObject({ name: 'Build ZMK firmware (lily58_left)', step: 'West Build (lily58_left)' });
+    expect(job?.hint).toMatch(/devicetree/);
+    expect(job?.lines[0]).toMatch(/undefined node label/);
+    expect(job?.url).toContain('/job/81');
+  });
+
+  it('still names the job when the browser can’t read the log', async () => {
+    const { fake, client } = setup();
+    fake.runs.push(failedRun);
+    fake.blockLogDownload = true;
+    const [job] = await buildFailure(client, REPO, 8);
+    expect(job).toMatchObject({ step: 'West Build (lily58_left)', lines: [] });
+    expect(job?.hint).toMatch(/couldn’t compile/);
   });
 });
 

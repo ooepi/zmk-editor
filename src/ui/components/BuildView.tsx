@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState, type Dispatch } from 'react';
 import { unsupportedHardwareSettings } from '../../core/catalog/settings.ts';
 import { sensorGaps } from '../../core/keymap/sensorEdit.ts';
 import { configPaths, generateConfig, importConfig, type ZmkConfig } from '../../core/config.ts';
-import type { WorkflowRun } from '../../core/github/builds.ts';
+import type { FailedJob, WorkflowRun } from '../../core/github/builds.ts';
+import { Icon } from './Icon.tsx';
 import { diffStats, lineDiff } from '../../core/github/diff.ts';
 import { extractUf2, type FirmwareFile } from '../../core/github/firmware.ts';
-import { handEditedShieldFiles, staleShieldFiles } from '../../core/hardware/generate.ts';
+import { pendingChanges } from '../../core/github/changes.ts';
+import { handEditedShieldFiles } from '../../core/hardware/generate.ts';
 import { validateHardware } from '../../core/hardware/validate.ts';
 import type { BuildSession, BuildState, Connection } from '../state/buildSession.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
@@ -47,14 +49,8 @@ export function BuildView({ config, dispatch, session }: BuildViewProps) {
 
   const generated = useMemo(() => generateConfig(config), [config]);
   // A null text deletes the file: shield files the editor generated earlier and no longer does.
-  const changes = useMemo<[string, string | null][]>(
-    () =>
-      connection
-        ? [
-            ...Object.entries(generated).filter(([path, text]) => connection.files[path] !== text),
-            ...staleShieldFiles(connection.files, config.keyboard, generated).map((path): [string, null] => [path, null]),
-          ]
-        : [],
+  const changes = useMemo(
+    () => (connection ? pendingChanges(generated, connection.files, config.keyboard) : []),
     [generated, connection, config.keyboard],
   );
   const handEdited = useMemo(
@@ -287,8 +283,35 @@ function BuildStatus({ build, onFirmware }: { build: BuildState; onFirmware: (ru
           />
         </div>
       )}
+      {build.phase === 'failed' && build.jobs && <FailedJobs jobs={build.jobs} />}
       {build.phase === 'done' && <FirmwareList firmware={build.firmware} />}
     </Section>
+  );
+}
+
+/** Which halves failed, why (as far as the log says), and each one's log on GitHub. */
+function FailedJobs({ jobs }: { jobs: FailedJob[] }) {
+  return (
+    <ul className="failed-jobs" aria-label="Failed builds">
+      {jobs.map((job) => (
+        <li key={job.url} className="failed-job">
+          <div className="failed-job-head">
+            <Icon name="x" size={14} strokeWidth={3} />
+            <strong className="grow">{job.name}</strong>
+            <a className="small" href={httpsUrl(job.url)} target="_blank" rel="noreferrer">
+              Open this log on GitHub
+            </a>
+          </div>
+          {job.step && <p className="muted small">Failed at: {job.step}</p>}
+          {job.hint && <p className="failed-job-hint">{job.hint}</p>}
+          {job.lines.length > 0 && (
+            <pre className="failed-job-lines" aria-label={`Errors from ${job.name}`}>
+              {job.lines.join('\n')}
+            </pre>
+          )}
+        </li>
+      ))}
+    </ul>
   );
 }
 

@@ -13,10 +13,22 @@ export interface Preferences {
   recent: PaletteItem[];
   /** The key palette folded down to its status line, so the keyboard gets the room. */
   paletteCollapsed: boolean;
+  /** The first-visit "Get started" card was answered or dismissed. */
+  welcomed: boolean;
+  /** This browser's first visit showed the card and it's still unanswered (it survives a reload). */
+  welcomePending: boolean;
 }
 
 const STORAGE_KEY = 'zmk-editor.preferences.v1';
-const DEFAULTS: Preferences = { unicodeLanguages: [], layouts: {}, pinoutViews: {}, recent: [], paletteCollapsed: false };
+const DEFAULTS: Preferences = {
+  unicodeLanguages: [],
+  layouts: {},
+  pinoutViews: {},
+  recent: [],
+  paletteCollapsed: false,
+  welcomed: false,
+  welcomePending: false,
+};
 
 /** Drops recent items that aren't shaped like palette items (hand-edited or older storage). */
 function validRecent(items: unknown): PaletteItem[] {
@@ -33,7 +45,14 @@ function load(): Preferences {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULTS;
     const stored = JSON.parse(raw) as Partial<Preferences>;
-    return { ...DEFAULTS, ...stored, recent: validRecent(stored.recent), paletteCollapsed: stored.paletteCollapsed === true };
+    return {
+      ...DEFAULTS,
+      ...stored,
+      recent: validRecent(stored.recent),
+      paletteCollapsed: stored.paletteCollapsed === true,
+      welcomed: stored.welcomed === true,
+      welcomePending: stored.welcomePending === true,
+    };
   } catch {
     return DEFAULTS;
   }
