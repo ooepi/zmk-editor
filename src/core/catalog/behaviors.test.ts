@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { importKeymap } from '../keymap/importer.ts';
-import { behaviorCatalog, BUILTIN_BEHAVIORS, findBehavior, searchBehaviors } from './behaviors.ts';
+import { behaviorCatalog, BUILTIN_BEHAVIORS, findBehavior, findBuiltinBehavior, searchBehaviors } from './behaviors.ts';
 
 const { model } = importKeymap(`
 / {
@@ -90,5 +90,11 @@ describe('searchBehaviors', () => {
 
   it('keeps catalog order for an empty query', () => {
     expect(refs('')).toEqual(BUILTIN_BEHAVIORS.map((d) => d.ref));
+  });
+});
+
+describe('studio_unlock', () => {
+  it('is a built-in System behavior with no params', () => {
+    expect(findBuiltinBehavior('studio_unlock')).toMatchObject({ group: 'system', params: [], keycap: 'Unlock' });
   });
 });
