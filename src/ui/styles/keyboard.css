@@ -37,6 +37,30 @@
   min-width: 0;
 }
 
+/*
+ * On wide screens the rail floats over the canvas, so the dots and a panned keyboard run on
+ * under it instead of stopping at a hard edge. The canvas keeps room on the left for the
+ * rail, so the fitted keyboard starts clear of it.
+ */
+@media (min-width: 901px) {
+  .canvas-row {
+    position: relative;
+    padding-left: 0;
+  }
+
+  .layer-rail-scroll {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--s-4);
+    margin-right: 0;
+  }
+
+  .canvas-row > .canvas {
+    padding-left: calc(var(--s-4) + var(--rail-width, 180px) + var(--s-6));
+  }
+}
+
 .layer-rail {
   margin-block: auto;
   display: flex;
@@ -44,7 +68,9 @@
   gap: var(--s-2);
   padding: 6px;
   border-radius: var(--r-lg);
-  background: var(--surface);
+  /* See-through, so keys and dots passing under it don't look cut off. */
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  backdrop-filter: blur(10px);
   box-shadow: var(--shadow-float);
   pointer-events: auto;
 }

@@ -33,6 +33,19 @@ export function LayerRail({ layers, active, dispatch, addDisabled }: LayerRailPr
   const reorder = useReorder('layers', (from, to) => dispatch({ type: 'moveLayer', from, to }));
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const list = useRef<HTMLDivElement>(null);
+  const rail = useRef<HTMLElement>(null);
+  // The rail floats over the canvas; tell the canvas how wide it is, so the fitted keyboard starts clear of it.
+  useEffect(() => {
+    const el = rail.current;
+    const row = el?.closest<HTMLElement>('.canvas-row');
+    if (!el || !row || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => row.style.setProperty('--rail-width', `${el.offsetWidth}px`));
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      row.style.removeProperty('--rail-width');
+    };
+  }, []);
   /** The layer whose tab gets focus back after a keyboard move (moving a node blurs it). */
   const refocus = useRef<string | null>(null);
 
@@ -112,7 +125,7 @@ export function LayerRail({ layers, active, dispatch, addDisabled }: LayerRailPr
     // The scroll column is wider than the rail and lets clicks through, so a hovered
     // row's buttons can stick out to the right without being clipped by the scrolling.
     <div className="layer-rail-scroll">
-      <nav className="layer-rail" aria-label="Layers">
+      <nav ref={rail} className="layer-rail" aria-label="Layers">
         <div ref={list} className="layer-rail-list" role="tablist" aria-label="Layers" aria-orientation={across ? 'horizontal' : 'vertical'}>
           {layers.map((layer, index) => {
             const name = layerName(layer);

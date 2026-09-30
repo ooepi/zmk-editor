@@ -264,7 +264,8 @@
   gap: 2px;
   padding: 3px;
   border-radius: var(--r-pill);
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  backdrop-filter: blur(10px);
   box-shadow: var(--shadow-float);
 }
 
