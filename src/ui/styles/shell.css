@@ -313,11 +313,6 @@
   background: var(--border);
 }
 
-/* Room for the encoder strip under the keyboard. */
-.canvas:has(.encoders) {
-  --encoder-space: 72px;
-}
-
 .panel {
   margin: var(--s-3) var(--s-3) var(--s-3) 0;
   padding: var(--s-5);

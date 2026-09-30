@@ -151,3 +151,16 @@ describe('box select', () => {
     expect(screen.getByRole('heading', { name: '58 keys selected · BASE' })).toBeTruthy();
   });
 });
+
+describe('encoder knobs', () => {
+  it('sit on the keyboard, under the half they belong to', () => {
+    render(<App />);
+    const board = screen.getByRole('group', { name: 'Keyboard layout' });
+    const knobs = screen.getByRole('group', { name: 'Encoders' });
+    expect(board.contains(knobs)).toBe(true);
+    // The Lily58's encoder is on its left half.
+    const knob = screen.getByRole('button', { name: /^Encoder 1:/ });
+    expect(parseFloat(knob.style.left)).toBeLessThan(50);
+    expect(document.querySelector('.encoders:not(.knobs)')).toBeNull();
+  });
+});

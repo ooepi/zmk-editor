@@ -514,3 +514,54 @@
   border-radius: 50%;
   background: var(--warning);
 }
+
+/* Encoder knobs on the keyboard: a ridged dial, ↺ on its left half and ↻ on its right. */
+.knob {
+  position: absolute;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 0;
+  border: calc(var(--unit) * 0.03) solid var(--keycap-edge);
+  border-radius: 50%;
+  background: repeating-conic-gradient(var(--keycap) 0 6deg, var(--keycap-edge) 6deg 12deg);
+  color: var(--text);
+  font-size: calc(var(--unit) * 0.13);
+  font-weight: 700;
+  line-height: 1.1;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.knob:hover {
+  border-color: var(--text-muted);
+}
+
+.knob.selected {
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 calc(var(--unit) * 0.04) var(--accent-soft);
+}
+
+.knob-half {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 0 calc(var(--unit) * 0.04);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.knob-half.ccw {
+  border-right: 1px solid var(--keycap-edge);
+}
+
+.knob-half.drop-target {
+  background: var(--accent-soft);
+}
+
+.knob-arrow {
+  color: var(--text-muted);
+  font-size: calc(var(--unit) * 0.16);
+}

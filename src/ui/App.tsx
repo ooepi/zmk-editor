@@ -5,6 +5,9 @@ import { behaviorKind } from '../core/keymap/model.ts';
 import { applyToEncoder, pushRecent, type EncoderDirection, type PaletteItem } from '../core/keymap/palette.ts';
 import { findKeyboard } from '../core/catalog/keyboards.ts';
 import { physicalLayoutFor } from '../core/layouts/index.ts';
+import { placeEncoders } from '../core/layouts/encoders.ts';
+import { encoderSides } from '../core/encoderSides.ts';
+import { sensorCount } from '../core/keymap/sensorEdit.ts';
 import { BehaviorsView } from './components/BehaviorsView.tsx';
 import { BindingPanel } from './components/BindingPanel.tsx';
 import { BuildView } from './components/BuildView.tsx';
@@ -15,7 +18,6 @@ import { ComboBanner } from './components/ComboBanner.tsx';
 import { CombosPanel } from './components/CombosPanel.tsx';
 import { ConditionalLayersPanel } from './components/ConditionalLayersPanel.tsx';
 import { EncoderPanel } from './components/EncoderPanel.tsx';
-import { EncoderStrip } from './components/EncoderStrip.tsx';
 import { HardwareWizard } from './components/HardwareWizard.tsx';
 import { KeyboardCanvas } from './components/KeyboardCanvas.tsx';
 import { KeyboardView } from './components/KeyboardView.tsx';
@@ -149,6 +151,9 @@ function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => 
   const onDemo = config.keyboard === DEMO_KEYBOARD && !buildSession.connection;
   const showWelcome = welcome && (newcomer || welcomePending) && !welcomed && onDemo;
   const layout = physicalLayoutFor(config.keyboard, keyCount, layouts[config.keyboard], customLayout(config));
+  /** Where each encoder's knob goes on the keyboard: saved spots, else under its own half. */
+  const encoderCount = sensorCount(keymap);
+  const knobs = useMemo(() => placeEncoders(layout, encoderSides(config), encoderCount), [layout, config, encoderCount]);
 
   /** The ZMK Studio connection: key and layer edits go to the keyboard while it's live. */
   const studio = useStudioSession(config, dispatch, { open: studioOpen ?? openKeyboard, loadFromKeyboard: config.studio !== undefined });
@@ -497,19 +502,20 @@ function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => 
                     onSelectKey={onKeyClick}
                     drop={view === 'keymap' ? keyDrop : undefined}
                     flagged={view === 'keymap' && studioLive ? needsBuild : undefined}
+                    knobs={knobs}
+                    encoders={
+                      view === 'keymap'
+                        ? {
+                            selected: sensor,
+                            onSelect: (index) => dispatch({ type: 'selectSensor', index: index === sensor ? null : index }),
+                            onDropItem: (index: number, direction: EncoderDirection, item: PaletteItem) => {
+                              dispatch({ type: 'placeOnEncoder', index, direction, item });
+                              if (applyToEncoder({ behavior: 'trans', params: [] }, item, direction)) remember(item);
+                            },
+                          }
+                        : undefined
+                    }
                   />
-                  {view === 'keymap' && (
-                    <EncoderStrip
-                      keymap={keymap}
-                      layer={layer}
-                      selected={sensor}
-                      onSelect={(index) => dispatch({ type: 'selectSensor', index: index === sensor ? null : index })}
-                      onDropItem={(index: number, direction: EncoderDirection, item: PaletteItem) => {
-                        dispatch({ type: 'placeOnEncoder', index, direction, item });
-                        if (applyToEncoder({ behavior: 'trans', params: [] }, item, direction)) remember(item);
-                      }}
-                    />
-                  )}
                 </CanvasCamera>
               </div>
               {view === 'keymap' && (

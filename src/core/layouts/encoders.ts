@@ -58,3 +58,13 @@ export function placeEncoders(layout: PhysicalLayout, sides: (Side | undefined)[
   }
   return spots;
 }
+
+/** A knob's box, in % of a drawing `width` × `height` layout units across whose layout origin is at (originX, originY). */
+export function knobBox(spot: EncoderSpot, width: number, height: number, originX: number, originY: number) {
+  return {
+    left: `${((spot.x - KNOB_SIZE / 2 + originX) / width) * 100}%`,
+    top: `${((spot.y - KNOB_SIZE / 2 + originY) / height) * 100}%`,
+    width: `${(KNOB_SIZE / width) * 100}%`,
+    height: `${(KNOB_SIZE / height) * 100}%`,
+  };
+}
