@@ -1,8 +1,18 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { generateConfig, importConfig, type ZmkConfig } from '../config.ts';
 import { setBinding } from '../keymap/edit.ts';
-import { demoConfig } from '../../ui/state/demo.ts';
 import { disableStudio, enableStudio, hasUnlockKey, spareLayers, studioEnabled, STUDIO_CMAKE_ARG, STUDIO_SNIPPET } from './enable.ts';
+
+const fixture = (name: string) => readFileSync(join(import.meta.dirname, '../../../test/fixtures/lily58', name), 'utf8');
+const demoConfig = () =>
+  importConfig({
+    'config/lily58.keymap': fixture('lily58.keymap'),
+    'config/lily58.conf': fixture('lily58.conf'),
+    'config/west.yml': fixture('west.yml'),
+    'build.yaml': fixture('build.yaml'),
+  });
 
 const roundTrip = (config: ZmkConfig) => importConfig(generateConfig(config), config.keyboard).config;
 

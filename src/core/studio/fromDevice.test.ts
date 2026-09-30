@@ -72,7 +72,7 @@ describe('keymapFromDevice', () => {
 describe('compareKeymaps', () => {
   it('finds the keys that differ, layer by layer in order', () => {
     const board: DeviceKeymap = {
-      layers: [keyboard().layers[0]!, { id: 3, name: 'Fn', bindings: [kp('C'), trans] }],
+      layers: [...keyboard().layers.slice(0, 1), { id: 3, name: 'Fn', bindings: [kp('C'), trans] }],
       availableLayers: 2,
     };
     const result = compareKeymaps(editor(), board, device);
@@ -83,7 +83,13 @@ describe('compareKeymaps', () => {
 
   it('counts layer name and count differences, and says when the keyboards do not match', () => {
     const renamed = { ...editor(), layers: editor().layers.map((l, i) => (i === 1 ? { ...l, displayName: 'Func' } : l)) };
-    const board: DeviceKeymap = { layers: [{ ...keyboard().layers[0]!, bindings: [kp('A'), { behaviorId: 2, param1: 3, param2: 0 }] }, { id: 3, name: 'Fn', bindings: [kp('B'), trans] }], availableLayers: 2 };
+    const board: DeviceKeymap = {
+      layers: [
+        { id: 0, name: 'Base', bindings: [kp('A'), { behaviorId: 2, param1: 3, param2: 0 }] },
+        { id: 3, name: 'Fn', bindings: [kp('B'), trans] },
+      ],
+      availableLayers: 2,
+    };
     const renamedResult = compareKeymaps(renamed, board, device);
     expect(renamedResult.layers).toBe(1);
     expect(renamedResult.summary).toBe('1 layer name');
