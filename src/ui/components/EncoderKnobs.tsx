@@ -53,17 +53,17 @@ export function EncoderKnobs({ keymap, layer, spots, place, selected, onSelect, 
       },
     };
   };
-  const half = (index: number, direction: EncoderDirection) => `knob-half ${direction}${over === `${index}-${direction}` ? ' drop-target' : ''}`;
+  const half = (index: number, direction: EncoderDirection) => `key-knob-half ${direction}${over === `${index}-${direction}` ? ' drop-target' : ''}`;
 
   return (
-    <div className="encoders knobs" role="group" aria-label="Encoders">
+    <div className="key-knobs" role="group" aria-label="Encoders">
       {spots.map((spot, index) => {
         const label = labels[index] ?? { ccw: '', cw: '' };
         return (
           <button
             key={index}
             type="button"
-            className={`knob${selected === index ? ' selected' : ''}`}
+            className={`key-knob${selected === index ? ' selected' : ''}`}
             style={place(spot)}
             aria-pressed={selected === index}
             aria-label={`Encoder ${index + 1}: ${label.ccw} / ${label.cw}`}
@@ -71,10 +71,10 @@ export function EncoderKnobs({ keymap, layer, spots, place, selected, onSelect, 
             onClick={() => onSelect(index)}
           >
             <span className={half(index, 'ccw')} {...dropZone(index, 'ccw')}>
-              <span className="knob-arrow">↺</span> {label.ccw}
+              <span className="key-knob-arrow">↺</span> {label.ccw}
             </span>
             <span className={half(index, 'cw')} {...dropZone(index, 'cw')}>
-              {label.cw} <span className="knob-arrow">↻</span>
+              {label.cw} <span className="key-knob-arrow">↻</span>
             </span>
           </button>
         );

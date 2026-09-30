@@ -516,7 +516,7 @@
 }
 
 /* Encoder knobs on the keyboard: a ridged dial, ↺ on its left half and ↻ on its right. */
-.knob {
+.key-knob {
   position: absolute;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -532,16 +532,16 @@
   overflow: hidden;
 }
 
-.knob:hover {
+.key-knob:hover {
   border-color: var(--text-muted);
 }
 
-.knob.selected {
+.key-knob.selected {
   border-color: var(--accent-line);
   box-shadow: 0 0 0 calc(var(--unit) * 0.04) var(--accent-soft);
 }
 
-.knob-half {
+.key-knob-half {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -553,15 +553,15 @@
   text-align: center;
 }
 
-.knob-half.ccw {
+.key-knob-half.ccw {
   border-right: 1px solid var(--keycap-edge);
 }
 
-.knob-half.drop-target {
+.key-knob-half.drop-target {
   background: var(--accent-soft);
 }
 
-.knob-arrow {
+.key-knob-arrow {
   color: var(--text-muted);
   font-size: calc(var(--unit) * 0.16);
 }

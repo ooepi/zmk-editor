@@ -161,6 +161,6 @@ describe('encoder knobs', () => {
     // The Lily58's encoder is on its left half.
     const knob = screen.getByRole('button', { name: /^Encoder 1:/ });
     expect(parseFloat(knob.style.left)).toBeLessThan(50);
-    expect(document.querySelector('.encoders:not(.knobs)')).toBeNull();
+    expect(document.querySelector('.canvas .encoders')).toBeNull();
   });
 });

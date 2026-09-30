@@ -226,7 +226,8 @@ export function DesignerCanvas({
         const k = knobDrag.current;
         if (k) {
           const at = toSvg(event);
-          if (at) onMoveKnob?.(k.index, { x: k.spot.x + snap(at.x - k.startX), y: k.spot.y + snap(at.y - k.startY) });
+          // Knobs land on the ¼-key grid, wherever their default spot was.
+          if (at) onMoveKnob?.(k.index, { x: snap(k.spot.x + at.x - k.startX), y: snap(k.spot.y + at.y - k.startY) });
           return;
         }
         const p = (drag.current || marquee) && toSvg(event);
