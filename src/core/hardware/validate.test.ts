@@ -113,11 +113,56 @@ describe('validateHardware', () => {
 describe('validateBasics', () => {
   it('stops a matrix that needs more pins than the controller has', () => {
     expect(validateBasics({ ...basics, rows: 6, cols: 14 }).map((i) => i.message)).toEqual([
-      'A 6 × 14 matrix needs 20 pins per half, but the controller has 18.',
+      'A 6 × 14 matrix needs 20 pins per half, but a Pro Micro has 18.',
     ]);
     expect(validateBasics({ ...basics, wiring: 'direct', split: false, rows: 4, cols: 5 }).map((i) => i.message)).toEqual([
-      'Direct wiring for 20 keys needs 20 pins, but the controller has 18.',
+      'Direct wiring for 20 keys needs 20 pins, but a Pro Micro has 18.',
     ]);
     expect(validateBasics({ ...basics, rows: 0 }).map((i) => i.message)).toEqual(['Use at least 1 row.']);
+  });
+
+  it('counts the Seeed XIAO’s 11 pins, and says what to do', () => {
+    const xiao = { ...basics, controller: 'seeeduino_xiao_ble' };
+    expect(validateBasics({ ...xiao, rows: 5, cols: 6 })).toEqual([]);
+    expect(validateBasics({ ...xiao, rows: 6, cols: 7 }).map((i) => i.message)).toEqual([
+      'A 6 × 7 matrix needs 13 pins per half, but a Seeed XIAO has 11. Use fewer rows or columns, or a Pro Micro controller.',
+    ]);
+  });
+});
+
+describe('validateHardware on a Seeed XIAO', () => {
+  const xiao = (): KeyboardHardware => ({ ...wired(), controller: 'seeeduino_xiao_ble' });
+
+  it('accepts XIAO pins and flags pins it doesn’t have, keeping them', () => {
+    expect(validateHardware(xiao())).toEqual([]);
+    const hw = xiao();
+    expect(messages({ ...hw, wiring: { kind: 'matrix', diodeDirection: 'col2row', rows: [4, 5], cols: [6, 7, 14] } })).toEqual([
+      'Column 2 on the left half uses D14, which isn’t a Seeed XIAO pin.',
+    ]);
+  });
+
+  it('checks the whole wiring fits in 11 pins', () => {
+    const hw = xiao();
+    const tooMany = { ...hw, wiring: { kind: 'direct' as const, pins: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, null] } };
+    expect(messages(tooMany)[0]).toBe('The wiring on the left half needs 12 pins, but a Seeed XIAO has 11.');
+  });
+
+  it('puts OLEDs on D4/D5 and flags a nice!view, which needs the Pro Micro adapter', () => {
+    const hw = xiao(); // rows [4, 5], cols [6, 7, 8]
+    expect(messages(setDisplay(hw, 'left', 'oled_128x32'))).toEqual([
+      'D4 is used for both Row 0 and Display SDA on the left half.',
+      'D5 is used for both Row 1 and Display SCL on the left half.',
+    ]);
+    const free = { ...hw, wiring: { kind: 'matrix' as const, diodeDirection: 'col2row' as const, rows: [0, 1], cols: [6, 7, 8] } };
+    expect(messages(setDisplay(free, 'left', 'oled_128x32'))).toEqual([]);
+    expect(validateHardware(setDisplay(free, 'right', 'nice_view'))).toContainEqual({
+      level: 'error',
+      area: 'wiring',
+      message: 'A nice!view needs the Pro Micro adapter; on a Seeed XIAO use an OLED for now.',
+    });
+  });
+
+  it('still rejects controllers it doesn’t know', () => {
+    expect(messages({ ...xiao(), controller: 'nope' })).toEqual(['nope isn’t a supported controller.']);
   });
 });

@@ -93,7 +93,7 @@ describe('Design your own keyboard', () => {
     render(<App />);
     await openWizard(user);
     await type(user, 'Columns', '16');
-    expect(screen.getByText('A 3 × 16 matrix needs 19 pins per half, but the controller has 18.')).toBeTruthy();
+    expect(screen.getByText('A 3 × 16 matrix needs 19 pins per half, but a Pro Micro has 18.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Next' })).toHaveProperty('disabled', true);
   });
 

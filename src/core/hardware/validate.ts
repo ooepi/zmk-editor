@@ -2,7 +2,7 @@ import { findKeyboard } from '../catalog/keyboards.ts';
 import { MODULES } from '../catalog/modules.ts';
 import { SCREEN_SHIELDS } from '../catalog/screens.ts';
 import { HARDWARE_CONTROLLERS } from './controllers.ts';
-import { PRO_MICRO } from './interconnects.ts';
+import { interconnectOf, PRO_MICRO, type Interconnect } from './interconnects.ts';
 import type { HardwareBasics } from './grid.ts';
 import type { KeyboardHardware, Pin } from './types.ts';
 import { displayPins, halfDisplay } from './displays.ts';
@@ -46,18 +46,25 @@ function identityIssues(name: string, displayName: string, controller: string): 
   return messages.map((message) => ({ level: 'error', area: 'basics', message }));
 }
 
+/** "but a Seeed XIAO has 11", with what to do on controllers smaller than a Pro Micro. */
+function pinCount(ic: Interconnect, hint: boolean): string {
+  const smaller = hint && ic.pins.length < PRO_MICRO.pins.length ? ' Use fewer rows or columns, or a Pro Micro controller.' : '';
+  return `but a ${ic.name} has ${ic.pins.length}.${smaller}`;
+}
+
 export function validateBasics(b: HardwareBasics): HardwareIssue[] {
   const issues = identityIssues(b.name, b.displayName, b.controller);
+  const ic = interconnectOf(b.controller);
   const error = (message: string) => issues.push({ level: 'error', area: 'basics', message });
   if (!Number.isInteger(b.rows) || b.rows < 1) error('Use at least 1 row.');
   if (!Number.isInteger(b.cols) || b.cols < 1) error('Use at least 1 column.');
   if (issues.length > 0) return issues;
   const perHalf = b.split ? ' per half' : '';
-  if (b.wiring === 'matrix' && b.rows + b.cols > PRO_MICRO.pins.length) {
-    error(`A ${b.rows} × ${b.cols} matrix needs ${b.rows + b.cols} pins${perHalf}, but the controller has ${PRO_MICRO.pins.length}.`);
+  if (b.wiring === 'matrix' && b.rows + b.cols > ic.pins.length) {
+    error(`A ${b.rows} × ${b.cols} matrix needs ${b.rows + b.cols} pins${perHalf}, ${pinCount(ic, true)}`);
   }
-  if (b.wiring === 'direct' && b.rows * b.cols > PRO_MICRO.pins.length) {
-    error(`Direct wiring for ${b.rows * b.cols} keys needs ${b.rows * b.cols} pins${perHalf}, but the controller has ${PRO_MICRO.pins.length}.`);
+  if (b.wiring === 'direct' && b.rows * b.cols > ic.pins.length) {
+    error(`Direct wiring for ${b.rows * b.cols} keys needs ${b.rows * b.cols} pins${perHalf}, ${pinCount(ic, true)}`);
   }
   return issues;
 }
@@ -69,12 +76,16 @@ export function validateHardware(hw: KeyboardHardware): HardwareIssue[] {
   };
   if (hw.keys.length === 0) add('error', 'keys', 'The keyboard has no keys.');
   const direct = hw.wiring.kind === 'direct';
+  const ic = interconnectOf(hw.controller);
 
   for (const side of halves(hw)) {
     const where = side ? ` on the ${side} half` : '';
 
     // A mirrored right half uses the left's pins, so they're checked once.
     const display = halfDisplay(hw, side);
+    if (display === 'nice_view' && !ic.niceViewAdapter) {
+      add('error', 'wiring', `A nice!view needs the Pro Micro adapter; on a ${ic.name} use an OLED for now.`);
+    }
     if (side !== 'right' || hw.wiring.right || hw.rightEncoders || display) {
       const labelled: { label: string; pin: Pin }[] = [
         ...(hw.wiring.kind === 'direct'
@@ -87,16 +98,16 @@ export function validateHardware(hw: KeyboardHardware): HardwareIssue[] {
           { label: `Encoder ${i} A`, pin: e.a },
           { label: `Encoder ${i} B`, pin: e.b },
         ]),
-        ...(display ? displayPins(display, PRO_MICRO).map(({ pin, use }) => ({ label: use, pin })) : []),
+        ...(display ? displayPins(display, ic).map(({ pin, use }) => ({ label: use, pin })) : []),
       ];
-      if (labelled.length > PRO_MICRO.pins.length) {
-        add('error', 'wiring', `The wiring${where} needs ${labelled.length} pins, but the controller has ${PRO_MICRO.pins.length}.`);
+      if (labelled.length > ic.pins.length) {
+        add('error', 'wiring', `The wiring${where} needs ${labelled.length} pins, ${pinCount(ic, false)}`);
       }
       const seen = new Map<number, string>();
       for (const { label, pin } of labelled) {
         const other = pin === null ? undefined : seen.get(pin);
         if (pin === null) add('error', 'wiring', `${label}${where} has no pin.`);
-        else if (!PRO_MICRO.pins.includes(pin)) add('error', 'wiring', `${label}${where} uses D${pin}, which isn’t a Pro Micro pin.`);
+        else if (!ic.pins.includes(pin)) add('error', 'wiring', `${label}${where} uses D${pin}, which isn’t a ${ic.name} pin.`);
         else if (other !== undefined) add('error', 'wiring', `D${pin} is used for both ${other} and ${label}${where}.`);
         else seen.set(pin, label);
       }
