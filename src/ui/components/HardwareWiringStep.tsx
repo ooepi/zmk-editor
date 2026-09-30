@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { interconnectOf, pinLabel } from '../../core/hardware/interconnects.ts';
-import { availableDisplays, DISPLAYS, displayPins, halfDisplay, setDisplay } from '../../core/hardware/displays.ts';
+import { defaultDisplayPins, DISPLAY_KINDS, DISPLAYS, halfDisplay, setDisplay } from '../../core/hardware/displays.ts';
 import type { DisplayKind, KeyboardHardware, Pin, Side } from '../../core/hardware/types.ts';
 import type { HardwareIssue } from '../../core/hardware/validate.ts';
 import {
@@ -38,11 +38,6 @@ export function HardwareWiringStep({ hw, issues, onChange, onAddEncoder, onRemov
   const differently = hw.wiring.right !== undefined;
   const shown: (Side | undefined)[] = hw.split ? (differently ? ['left', 'right'] : ['left']) : [undefined];
   const ic = interconnectOf(hw.controller);
-  /** The displays this controller takes, plus one already chosen that it can't take, so it stays visible (and flagged). */
-  const displayChoices = (current: DisplayKind | undefined) => {
-    const available = availableDisplays(ic);
-    return current && !available.includes(current) ? [current, ...available] : available;
-  };
   const title = (side: Side | undefined) =>
     side === 'right' ? 'Right half' : side === 'left' ? (differently ? 'Left half' : 'Left half (the right half mirrors it)') : undefined;
   return (
@@ -124,10 +119,9 @@ export function HardwareWiringStep({ hw, issues, onChange, onAddEncoder, onRemov
                   onChange={(e) => onChange(setDisplay(hw, side, e.target.value === '' ? undefined : (e.target.value as DisplayKind)))}
                 >
                   <option value="">None</option>
-                  {displayChoices(halfDisplay(hw, side)).map((kind) => (
+                  {DISPLAY_KINDS.map((kind) => (
                     <option key={kind} value={kind}>
-                      {DISPLAYS[kind].label} ({displayPins(kind, ic).map((p) => `D${p.pin}`).join(', ')})
-                      {availableDisplays(ic).includes(kind) ? '' : ' (not on this controller)'}
+                      {DISPLAYS[kind].label} ({defaultDisplayPins(kind, ic).map((p) => `D${p.pin}`).join(', ')})
                     </option>
                   ))}
                 </select>

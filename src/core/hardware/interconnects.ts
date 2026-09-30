@@ -25,6 +25,8 @@ export interface Interconnect {
   i2cPins: { sda: number; scl: number };
   /** Whether ZMK's nice!view adapter fits (its overlays only cover Pro Micro nRF52840 boards). */
   niceViewAdapter: boolean;
+  /** A nice!view's default pins: the adapter's on a Pro Micro. */
+  niceViewPins: { cs: number; data: number; clock: number };
 }
 
 const power = (label: string): HeaderPad => ({ pin: null, label });
@@ -81,6 +83,7 @@ export const PRO_MICRO: Interconnect = interconnect({
   },
   i2cPins: { sda: 2, scl: 3 },
   niceViewAdapter: true,
+  niceViewPins: { cs: 1, data: 2, clock: 3 },
 });
 
 // XIAO nRF52840 pins from Zephyr's xiao_ble seeed_xiao_connector.dtsi (ZMK's v3.5.0+zmk-fixes).
@@ -113,6 +116,8 @@ export const SEEED_XIAO: Interconnect = interconnect({
   },
   i2cPins: { sda: 4, scl: 5 },
   niceViewAdapter: false,
+  // The XIAO's own SPI pads (SCK D8, MOSI D10), with CS on its unused MISO pad.
+  niceViewPins: { cs: 9, data: 10, clock: 8 },
 });
 
 export const INTERCONNECTS: Interconnect[] = [PRO_MICRO, SEEED_XIAO];

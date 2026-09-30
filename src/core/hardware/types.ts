@@ -47,6 +47,12 @@ export interface Encoder {
 /** A screen on one half: a nice!view (via ZMK's adapter) or an SSD1306 OLED on the controller's I2C pins. */
 export type DisplayKind = 'nice_view' | 'oled_128x32' | 'oled_128x64';
 
+/** A display's wires: a nice!view's SPI CS, data (MOSI) and clock (SCK), or an OLED's I2C SDA and SCL. */
+export type DisplaySignal = 'cs' | 'data' | 'clock' | 'sda' | 'scl';
+
+/** A half's display pins that differ from the defaults. */
+export type DisplayPinOverrides = Partial<Record<DisplaySignal, Pin>>;
+
 /** A keyboard designed in the editor; its ZMK shield is generated from this. */
 export interface KeyboardHardware {
   /** Shield id: lowercase letters, digits and `_`, e.g. `my_split`. */
@@ -65,6 +71,8 @@ export interface KeyboardHardware {
   rightEncoders?: Encoder[];
   /** A display per half; a one-piece keyboard uses `left`. */
   displays?: { left?: DisplayKind; right?: DisplayKind };
+  /** Display pins moved off their defaults, per half; a one-piece keyboard uses `left`. */
+  displayPins?: { left?: DisplayPinOverrides; right?: DisplayPinOverrides };
   /** Where each encoder's knob is drawn, in `sensorOrder`; null for the default spot under its half. */
   encoderSpots?: (EncoderSpot | null)[];
 }

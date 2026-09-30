@@ -552,13 +552,13 @@ describe('Seeed XIAO in the wizard', () => {
     expect(padOrder(xiaoPinout())[0]).toBe('5V');
   });
 
-  it('offers OLEDs on D4/D5 but no nice!view', async () => {
+  it('offers OLEDs on D4/D5 and a nice!view on D9/D10/D8', async () => {
     const user = userEvent.setup();
     render(<App />);
     await wiringOnXiao(user);
     const options = within(screen.getByLabelText('Left display')).getAllByRole('option').map((o) => (o as HTMLOptionElement).value);
-    expect(options).toEqual(['', 'oled_128x32', 'oled_128x64']);
-    expect(screen.getByText(/OLEDs use D4 \(SDA\) and D5 \(SCL\)/)).toBeTruthy();
+    expect(options).toEqual(['', 'nice_view', 'oled_128x32', 'oled_128x64']);
+    expect(within(screen.getByLabelText('Left display')).getByRole('option', { name: 'nice!view (D9, D10, D8)' })).toBeTruthy();
     await user.selectOptions(screen.getByLabelText('Left display'), 'oled_128x32');
     expect(within(xiaoPinout()).getByRole('button', { name: 'D4: Display SDA' })).toBeTruthy();
   });
@@ -580,7 +580,6 @@ describe('Seeed XIAO in the wizard', () => {
     expect(
       screen.getByText('The nice!view on the left half needs ZMK’s nice!view adapter, which only fits a Pro Micro; on a Seeed XIAO use an OLED for now.'),
     ).toBeTruthy();
-    expect(within(screen.getByLabelText('Left display')).getByRole('option', { name: 'nice!view (D1, D2, D3) (not on this controller)' })).toBeTruthy();
     // Nothing flagged can be saved.
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await user.click(screen.getByRole('button', { name: 'Next' }));

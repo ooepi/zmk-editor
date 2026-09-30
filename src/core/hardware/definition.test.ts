@@ -20,7 +20,7 @@ describe('hardware definition file', () => {
 
   it('explains what is wrong with a bad file', () => {
     expect(() => parseHardware('nope')).toThrow();
-    expect(() => parseHardware('{"version": 2}')).toThrow('version 2 isn’t supported; update the editor');
+    expect(() => parseHardware('{"version": 3}')).toThrow('version 3 isn’t supported; update the editor');
     expect(() => parseHardware(serializeHardware(hw).replace('"matrix"', '"charlieplex"'))).toThrow('wiring.kind must be matrix or direct');
   });
 });
@@ -47,6 +47,25 @@ describe('hardware definition with displays', () => {
     expect(parseHardware(serializeHardware(withDisplays))).toEqual(withDisplays);
     expect(serializeHardware(hw)).not.toContain('displays');
     expect(() => parseHardware(serializeHardware(withDisplays).replace('"oled_128x64"', '"crt"'))).toThrow('displays.right must be one of nice_view, oled_128x32, oled_128x64');
+  });
+});
+
+describe('display pins in the definition', () => {
+  const withView = { ...hw, displays: { left: 'nice_view' as const, right: 'oled_128x32' as const } };
+
+  it('round-trips them as version 2, and stays version 1 without them', () => {
+    const moved = { ...withView, displayPins: { left: { cs: 5 }, right: { sda: 6, scl: 7 } } };
+    const text = serializeHardware(moved);
+    expect(text).toContain('"version": 2,');
+    expect(text).toContain('"displayPins": {');
+    expect(parseHardware(text)).toEqual(moved);
+    expect(serializeHardware(withView)).toContain('"version": 1,');
+  });
+
+  it('rejects unknown signals and pins that aren’t numbers', () => {
+    const text = serializeHardware({ ...withView, displayPins: { left: { cs: 5 } } });
+    expect(() => parseHardware(text.replace('"cs"', '"foo"'))).toThrow('displayPins.left.foo isn’t a display signal');
+    expect(() => parseHardware(text.replace('"cs": 5', '"cs": "x"'))).toThrow('displayPins.left.cs must be a number');
   });
 });
 
