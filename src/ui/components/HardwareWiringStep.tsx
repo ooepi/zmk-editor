@@ -127,6 +127,7 @@ export function HardwareWiringStep({ hw, issues, onChange, onAddEncoder, onRemov
                   {displayChoices(halfDisplay(hw, side)).map((kind) => (
                     <option key={kind} value={kind}>
                       {DISPLAYS[kind].label} ({displayPins(kind, ic).map((p) => `D${p.pin}`).join(', ')})
+                      {availableDisplays(ic).includes(kind) ? '' : ' (not on this controller)'}
                     </option>
                   ))}
                 </select>
@@ -136,9 +137,8 @@ export function HardwareWiringStep({ hw, issues, onChange, onAddEncoder, onRemov
         </div>
         <p id="hw-display-help" className="muted small">
           {ic.niceViewAdapter
-            ? `Displays use fixed pins: a nice!view D1, D2 and D3, an OLED D${ic.i2cPins.sda} (SDA) and D${ic.i2cPins.scl} (SCL).`
-            : `OLEDs use D${ic.i2cPins.sda} (SDA) and D${ic.i2cPins.scl} (SCL). A nice!view on a ${ic.name} needs custom display pins, which aren’t supported yet.`}{' '}
-          They can’t be used for rows, columns or encoders on that half.
+            ? `Displays use fixed pins: a nice!view D1, D2 and D3, an OLED D${ic.i2cPins.sda} (SDA) and D${ic.i2cPins.scl} (SCL). They can’t be used for rows, columns or encoders on that half.`
+            : `OLEDs use D${ic.i2cPins.sda} (SDA) and D${ic.i2cPins.scl} (SCL), which can’t then be used for rows, columns or encoders on that half. A nice!view on a ${ic.name} isn’t supported yet.`}
         </p>
       </fieldset>
       <HardwareIssueList issues={issues} />

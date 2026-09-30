@@ -577,6 +577,13 @@ describe('Seeed XIAO in the wizard', () => {
     expect(screen.getByLabelText('Left column 1')).toHaveProperty('value', '7');
     expect(screen.getByText('Row 0 on the left half uses D21, which isn’t a Seeed XIAO pin.')).toBeTruthy();
     expect(screen.getByLabelText('Left display')).toHaveProperty('value', 'nice_view');
-    expect(screen.getByText('A nice!view needs the Pro Micro adapter; on a Seeed XIAO use an OLED for now.')).toBeTruthy();
+    expect(
+      screen.getByText('The nice!view on the left half needs ZMK’s nice!view adapter, which only fits a Pro Micro; on a Seeed XIAO use an OLED for now.'),
+    ).toBeTruthy();
+    expect(within(screen.getByLabelText('Left display')).getByRole('option', { name: 'nice!view (D1, D2, D3) (not on this controller)' })).toBeTruthy();
+    // Nothing flagged can be saved.
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByRole('button', { name: 'Save hardware' })).toHaveProperty('disabled', true);
   });
 });

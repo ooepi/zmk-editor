@@ -136,9 +136,10 @@ describe('validateHardware on a Seeed XIAO', () => {
   it('accepts XIAO pins and flags pins it doesn’t have, keeping them', () => {
     expect(validateHardware(xiao())).toEqual([]);
     const hw = xiao();
-    expect(messages({ ...hw, wiring: { kind: 'matrix', diodeDirection: 'col2row', rows: [4, 5], cols: [6, 7, 14] } })).toEqual([
-      'Column 2 on the left half uses D14, which isn’t a Seeed XIAO pin.',
-    ]);
+    const kept = { ...hw, wiring: { kind: 'matrix' as const, diodeDirection: 'col2row' as const, rows: [4, 5], cols: [6, 7, 14] } };
+    expect(messages(kept)).toEqual(['Column 2 on the left half uses D14, which isn’t a Seeed XIAO pin.']);
+    // Switching back to a Pro Micro makes the kept pin valid again.
+    expect(messages({ ...kept, controller: 'nice_nano_v2' })).toEqual([]);
   });
 
   it('checks the whole wiring fits in 11 pins', () => {
@@ -158,7 +159,7 @@ describe('validateHardware on a Seeed XIAO', () => {
     expect(validateHardware(setDisplay(free, 'right', 'nice_view'))).toContainEqual({
       level: 'error',
       area: 'wiring',
-      message: 'A nice!view needs the Pro Micro adapter; on a Seeed XIAO use an OLED for now.',
+      message: 'The nice!view on the right half needs ZMK’s nice!view adapter, which only fits a Pro Micro; on a Seeed XIAO use an OLED for now.',
     });
   });
 

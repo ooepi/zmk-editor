@@ -84,7 +84,7 @@ export function validateHardware(hw: KeyboardHardware): HardwareIssue[] {
     // A mirrored right half uses the left's pins, so they're checked once.
     const display = halfDisplay(hw, side);
     if (display === 'nice_view' && !ic.niceViewAdapter) {
-      add('error', 'wiring', `A nice!view needs the Pro Micro adapter; on a ${ic.name} use an OLED for now.`);
+      add('error', 'wiring', `The nice!view${where} needs ZMK’s nice!view adapter, which only fits a Pro Micro; on a ${ic.name} use an OLED for now.`);
     }
     if (side !== 'right' || hw.wiring.right || hw.rightEncoders || display) {
       const labelled: { label: string; pin: Pin }[] = [

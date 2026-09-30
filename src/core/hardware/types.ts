@@ -1,6 +1,6 @@
 import type { EncoderSpot, PhysicalKey, PhysicalLayout } from '../layouts/types.ts';
 
-/** A `&pro_micro` pin number, or null while none is picked yet. */
+/** A pad's D-number on the controller (`&pro_micro 4`, `&xiao_d 4`), or null while none is picked yet. */
 export type Pin = number | null;
 export type Side = 'left' | 'right';
 export type DiodeDirection = 'col2row' | 'row2col';
@@ -44,7 +44,7 @@ export interface Encoder {
   b: Pin;
 }
 
-/** A screen on one half: a nice!view (via ZMK's adapter) or an SSD1306 OLED on the Pro Micro's I2C pins. */
+/** A screen on one half: a nice!view (via ZMK's adapter) or an SSD1306 OLED on the controller's I2C pins. */
 export type DisplayKind = 'nice_view' | 'oled_128x32' | 'oled_128x64';
 
 /** A keyboard designed in the editor; its ZMK shield is generated from this. */
