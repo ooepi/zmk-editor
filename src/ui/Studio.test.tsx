@@ -219,3 +219,37 @@ describe('keys the keyboard can’t take', () => {
     expect(document.getElementById(key.getAttribute('aria-describedby') ?? '')?.textContent).toContain('Needs a build');
   });
 });
+
+describe('ZMK Studio in Settings', () => {
+  const openPane = async (user: ReturnType<typeof userEvent.setup>) => {
+    await user.click(views().getByRole('button', { name: /^Settings/ }));
+    await user.click(within(screen.getByRole('navigation', { name: 'Setting groups' })).getByRole('button', { name: /ZMK Studio/ }));
+  };
+
+  it('turns Studio on for the build, with spare layers, and helps place the unlock key', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await openPane(user);
+    const toggle = screen.getByRole('switch', { name: 'Change keys without rebuilding' }) as HTMLInputElement;
+    expect(toggle.checked).toBe(false);
+    await user.click(toggle);
+    expect(toggle.checked).toBe(true);
+    expect(screen.getByRole('list', { name: 'Before you connect' }).textContent).toContain('lily58_left');
+    expect((screen.getByRole('spinbutton', { name: 'Spare layers' }) as HTMLInputElement).value).toBe('2');
+    expect(screen.getByText('Put the unlock key on your keymap')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Place it' }));
+    await user.click(palette().getByRole('button', { name: 'Behaviors' }));
+    expect(palette().getByRole('button', { name: 'Place Unlock' }).getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('turning it off takes it out of the build again', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await openPane(user);
+    const toggle = screen.getByRole('switch', { name: 'Change keys without rebuilding' }) as HTMLInputElement;
+    await user.click(toggle);
+    await user.click(toggle);
+    expect(toggle.checked).toBe(false);
+    expect(screen.queryByRole('spinbutton', { name: 'Spare layers' })).toBeNull();
+  });
+});

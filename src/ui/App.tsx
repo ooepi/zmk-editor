@@ -422,7 +422,14 @@ function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => 
           </main>
         ) : view === 'settings' ? (
           <main className="workspace single">
-            <SettingsView config={config} dispatch={dispatch} />
+            <SettingsView
+              config={config}
+              dispatch={dispatch}
+              onPlaceUnlock={() => {
+                setArmed({ kind: 'binding', binding: { behavior: 'studio_unlock', params: [] } });
+                setView('keymap');
+              }}
+            />
           </main>
         ) : view === 'build' ? (
           <main className="workspace single">
