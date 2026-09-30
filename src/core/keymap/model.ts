@@ -37,6 +37,8 @@ export interface Combo {
 
 export interface Layer {
   name: string;
+  /** Editor-only identity that survives renames and moves (never written to the keymap). */
+  uid?: number;
   label?: string;
   displayName?: string;
   bindings: Binding[];
@@ -50,6 +52,8 @@ export interface KeymapModel {
   behaviors: Behavior[];
   combos: Combo[];
   layers: Layer[];
+  /** Spare layers (`status = "reserved"`) that ZMK Studio can switch on; always after `layers`. */
+  reservedLayers?: DtNode[];
   /** Properties set directly on the root node. */
   rootProperties: DtProperty[];
   /** Root children the model doesn't cover, kept as generic nodes. */

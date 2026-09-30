@@ -384,3 +384,32 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Settings ▸ ZMK Studio: what's done and what's left before connecting. */
+.studio-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: var(--s-4) 0;
+  padding: 0;
+  list-style: none;
+}
+
+.studio-checklist li {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 40px;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  color: var(--text-muted);
+}
+
+.studio-checklist li.done {
+  color: var(--text);
+}
+
+.studio-checklist li.done svg {
+  color: var(--success-text);
+}

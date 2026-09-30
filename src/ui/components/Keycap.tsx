@@ -17,6 +17,8 @@ interface KeycapProps {
   label: KeycapLabel;
   selected: boolean;
   highlighted?: boolean;
+  /** The key's change waits for the next build (a ZMK Studio keyboard can't take it). */
+  flagged?: boolean;
   style: CSSProperties;
   /** `additive` for Ctrl/Shift-clicks, which add to the selection. */
   onSelect: (index: number, additive: boolean) => void;
@@ -31,7 +33,10 @@ function sizeClass(text: string): string {
   return 'size-xs';
 }
 
-export function Keycap({ index, label, selected, highlighted = false, style, onSelect, drop }: KeycapProps) {
+/** The id of the shared text that describes a key waiting for a build (KeyboardCanvas renders it). */
+export const NEEDS_BUILD_NOTE = 'keycap-needs-build';
+
+export function Keycap({ index, label, selected, highlighted = false, flagged = false, style, onSelect, drop }: KeycapProps) {
   const [over, setOver] = useState(false);
   const description = label.sub ? `${label.main} (${label.sub})` : label.main;
 
@@ -67,9 +72,10 @@ export function Keycap({ index, label, selected, highlighted = false, style, onS
   return (
     <button
       type="button"
-      className={`keycap kind-${label.kind}${selected ? ' selected' : ''}${highlighted ? ' highlighted' : ''}${over ? ' drop-target' : ''}`}
+      className={`keycap kind-${label.kind}${selected ? ' selected' : ''}${highlighted ? ' highlighted' : ''}${flagged ? ' needs-build' : ''}${over ? ' drop-target' : ''}`}
       style={style}
       aria-label={`Key ${index}: ${description}`}
+      aria-describedby={flagged ? NEEDS_BUILD_NOTE : undefined}
       aria-pressed={selected}
       title={description}
       onClick={(event) => onSelect(index, event.ctrlKey || event.metaKey || event.shiftKey)}

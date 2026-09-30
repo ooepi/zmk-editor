@@ -502,3 +502,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* A change the ZMK Studio keyboard can't take live: it waits for the next build. */
+.keycap.needs-build::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--warning);
+}

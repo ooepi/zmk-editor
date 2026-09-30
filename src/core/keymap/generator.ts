@@ -28,7 +28,8 @@ export function generateKeymap(model: KeymapModel, layout?: TextLayout): string 
   if (macros.length > 0) rootParts.push(container('macros', undefined, macros.map(printBehavior)));
   if (model.combos.length > 0) rootParts.push(container('combos', 'zmk,combos', model.combos.map(printCombo)));
   if (model.layers.length > 0) {
-    rootParts.push(container('keymap', 'zmk,keymap', model.layers.map((l) => printLayer(l, model.layers, layout))));
+    const reserved = (model.reservedLayers ?? []).map((node) => printNode(node, 2));
+    rootParts.push(container('keymap', 'zmk,keymap', [...model.layers.map((l) => printLayer(l, model.layers, layout)), ...reserved]));
   }
   for (const node of model.extraNodes) rootParts.push(printNode(node, 1));
 

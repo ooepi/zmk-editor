@@ -19,14 +19,17 @@ import { Icon, type IconName } from './Icon.tsx';
 import { IconButton } from './ui/IconButton.tsx';
 import { Switch } from './ui/Switch.tsx';
 import { NumberInput } from './ui/NumberInput.tsx';
+import { StudioSettings } from './StudioSettings.tsx';
 
 interface SettingsViewProps {
   config: ZmkConfig;
   dispatch: Dispatch<EditorAction>;
+  /** Arms the Studio unlock tile on the Keymap tab. */
+  onPlaceUnlock: () => void;
 }
 
-/** What the right-hand pane shows: one group, every changed setting, or the raw file. */
-type Pane = SettingGroup | 'changed' | 'raw';
+/** What the right-hand pane shows: one group, every changed setting, ZMK Studio, or the raw file. */
+type Pane = SettingGroup | 'changed' | 'studio' | 'raw';
 
 const GROUP_ICONS: Record<SettingGroup, IconName> = {
   power: 'zap',
@@ -65,7 +68,7 @@ function groupOf(id: SettingGroup) {
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 /** Kconfig settings (`config/<keyboard>.conf`): pick a group on the left, change it on the right. */
-export function SettingsView({ config, dispatch }: SettingsViewProps) {
+export function SettingsView({ config, dispatch, onPlaceUnlock }: SettingsViewProps) {
   const [pane, setPane] = useState<Pane>('power');
   /** Groups whose advanced settings are shown. */
   const [advancedOpen, setAdvancedOpen] = useState<Set<SettingGroup>>(() => new Set());
@@ -194,6 +197,15 @@ export function SettingsView({ config, dispatch }: SettingsViewProps) {
           <hr className="settings-nav-rule" />
           <button
             type="button"
+            className={`settings-nav-item${pane === 'studio' ? ' active' : ''}`}
+            aria-current={pane === 'studio' ? 'true' : undefined}
+            onClick={() => setPane('studio')}
+          >
+            <Icon name="usb" size={16} />
+            <span className="grow">ZMK Studio</span>
+          </button>
+          <button
+            type="button"
             className={`settings-nav-item${pane === 'raw' ? ' active' : ''}`}
             aria-current={pane === 'raw' ? 'true' : undefined}
             onClick={() => setPane('raw')}
@@ -205,7 +217,9 @@ export function SettingsView({ config, dispatch }: SettingsViewProps) {
         </nav>
 
         <div className="settings-pane">
-          {pane === 'raw' ? (
+          {pane === 'studio' ? (
+            <StudioSettings config={config} dispatch={dispatch} onPlaceUnlock={onPlaceUnlock} />
+          ) : pane === 'raw' ? (
             <RawPane config={config} dispatch={dispatch} others={others} />
           ) : pane === 'changed' ? (
             // Keyed by keyboard: another keyboard's .conf starts a fresh list.
@@ -463,7 +477,7 @@ function SettingRow({
   );
 }
 
-function RawPane({ config, dispatch, others }: SettingsViewProps & { others: string[] }) {
+function RawPane({ config, dispatch, others }: Omit<SettingsViewProps, 'onPlaceUnlock'> & { others: string[] }) {
   return (
     <section className="settings-group" aria-label="Raw .conf">
       <header className="settings-group-head">
@@ -492,7 +506,7 @@ function RawPane({ config, dispatch, others }: SettingsViewProps & { others: str
   );
 }
 
-function RawConf({ config, dispatch }: SettingsViewProps) {
+function RawConf({ config, dispatch }: Omit<SettingsViewProps, 'onPlaceUnlock'>) {
   const original = generateKconfig(config.kconfig);
   const [text, setText] = useState(original);
   return (

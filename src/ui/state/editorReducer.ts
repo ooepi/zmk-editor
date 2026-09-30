@@ -4,6 +4,7 @@ import { applyPaletteItem, applyToEncoder, type EncoderDirection, type PaletteIt
 import { copyKeys, pasteKeys, type KeyClipboard } from '../../core/keymap/clipboard.ts';
 import { setSensorBinding } from '../../core/keymap/sensorEdit.ts';
 import type { Binding, KeymapModel } from '../../core/keymap/model.ts';
+import { withLayerUids } from '../../core/keymap/layerIds.ts';
 
 const HISTORY_LIMIT = 200;
 
@@ -67,9 +68,15 @@ export type EditorAction =
   | { type: 'notify'; notice: string; transient?: boolean }
   | { type: 'dismissNotice' };
 
+/** The config with a uid on every layer. */
+function withUids(config: ZmkConfig): ZmkConfig {
+  const keymap = withLayerUids(config.keymap);
+  return keymap === config.keymap ? config : { ...config, keymap };
+}
+
 export function initialState(config: ZmkConfig, warnings: string[] = []): EditorState {
   return {
-    config,
+    config: withUids(config),
     warnings,
     layer: 0,
     key: null,
@@ -106,7 +113,7 @@ function commit(state: EditorState, keymap: KeymapModel, patch: Partial<EditorSt
   return {
     ...state,
     ...patch,
-    config: { ...state.config, keymap },
+    config: { ...state.config, keymap: withLayerUids(keymap) },
     past: [...state.past, state.config].slice(-HISTORY_LIMIT),
     future: [],
   };
@@ -204,7 +211,7 @@ function reduce(state: EditorState, action: EditorAction): EditorState {
     case 'editConfig':
       return {
         ...state,
-        config: action.config,
+        config: withUids(action.config),
         past: [...state.past, state.config].slice(-HISTORY_LIMIT),
         future: [],
         notice: action.notice ?? null,

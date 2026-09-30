@@ -9,6 +9,8 @@ export interface KeycodeData {
   page: 'key' | 'consumer' | 'gd';
   /** Defined as LS(...) of another key, e.g. EXCLAMATION. */
   shifted: boolean;
+  /** The value ZMK sends for it: (page << 16) | id, with modifier bits (LS…) in bits 24–31. */
+  usage: number;
 }
 
 export const KEYCODE_DATA: KeycodeData[] = [
@@ -20,7 +22,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "System Power Down",
     "page": "gd",
-    "shifted": false
+    "shifted": false,
+    "usage": 65665
   },
   {
     "name": "SYSTEM_SLEEP",
@@ -30,7 +33,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "System Sleep",
     "page": "gd",
-    "shifted": false
+    "shifted": false,
+    "usage": 65666
   },
   {
     "name": "SYSTEM_WAKE_UP",
@@ -40,7 +44,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "System Wake Up",
     "page": "gd",
-    "shifted": false
+    "shifted": false,
+    "usage": 65667
   },
   {
     "name": "A",
@@ -48,7 +53,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard a and A",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458756
   },
   {
     "name": "B",
@@ -56,7 +62,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard b and B",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458757
   },
   {
     "name": "C",
@@ -64,7 +71,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard c and C",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458758
   },
   {
     "name": "D",
@@ -72,7 +80,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard d and D",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458759
   },
   {
     "name": "E",
@@ -80,7 +89,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard e and E",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458760
   },
   {
     "name": "F",
@@ -88,7 +98,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard f and F",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458761
   },
   {
     "name": "G",
@@ -96,7 +107,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard g and G",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458762
   },
   {
     "name": "H",
@@ -104,7 +116,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard h and H",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458763
   },
   {
     "name": "I",
@@ -112,7 +125,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard i and I",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458764
   },
   {
     "name": "J",
@@ -120,7 +134,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard j and J",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458765
   },
   {
     "name": "K",
@@ -128,7 +143,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard k and K",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458766
   },
   {
     "name": "L",
@@ -136,7 +152,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard l and L",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458767
   },
   {
     "name": "M",
@@ -144,7 +161,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard m and M",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458768
   },
   {
     "name": "N",
@@ -152,7 +170,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard n and N",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458769
   },
   {
     "name": "O",
@@ -160,7 +179,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard o and O",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458770
   },
   {
     "name": "P",
@@ -168,7 +188,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard p and P",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458771
   },
   {
     "name": "Q",
@@ -176,7 +197,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard q and Q",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458772
   },
   {
     "name": "R",
@@ -184,7 +206,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard r and R",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458773
   },
   {
     "name": "S",
@@ -192,7 +215,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard s and S",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458774
   },
   {
     "name": "T",
@@ -200,7 +224,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard t and T",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458775
   },
   {
     "name": "U",
@@ -208,7 +233,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard u and U",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458776
   },
   {
     "name": "V",
@@ -216,7 +242,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard v and V",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458777
   },
   {
     "name": "W",
@@ -224,7 +251,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard w and W",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458778
   },
   {
     "name": "X",
@@ -232,7 +260,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard x and X",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458779
   },
   {
     "name": "Y",
@@ -240,7 +269,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard y and Y",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458780
   },
   {
     "name": "Z",
@@ -248,7 +278,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard z and Z",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458781
   },
   {
     "name": "NUMBER_1",
@@ -260,7 +291,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard 1 and ! (Exclamation)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458782
   },
   {
     "name": "EXCLAMATION",
@@ -272,7 +304,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard ! (Exclamation)",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013214
   },
   {
     "name": "NUMBER_2",
@@ -284,7 +317,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard 2 and @ (At sign)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458783
   },
   {
     "name": "AT_SIGN",
@@ -296,7 +330,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard @ (At sign)",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013215
   },
   {
     "name": "NUMBER_3",
@@ -308,7 +343,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard 3 and # (Hash/Number)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458784
   },
   {
     "name": "HASH",
@@ -318,7 +354,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard # (Hash/Number)",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013216
   },
   {
     "name": "NUMBER_4",
@@ -330,7 +367,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard 4 and $ (Dollar)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458785
   },
   {
     "name": "DOLLAR",
@@ -340,7 +378,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard $ (Dollar)",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013217
   },
   {
     "name": "NUMBER_5",
@@ -352,7 +391,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard 5 and % (Percent)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458786
   },
   {
     "name": "PERCENT",
@@ -364,7 +404,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard % (Percent)",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013218
   },
   {
     "name": "NUMBER_6",
@@ -376,7 +417,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard 6 and ^ (Caret)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458787
   },
   {
     "name": "CARET",
@@ -386,7 +428,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard ^ (Caret)",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013219
   },
   {
     "name": "NUMBER_7",
@@ -398,7 +441,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard 7 and & (Ampersand)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458788
   },
   {
     "name": "AMPERSAND",
@@ -408,7 +452,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard & (Ampersand)",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013220
   },
   {
     "name": "NUMBER_8",
@@ -420,7 +465,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard 8 and * (Asterisk)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458789
   },
   {
     "name": "ASTERISK",
@@ -431,7 +477,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard * (Asterisk)",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013221
   },
   {
     "name": "NUMBER_9",
@@ -443,7 +490,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard 9 and ( (Left Parenthesis)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458790
   },
   {
     "name": "LEFT_PARENTHESIS",
@@ -455,7 +503,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard ( (Left Parenthesis)",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013222
   },
   {
     "name": "NUMBER_0",
@@ -467,7 +516,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard 0 and ) (Right Parenthesis)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458791
   },
   {
     "name": "RIGHT_PARENTHESIS",
@@ -479,7 +529,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard ) (Right Parenthesis)",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013223
   },
   {
     "name": "RETURN",
@@ -490,7 +541,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Return (Enter)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458792
   },
   {
     "name": "ESCAPE",
@@ -500,7 +552,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Escape",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458793
   },
   {
     "name": "BACKSPACE",
@@ -512,7 +565,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard Backspace",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458794
   },
   {
     "name": "TAB",
@@ -520,7 +574,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Tab",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458795
   },
   {
     "name": "SPACE",
@@ -530,7 +585,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard Space",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458796
   },
   {
     "name": "MINUS",
@@ -538,7 +594,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard - and _ (Minus and Underscore)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458797
   },
   {
     "name": "UNDERSCORE",
@@ -548,7 +605,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard _ (Underscore)",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013229
   },
   {
     "name": "EQUAL",
@@ -558,7 +616,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard = and + (Equal and Plus)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458798
   },
   {
     "name": "PLUS",
@@ -566,7 +625,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard + (Plus)",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013230
   },
   {
     "name": "LEFT_BRACKET",
@@ -576,7 +636,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard [ and { (Left Bracket and Left Brace)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458799
   },
   {
     "name": "LEFT_BRACE",
@@ -588,7 +649,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard { (Left Brace)",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013231
   },
   {
     "name": "RIGHT_BRACKET",
@@ -598,7 +660,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard ] and } (Right Bracket and Right Brace)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458800
   },
   {
     "name": "RIGHT_BRACE",
@@ -610,7 +673,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard } (Right Brace)",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013232
   },
   {
     "name": "BACKSLASH",
@@ -620,7 +684,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard \\ and | (Backslash and Pipe)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458801
   },
   {
     "name": "PIPE",
@@ -628,7 +693,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard | (Pipe)",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013233
   },
   {
     "name": "NON_US_HASH",
@@ -638,7 +704,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Non-US # and ~ (Non-US Hash/Number and Tilde)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458802
   },
   {
     "name": "TILDE2",
@@ -646,7 +713,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard ~ (Tilde)",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013234
   },
   {
     "name": "SEMICOLON",
@@ -658,7 +726,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard ; and : (Semicolon and Colon)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458803
   },
   {
     "name": "COLON",
@@ -668,7 +737,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard : (Colon)",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013235
   },
   {
     "name": "SINGLE_QUOTE",
@@ -682,7 +752,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard ' and \" (Apostrophe and Quote)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458804
   },
   {
     "name": "DOUBLE_QUOTES",
@@ -692,7 +763,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard \" (Quote)",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013236
   },
   {
     "name": "GRAVE",
@@ -702,7 +774,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard ` and ~ (Grave Accent and Tilde)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458805
   },
   {
     "name": "TILDE",
@@ -712,7 +785,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard ~ (Tilde)",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013237
   },
   {
     "name": "COMMA",
@@ -722,7 +796,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard , and < (Comma and Less Than)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458806
   },
   {
     "name": "LESS_THAN",
@@ -734,7 +809,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard < (Less Than)",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013238
   },
   {
     "name": "PERIOD",
@@ -744,7 +820,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard . and > (Period and Greater Than)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458807
   },
   {
     "name": "GREATER_THAN",
@@ -756,7 +833,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard > (Greater Than)",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013239
   },
   {
     "name": "SLASH",
@@ -766,7 +844,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard / and ? (Forward Slash and Question)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458808
   },
   {
     "name": "QUESTION",
@@ -776,7 +855,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard ? (Question)",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013240
   },
   {
     "name": "CAPSLOCK",
@@ -787,7 +867,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Caps Lock",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458809
   },
   {
     "name": "F1",
@@ -795,7 +876,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F1",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458810
   },
   {
     "name": "F2",
@@ -803,7 +885,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F2",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458811
   },
   {
     "name": "F3",
@@ -811,7 +894,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F3",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458812
   },
   {
     "name": "F4",
@@ -819,7 +903,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F4",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458813
   },
   {
     "name": "F5",
@@ -827,7 +912,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F5",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458814
   },
   {
     "name": "F6",
@@ -835,7 +921,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F6",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458815
   },
   {
     "name": "F7",
@@ -843,7 +930,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F7",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458816
   },
   {
     "name": "F8",
@@ -851,7 +939,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F8",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458817
   },
   {
     "name": "F9",
@@ -859,7 +948,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F9",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458818
   },
   {
     "name": "F10",
@@ -867,7 +957,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F10",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458819
   },
   {
     "name": "F11",
@@ -875,7 +966,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F11",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458820
   },
   {
     "name": "F12",
@@ -883,7 +975,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F12",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458821
   },
   {
     "name": "PRINTSCREEN",
@@ -895,7 +988,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard Print Screen",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458822
   },
   {
     "name": "SCROLLLOCK",
@@ -907,7 +1001,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard Scroll Lock",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458823
   },
   {
     "name": "PAUSE_BREAK",
@@ -917,7 +1012,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard Pause/Break",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458824
   },
   {
     "name": "INSERT",
@@ -927,7 +1023,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Insert",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458825
   },
   {
     "name": "HOME",
@@ -935,7 +1032,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Home",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458826
   },
   {
     "name": "PAGE_UP",
@@ -947,7 +1045,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard Page Up",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458827
   },
   {
     "name": "DELETE",
@@ -957,7 +1056,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Delete",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458828
   },
   {
     "name": "END",
@@ -965,7 +1065,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard End",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458829
   },
   {
     "name": "PAGE_DOWN",
@@ -977,7 +1078,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard Page Down",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458830
   },
   {
     "name": "RIGHT_ARROW",
@@ -989,7 +1091,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard Right Arrow",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458831
   },
   {
     "name": "LEFT_ARROW",
@@ -1001,7 +1104,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard Left Arrow",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458832
   },
   {
     "name": "DOWN_ARROW",
@@ -1013,7 +1117,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard Down Arrow",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458833
   },
   {
     "name": "UP_ARROW",
@@ -1025,7 +1130,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard Up Arrow",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458834
   },
   {
     "name": "KP_NUMLOCK",
@@ -1036,7 +1142,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keypad Numlock and Clear",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458835
   },
   {
     "name": "CLEAR2",
@@ -1044,7 +1151,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keypad Clear",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013267
   },
   {
     "name": "KP_DIVIDE",
@@ -1056,7 +1164,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keypad / (Slash/Divide)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458836
   },
   {
     "name": "KP_MULTIPLY",
@@ -1068,7 +1177,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keypad * (Multiply)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458837
   },
   {
     "name": "KP_MINUS",
@@ -1080,7 +1190,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keypad - (Minus)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458838
   },
   {
     "name": "KP_PLUS",
@@ -1090,7 +1201,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keypad + (Plus)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458839
   },
   {
     "name": "KP_ENTER",
@@ -1098,7 +1210,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keypad Enter",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458840
   },
   {
     "name": "KP_NUMBER_1",
@@ -1108,7 +1221,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keypad 1",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458841
   },
   {
     "name": "KP_NUMBER_2",
@@ -1118,7 +1232,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keypad 2",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458842
   },
   {
     "name": "KP_NUMBER_3",
@@ -1128,7 +1243,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keypad 3",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458843
   },
   {
     "name": "KP_NUMBER_4",
@@ -1138,7 +1254,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keypad 4",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458844
   },
   {
     "name": "KP_NUMBER_5",
@@ -1148,7 +1265,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keypad 5",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458845
   },
   {
     "name": "KP_NUMBER_6",
@@ -1158,7 +1276,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keypad 6",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458846
   },
   {
     "name": "KP_NUMBER_7",
@@ -1168,7 +1287,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keypad 7",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458847
   },
   {
     "name": "KP_NUMBER_8",
@@ -1178,7 +1298,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keypad 8",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458848
   },
   {
     "name": "KP_NUMBER_9",
@@ -1188,7 +1309,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keypad 9",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458849
   },
   {
     "name": "KP_NUMBER_0",
@@ -1198,7 +1320,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keypad 0",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458850
   },
   {
     "name": "KP_DOT",
@@ -1206,7 +1329,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keypad . (Dot)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458851
   },
   {
     "name": "NON_US_BACKSLASH",
@@ -1217,7 +1341,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Non-US \\ and | (Non-us Backslash and Pipe)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458852
   },
   {
     "name": "PIPE2",
@@ -1225,7 +1350,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Pipe",
     "page": "key",
-    "shifted": true
+    "shifted": true,
+    "usage": 34013284
   },
   {
     "name": "K_APPLICATION",
@@ -1239,7 +1365,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard Application (Context Menu)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458853
   },
   {
     "name": "K_POWER",
@@ -1249,7 +1376,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Power",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458854
   },
   {
     "name": "KP_EQUAL",
@@ -1257,7 +1385,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keypad = (Equal)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458855
   },
   {
     "name": "F13",
@@ -1265,7 +1394,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F13",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458856
   },
   {
     "name": "F14",
@@ -1273,7 +1403,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F14",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458857
   },
   {
     "name": "F15",
@@ -1281,7 +1412,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F15",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458858
   },
   {
     "name": "F16",
@@ -1289,7 +1421,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F16",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458859
   },
   {
     "name": "F17",
@@ -1297,7 +1430,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F17",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458860
   },
   {
     "name": "F18",
@@ -1305,7 +1439,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F18",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458861
   },
   {
     "name": "F19",
@@ -1313,7 +1448,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F19",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458862
   },
   {
     "name": "F20",
@@ -1321,7 +1457,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F20",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458863
   },
   {
     "name": "F21",
@@ -1329,7 +1466,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F21",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458864
   },
   {
     "name": "F22",
@@ -1337,7 +1475,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F22",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458865
   },
   {
     "name": "F23",
@@ -1345,7 +1484,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F23",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458866
   },
   {
     "name": "F24",
@@ -1353,7 +1493,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard F24",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458867
   },
   {
     "name": "K_EXECUTE",
@@ -1363,7 +1504,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Execute",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458868
   },
   {
     "name": "K_HELP",
@@ -1371,7 +1513,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Help",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458869
   },
   {
     "name": "K_MENU",
@@ -1379,7 +1522,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Menu",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458870
   },
   {
     "name": "K_SELECT",
@@ -1387,7 +1531,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Select",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458871
   },
   {
     "name": "K_STOP",
@@ -1395,7 +1540,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Stop",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458872
   },
   {
     "name": "K_AGAIN",
@@ -1405,7 +1551,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Again",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458873
   },
   {
     "name": "K_UNDO",
@@ -1415,7 +1562,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard Undo",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458874
   },
   {
     "name": "K_CUT",
@@ -1425,7 +1573,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard Cut",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458875
   },
   {
     "name": "K_COPY",
@@ -1435,7 +1584,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard Copy",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458876
   },
   {
     "name": "K_PASTE",
@@ -1445,7 +1595,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard Paste",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458877
   },
   {
     "name": "K_FIND",
@@ -1453,7 +1604,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Find",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458878
   },
   {
     "name": "K_MUTE",
@@ -1461,7 +1613,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Mute",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458879
   },
   {
     "name": "K_VOLUME_UP",
@@ -1473,7 +1626,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard Volume Up",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458880
   },
   {
     "name": "K_VOLUME_DOWN",
@@ -1485,7 +1639,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard Volume Down",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458881
   },
   {
     "name": "LOCKING_CAPS",
@@ -1495,7 +1650,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Locking Caps Lock",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458882
   },
   {
     "name": "LOCKING_NUM",
@@ -1505,7 +1661,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Locking Num Lock",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458883
   },
   {
     "name": "LOCKING_SCROLL",
@@ -1515,7 +1672,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Locking Scroll Lock",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458884
   },
   {
     "name": "KP_COMMA",
@@ -1523,7 +1681,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keypad , (Comma)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458885
   },
   {
     "name": "KP_EQUAL_AS400",
@@ -1531,7 +1690,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keypad = (Equal) AS/400",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458886
   },
   {
     "name": "INTERNATIONAL_1",
@@ -1542,7 +1702,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard International 1",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458887
   },
   {
     "name": "INTERNATIONAL_2",
@@ -1554,7 +1715,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard International 2",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458888
   },
   {
     "name": "INTERNATIONAL_3",
@@ -1565,7 +1727,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard International 3",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458889
   },
   {
     "name": "INTERNATIONAL_4",
@@ -1576,7 +1739,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard International 4",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458890
   },
   {
     "name": "INTERNATIONAL_5",
@@ -1587,7 +1751,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard International 5",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458891
   },
   {
     "name": "INTERNATIONAL_6",
@@ -1598,7 +1763,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard International 6",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458892
   },
   {
     "name": "INTERNATIONAL_7",
@@ -1608,7 +1774,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard International 7",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458893
   },
   {
     "name": "INTERNATIONAL_8",
@@ -1618,7 +1785,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard International 8",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458894
   },
   {
     "name": "INTERNATIONAL_9",
@@ -1628,7 +1796,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard International 9",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458895
   },
   {
     "name": "LANGUAGE_1",
@@ -1639,7 +1808,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Language 1",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458896
   },
   {
     "name": "LANGUAGE_2",
@@ -1650,7 +1820,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Language 2",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458897
   },
   {
     "name": "LANGUAGE_3",
@@ -1661,7 +1832,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Language 3",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458898
   },
   {
     "name": "LANGUAGE_4",
@@ -1672,7 +1844,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Language 4",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458899
   },
   {
     "name": "LANGUAGE_5",
@@ -1683,7 +1856,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Language 5",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458900
   },
   {
     "name": "LANGUAGE_6",
@@ -1693,7 +1867,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Language 6",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458901
   },
   {
     "name": "LANGUAGE_7",
@@ -1703,7 +1878,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Language 7",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458902
   },
   {
     "name": "LANGUAGE_8",
@@ -1713,7 +1889,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Language 8",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458903
   },
   {
     "name": "LANGUAGE_9",
@@ -1723,7 +1900,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Language 9",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458904
   },
   {
     "name": "ALT_ERASE",
@@ -1731,7 +1909,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Alternate Erase",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458905
   },
   {
     "name": "SYSREQ",
@@ -1741,7 +1920,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard SysReq/Attention",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458906
   },
   {
     "name": "K_CANCEL",
@@ -1749,7 +1929,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Cancel",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458907
   },
   {
     "name": "CLEAR",
@@ -1757,7 +1938,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Clear",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458908
   },
   {
     "name": "PRIOR",
@@ -1765,7 +1947,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Prior",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458909
   },
   {
     "name": "RETURN2",
@@ -1775,7 +1958,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Return",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458910
   },
   {
     "name": "SEPARATOR",
@@ -1783,7 +1967,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Separator",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458911
   },
   {
     "name": "OUT",
@@ -1791,7 +1976,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Out",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458912
   },
   {
     "name": "OPER",
@@ -1799,7 +1985,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Oper",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458913
   },
   {
     "name": "CLEAR_AGAIN",
@@ -1807,7 +1994,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Clear/Again",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458914
   },
   {
     "name": "CRSEL",
@@ -1815,7 +2003,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard CrSel/Props",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458915
   },
   {
     "name": "EXSEL",
@@ -1823,7 +2012,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard ExSel",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458916
   },
   {
     "name": "CURU",
@@ -1831,7 +2021,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Currency Unit",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458932
   },
   {
     "name": "KP_LEFT_PARENTHESIS",
@@ -1841,7 +2032,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keypad ( (Left Parenthesis)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458934
   },
   {
     "name": "KP_RIGHT_PARENTHESIS",
@@ -1851,7 +2043,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keypad ) (Right Parenthesis)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458935
   },
   {
     "name": "KSPC",
@@ -1859,7 +2052,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keypad Space",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458957
   },
   {
     "name": "KP_CLEAR",
@@ -1867,7 +2061,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keypad Clear",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458968
   },
   {
     "name": "LEFT_CONTROL",
@@ -1879,7 +2074,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard Left Control",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458976
   },
   {
     "name": "LEFT_SHIFT",
@@ -1892,7 +2088,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard Left Shift",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458977
   },
   {
     "name": "LEFT_ALT",
@@ -1902,7 +2099,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Left Alt",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458978
   },
   {
     "name": "LEFT_GUI",
@@ -1918,7 +2116,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Left GUI (Windows / Command / Meta)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458979
   },
   {
     "name": "RIGHT_CONTROL",
@@ -1930,7 +2129,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard Right Control",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458980
   },
   {
     "name": "RIGHT_SHIFT",
@@ -1943,7 +2143,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Keyboard Right Shift",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458981
   },
   {
     "name": "RIGHT_ALT",
@@ -1953,7 +2154,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Right Alt",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458982
   },
   {
     "name": "RIGHT_GUI",
@@ -1969,7 +2171,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Right GUI (Windows / Command / Meta)",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458983
   },
   {
     "name": "K_PLAY_PAUSE",
@@ -1979,7 +2182,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Play/Pause",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458984
   },
   {
     "name": "K_STOP2",
@@ -1987,7 +2191,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Stop",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458985
   },
   {
     "name": "K_PREVIOUS",
@@ -1997,7 +2202,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Previous",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458986
   },
   {
     "name": "K_NEXT",
@@ -2005,7 +2211,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Next",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458987
   },
   {
     "name": "K_EJECT",
@@ -2013,7 +2220,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Eject",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458988
   },
   {
     "name": "K_VOLUME_UP2",
@@ -2023,7 +2231,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Volume Up",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458989
   },
   {
     "name": "K_VOLUME_DOWN2",
@@ -2033,7 +2242,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Volume Down",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458990
   },
   {
     "name": "K_MUTE2",
@@ -2041,7 +2251,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Mute",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458991
   },
   {
     "name": "K_WWW",
@@ -2049,7 +2260,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard WWW",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458992
   },
   {
     "name": "K_BACK",
@@ -2057,7 +2269,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Back",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458993
   },
   {
     "name": "K_FORWARD",
@@ -2065,7 +2278,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Forward",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458994
   },
   {
     "name": "K_STOP3",
@@ -2073,7 +2287,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Stop",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458995
   },
   {
     "name": "K_FIND2",
@@ -2081,7 +2296,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Find",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458996
   },
   {
     "name": "K_SCROLL_UP",
@@ -2089,7 +2305,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Scroll Up",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458997
   },
   {
     "name": "K_SCROLL_DOWN",
@@ -2097,7 +2314,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Scroll Down",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458998
   },
   {
     "name": "K_EDIT",
@@ -2105,7 +2323,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Edit",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 458999
   },
   {
     "name": "K_SLEEP",
@@ -2113,7 +2332,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Sleep",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 459000
   },
   {
     "name": "K_LOCK",
@@ -2124,7 +2344,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Lock",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 459001
   },
   {
     "name": "K_REFRESH",
@@ -2132,7 +2353,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Refresh",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 459002
   },
   {
     "name": "K_CALCULATOR",
@@ -2142,7 +2364,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Keyboard Calculator",
     "page": "key",
-    "shifted": false
+    "shifted": false,
+    "usage": 459003
   },
   {
     "name": "C_POWER",
@@ -2152,7 +2375,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Power",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786480
   },
   {
     "name": "C_RESET",
@@ -2160,7 +2384,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Reset",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786481
   },
   {
     "name": "C_SLEEP",
@@ -2168,7 +2393,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Sleep",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786482
   },
   {
     "name": "C_SLEEP_MODE",
@@ -2176,7 +2402,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Sleep Mode",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786484
   },
   {
     "name": "C_MENU",
@@ -2184,7 +2411,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Menu",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786496
   },
   {
     "name": "C_MENU_PICK",
@@ -2194,7 +2422,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Menu Pick",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786497
   },
   {
     "name": "C_MENU_UP",
@@ -2202,7 +2431,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Menu Up",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786498
   },
   {
     "name": "C_MENU_DOWN",
@@ -2210,7 +2440,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Menu Down",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786499
   },
   {
     "name": "C_MENU_LEFT",
@@ -2218,7 +2449,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Menu Left",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786500
   },
   {
     "name": "C_MENU_RIGHT",
@@ -2226,7 +2458,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Menu Right",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786501
   },
   {
     "name": "C_MENU_ESCAPE",
@@ -2236,7 +2469,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Menu Escape",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786502
   },
   {
     "name": "C_MENU_INCREASE",
@@ -2246,7 +2480,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Menu Value Increase",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786503
   },
   {
     "name": "C_MENU_DECREASE",
@@ -2256,7 +2491,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Menu Value Decrease",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786504
   },
   {
     "name": "C_DATA_ON_SCREEN",
@@ -2264,7 +2500,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Data On Screen",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786528
   },
   {
     "name": "C_CAPTIONS",
@@ -2274,7 +2511,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Closed Caption",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786529
   },
   {
     "name": "C_SNAPSHOT",
@@ -2282,7 +2520,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Snapshot",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786533
   },
   {
     "name": "C_PIP",
@@ -2290,7 +2529,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Picture-in-Picture Toggle",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786535
   },
   {
     "name": "C_RED_BUTTON",
@@ -2300,7 +2540,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Red Menu Button",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786537
   },
   {
     "name": "C_GREEN_BUTTON",
@@ -2310,7 +2551,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Green Menu Button",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786538
   },
   {
     "name": "C_BLUE_BUTTON",
@@ -2320,7 +2562,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Blue Menu Button",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786539
   },
   {
     "name": "C_YELLOW_BUTTON",
@@ -2330,7 +2573,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Yellow Menu Button",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786540
   },
   {
     "name": "C_ASPECT",
@@ -2338,7 +2582,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Aspect",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786541
   },
   {
     "name": "C_BRIGHTNESS_INC",
@@ -2349,7 +2594,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Display Brightness Increment",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786543
   },
   {
     "name": "C_BRIGHTNESS_DEC",
@@ -2360,7 +2606,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Display Brightness Decrement",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786544
   },
   {
     "name": "C_BACKLIGHT_TOGGLE",
@@ -2370,7 +2617,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Display Backlight Toggle",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786546
   },
   {
     "name": "C_BRIGHTNESS_MINIMUM",
@@ -2380,7 +2628,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Display Set Brightness to Minimum",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786547
   },
   {
     "name": "C_BRIGHTNESS_MAXIMUM",
@@ -2390,7 +2639,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Display Set Brightness to Maximum",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786548
   },
   {
     "name": "C_BRIGHTNESS_AUTO",
@@ -2400,7 +2650,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Display Set Auto Brightness",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786549
   },
   {
     "name": "C_MEDIA_STEP",
@@ -2410,7 +2661,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Mode Step",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786562
   },
   {
     "name": "C_RECALL_LAST",
@@ -2420,7 +2672,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Recall Last",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786563
   },
   {
     "name": "C_MEDIA_COMPUTER",
@@ -2428,7 +2681,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Media Select Computer",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786568
   },
   {
     "name": "C_MEDIA_TV",
@@ -2436,7 +2690,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Media Select TV",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786569
   },
   {
     "name": "C_MEDIA_WWW",
@@ -2444,7 +2699,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Media Select WWW",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786570
   },
   {
     "name": "C_MEDIA_DVD",
@@ -2452,7 +2708,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Media Select DVD",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786571
   },
   {
     "name": "C_MEDIA_PHONE",
@@ -2460,7 +2717,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Media Select Telephone",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786572
   },
   {
     "name": "C_MEDIA_GUIDE",
@@ -2468,7 +2726,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Media Select Program Guide",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786573
   },
   {
     "name": "C_MEDIA_VIDEOPHONE",
@@ -2476,7 +2735,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Media Select Video Phone",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786574
   },
   {
     "name": "C_MEDIA_GAMES",
@@ -2484,7 +2744,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Media Select Games",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786575
   },
   {
     "name": "C_MEDIA_MESSAGES",
@@ -2492,7 +2753,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Media Select Messages",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786576
   },
   {
     "name": "C_MEDIA_CD",
@@ -2500,7 +2762,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Media Select CD",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786577
   },
   {
     "name": "C_MEDIA_VCR",
@@ -2508,7 +2771,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Media Select VCR",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786578
   },
   {
     "name": "C_MEDIA_TUNER",
@@ -2516,7 +2780,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Media Select Tuner",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786579
   },
   {
     "name": "C_QUIT",
@@ -2524,7 +2789,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Quit",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786580
   },
   {
     "name": "C_HELP",
@@ -2532,7 +2798,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Help",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786581
   },
   {
     "name": "C_MEDIA_TAPE",
@@ -2540,7 +2807,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Media Select Tape",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786582
   },
   {
     "name": "C_MEDIA_CABLE",
@@ -2548,7 +2816,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Media Select Cable",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786583
   },
   {
     "name": "C_MEDIA_SATELLITE",
@@ -2556,7 +2825,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Media Select Satellite",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786584
   },
   {
     "name": "C_MEDIA_HOME",
@@ -2564,7 +2834,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Media Select Home",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786586
   },
   {
     "name": "C_CHANNEL_INC",
@@ -2574,7 +2845,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Channel Increment",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786588
   },
   {
     "name": "C_CHANNEL_DEC",
@@ -2584,7 +2856,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Channel Decrement",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786589
   },
   {
     "name": "C_MEDIA_VCR_PLUS",
@@ -2592,7 +2865,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer VCR Plus",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786592
   },
   {
     "name": "C_PLAY",
@@ -2600,7 +2874,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Play",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786608
   },
   {
     "name": "C_PAUSE",
@@ -2608,7 +2883,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Pause",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786609
   },
   {
     "name": "C_RECORD",
@@ -2618,7 +2894,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Record",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786610
   },
   {
     "name": "C_FAST_FORWARD",
@@ -2628,7 +2905,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Fast Forward",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786611
   },
   {
     "name": "C_REWIND",
@@ -2638,7 +2916,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Rewind",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786612
   },
   {
     "name": "C_NEXT",
@@ -2648,7 +2927,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Consumer Scan Next Track",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786613
   },
   {
     "name": "C_PREVIOUS",
@@ -2660,7 +2940,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Consumer Scan Previous Track",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786614
   },
   {
     "name": "C_STOP",
@@ -2670,7 +2951,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Consumer Stop",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786615
   },
   {
     "name": "C_EJECT",
@@ -2680,7 +2962,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Consumer Eject",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786616
   },
   {
     "name": "C_RANDOM_PLAY",
@@ -2690,7 +2973,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Random Play",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786617
   },
   {
     "name": "C_REPEAT",
@@ -2698,7 +2982,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Repeat",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786620
   },
   {
     "name": "C_SLOW_TRACKING",
@@ -2708,7 +2993,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Slow Tracking",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786623
   },
   {
     "name": "C_STOP_EJECT",
@@ -2716,7 +3002,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Stop/Eject",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786636
   },
   {
     "name": "C_PLAY_PAUSE",
@@ -2728,7 +3015,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Consumer Play/Pause",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786637
   },
   {
     "name": "C_VOICE_COMMAND",
@@ -2736,7 +3024,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Voice Command",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786639
   },
   {
     "name": "C_MUTE",
@@ -2746,7 +3035,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Consumer Mute",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786658
   },
   {
     "name": "C_BASS_BOOST",
@@ -2754,7 +3044,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Bass Boost",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786661
   },
   {
     "name": "C_VOLUME_UP",
@@ -2766,7 +3057,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Consumer Volume Increment",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786665
   },
   {
     "name": "C_VOLUME_DOWN",
@@ -2778,7 +3070,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     ],
     "description": "Consumer Volume Decrement",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786666
   },
   {
     "name": "C_SLOW",
@@ -2786,7 +3079,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Slow",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786677
   },
   {
     "name": "C_ALTERNATE_AUDIO_INCREMENT",
@@ -2796,7 +3090,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Alternate Audio Increment",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786803
   },
   {
     "name": "C_AL_CCC",
@@ -2804,7 +3099,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Consumer Control Configuration",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786819
   },
   {
     "name": "C_AL_WORD",
@@ -2812,7 +3108,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Word Processor",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786820
   },
   {
     "name": "C_AL_TEXT_EDITOR",
@@ -2820,7 +3117,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Text Editor",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786821
   },
   {
     "name": "C_AL_SPREADSHEET",
@@ -2830,7 +3128,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Spreadsheet",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786822
   },
   {
     "name": "C_AL_GRAPHICS_EDITOR",
@@ -2838,7 +3137,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Graphics Editor",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786823
   },
   {
     "name": "C_AL_PRESENTATION",
@@ -2846,7 +3146,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Presentation App",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786824
   },
   {
     "name": "C_AL_DATABASE",
@@ -2856,7 +3157,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Database App",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786825
   },
   {
     "name": "C_AL_EMAIL",
@@ -2866,7 +3168,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Email Reader",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786826
   },
   {
     "name": "C_AL_NEWS",
@@ -2874,7 +3177,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Newsreader",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786827
   },
   {
     "name": "C_AL_VOICEMAIL",
@@ -2882,7 +3186,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Voicemail",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786828
   },
   {
     "name": "C_AL_CONTACTS",
@@ -2892,7 +3197,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Contacts/Address Book",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786829
   },
   {
     "name": "C_AL_CALENDAR",
@@ -2902,7 +3208,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Calendar/Schedule",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786830
   },
   {
     "name": "C_AL_TASK_MANAGER",
@@ -2910,7 +3217,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Task/Project Manager",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786831
   },
   {
     "name": "C_AL_JOURNAL",
@@ -2918,7 +3226,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Log/Journal/Timecard",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786832
   },
   {
     "name": "C_AL_FINANCE",
@@ -2926,7 +3235,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Checkbook/Finance",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786833
   },
   {
     "name": "C_AL_CALCULATOR",
@@ -2936,7 +3246,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Calculator",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786834
   },
   {
     "name": "C_AL_AV_CAPTURE_PLAYBACK",
@@ -2944,7 +3255,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL A/V Capture/Playback",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786835
   },
   {
     "name": "C_AL_MY_COMPUTER",
@@ -2952,7 +3264,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Local Machine Browser",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786836
   },
   {
     "name": "C_AL_WWW",
@@ -2960,7 +3273,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Internet Browser",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786838
   },
   {
     "name": "C_AL_NETWORK_CHAT",
@@ -2970,7 +3284,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Network Chat",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786841
   },
   {
     "name": "C_AL_LOGOFF",
@@ -2978,7 +3293,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Logoff",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786844
   },
   {
     "name": "C_AL_LOCK",
@@ -2989,7 +3305,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Terminal Lock/Screensaver",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786846
   },
   {
     "name": "C_AL_CONTROL_PANEL",
@@ -2997,7 +3314,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Control Panel",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786847
   },
   {
     "name": "C_AL_SELECT_TASK",
@@ -3005,7 +3323,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Select Task/Application",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786850
   },
   {
     "name": "C_AL_NEXT_TASK",
@@ -3013,7 +3332,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Next Task/Application",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786851
   },
   {
     "name": "C_AL_PREVIOUS_TASK",
@@ -3023,7 +3343,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Previous Task/Application",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786852
   },
   {
     "name": "C_AL_HELP",
@@ -3031,7 +3352,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Integrated Help Center",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786854
   },
   {
     "name": "C_AL_DOCUMENTS",
@@ -3041,7 +3363,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Documents",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786855
   },
   {
     "name": "C_AL_SPELLCHECK",
@@ -3051,7 +3374,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Spell Check",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786859
   },
   {
     "name": "C_AL_KEYBOARD_LAYOUT",
@@ -3059,7 +3383,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Keyboard Layout",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786862
   },
   {
     "name": "C_AL_SCREEN_SAVER",
@@ -3067,7 +3392,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Screen Saver",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786865
   },
   {
     "name": "C_AL_FILE_BROWSER",
@@ -3077,7 +3403,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL File Browser",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786868
   },
   {
     "name": "C_AL_IMAGE_BROWSER",
@@ -3087,7 +3414,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Image Browser",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786870
   },
   {
     "name": "C_AL_AUDIO_BROWSER",
@@ -3098,7 +3426,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Audio Browser",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786871
   },
   {
     "name": "C_AL_MOVIE_BROWSER",
@@ -3108,7 +3437,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Movie Browser",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786872
   },
   {
     "name": "C_AL_INSTANT_MESSAGING",
@@ -3118,7 +3448,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL Instant Messaging",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786876
   },
   {
     "name": "C_AL_OEM_FEATURES",
@@ -3129,7 +3460,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AL OEM Features/Tips/Tutorial Browser",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786877
   },
   {
     "name": "C_AC_NEW",
@@ -3137,7 +3469,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC New",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786945
   },
   {
     "name": "C_AC_OPEN",
@@ -3145,7 +3478,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Open",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786946
   },
   {
     "name": "C_AC_CLOSE",
@@ -3153,7 +3487,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Close",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786947
   },
   {
     "name": "C_AC_EXIT",
@@ -3161,7 +3496,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Exit",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786948
   },
   {
     "name": "C_AC_SAVE",
@@ -3169,7 +3505,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Save",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786951
   },
   {
     "name": "C_AC_PRINT",
@@ -3177,7 +3514,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Print",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786952
   },
   {
     "name": "C_AC_PROPERTIES",
@@ -3187,7 +3525,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Properties",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786953
   },
   {
     "name": "C_AC_UNDO",
@@ -3195,7 +3534,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Undo",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786970
   },
   {
     "name": "C_AC_COPY",
@@ -3203,7 +3543,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Copy",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786971
   },
   {
     "name": "C_AC_CUT",
@@ -3211,7 +3552,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Cut",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786972
   },
   {
     "name": "C_AC_PASTE",
@@ -3219,7 +3561,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Paste",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786973
   },
   {
     "name": "C_AC_FIND",
@@ -3227,7 +3570,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Find",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786975
   },
   {
     "name": "C_AC_SEARCH",
@@ -3235,7 +3579,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Search",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786977
   },
   {
     "name": "C_AC_GOTO",
@@ -3243,7 +3588,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Go To",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786978
   },
   {
     "name": "C_AC_HOME",
@@ -3251,7 +3597,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Home",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786979
   },
   {
     "name": "C_AC_BACK",
@@ -3259,7 +3606,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Back",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786980
   },
   {
     "name": "C_AC_FORWARD",
@@ -3267,7 +3615,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Forward",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786981
   },
   {
     "name": "C_AC_STOP",
@@ -3275,7 +3624,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Stop",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786982
   },
   {
     "name": "C_AC_REFRESH",
@@ -3283,7 +3633,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Refresh",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786983
   },
   {
     "name": "C_AC_BOOKMARKS",
@@ -3294,7 +3645,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Bookmarks",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786986
   },
   {
     "name": "C_AC_ZOOM_IN",
@@ -3302,7 +3654,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Zoom In",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786989
   },
   {
     "name": "C_AC_ZOOM_OUT",
@@ -3310,7 +3663,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Zoom Out",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786990
   },
   {
     "name": "C_AC_ZOOM",
@@ -3318,7 +3672,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Zoom",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786991
   },
   {
     "name": "C_AC_VIEW_TOGGLE",
@@ -3326,7 +3681,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC View Toggle",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786994
   },
   {
     "name": "C_AC_SCROLL_UP",
@@ -3334,7 +3690,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Scroll Up",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786995
   },
   {
     "name": "C_AC_SCROLL_DOWN",
@@ -3342,7 +3699,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Scroll Down",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 786996
   },
   {
     "name": "C_AC_EDIT",
@@ -3350,7 +3708,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Edit",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 787005
   },
   {
     "name": "C_AC_CANCEL",
@@ -3358,7 +3717,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Cancel",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 787039
   },
   {
     "name": "C_AC_INSERT",
@@ -3368,7 +3728,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Insert Mode",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 787049
   },
   {
     "name": "C_AC_DEL",
@@ -3376,7 +3737,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Delete",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 787050
   },
   {
     "name": "C_AC_REDO",
@@ -3384,7 +3746,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Redo/Repeat",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 787065
   },
   {
     "name": "C_AC_REPLY",
@@ -3392,7 +3755,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Reply",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 787081
   },
   {
     "name": "C_AC_FORWARD_MAIL",
@@ -3400,7 +3764,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Forward Msg",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 787083
   },
   {
     "name": "C_AC_SEND",
@@ -3408,7 +3773,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Send",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 787084
   },
   {
     "name": "C_AC_DESKTOP_SHOW_ALL_WINDOWS",
@@ -3416,7 +3782,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Desktop Show All Windows",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 787103
   },
   {
     "name": "C_AC_DESKTOP_SHOW_ALL_APPLICATIONS",
@@ -3424,7 +3791,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer AC Desktop Show All Applications",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 787106
   },
   {
     "name": "C_KEYBOARD_INPUT_ASSIST_PREVIOUS",
@@ -3434,7 +3802,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Keyboard Input Assist Previous",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 787143
   },
   {
     "name": "C_KEYBOARD_INPUT_ASSIST_NEXT",
@@ -3444,7 +3813,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Keyboard Input Assist Next",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 787144
   },
   {
     "name": "C_KEYBOARD_INPUT_ASSIST_PREVIOUS_GROUP",
@@ -3454,7 +3824,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Keyboard Input Assist Previous Group",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 787145
   },
   {
     "name": "C_KEYBOARD_INPUT_ASSIST_NEXT_GROUP",
@@ -3464,7 +3835,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Keyboard Input Assist Next Group",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 787146
   },
   {
     "name": "C_KEYBOARD_INPUT_ASSIST_ACCEPT",
@@ -3474,7 +3846,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Keyboard Input Assist Accept",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 787147
   },
   {
     "name": "C_KEYBOARD_INPUT_ASSIST_CANCEL",
@@ -3484,7 +3857,8 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Consumer Keyboard Input Assist Cancel",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 787148
   },
   {
     "name": "C_AC_NEXT_KEYBOARD_LAYOUT_SELECT",
@@ -3494,6 +3868,7 @@ export const KEYCODE_DATA: KeycodeData[] = [
     "deprecated": [],
     "description": "Apple Globe key",
     "page": "consumer",
-    "shifted": false
+    "shifted": false,
+    "usage": 787101
   }
 ];

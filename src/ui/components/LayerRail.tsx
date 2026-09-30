@@ -11,6 +11,8 @@ interface LayerRailProps {
   layers: Layer[];
   active: number;
   dispatch: Dispatch<EditorAction>;
+  /** Why a layer can't be added right now (a ZMK Studio keyboard with no spare layers). */
+  addDisabled?: string | undefined;
 }
 
 const layerName = (layer: Layer) => layer.displayName ?? layer.name;
@@ -22,7 +24,7 @@ export const HOVER_SWITCH_MS = 500;
  * The layers as a floating vertical rail beside the keyboard. Hovering or focusing a
  * row reveals its drag grip, rename and delete; Alt+↑/↓ moves the focused layer.
  */
-export function LayerRail({ layers, active, dispatch }: LayerRailProps) {
+export function LayerRail({ layers, active, dispatch, addDisabled }: LayerRailProps) {
   // On narrow screens the rail runs across the top (panels.css), so its tabs are a row.
   const across = useMediaQuery('(max-width: 900px)');
   const [renaming, setRenaming] = useState<number | null>(null);
@@ -191,7 +193,7 @@ export function LayerRail({ layers, active, dispatch }: LayerRailProps) {
             );
           })}
         </div>
-        <IconButton icon="plus" label="Add layer" className="layer-add" onClick={addLayer} />
+        <IconButton icon="plus" label="Add layer" className="layer-add" disabled={addDisabled !== undefined} title={addDisabled} onClick={addLayer} />
       </nav>
     </div>
   );

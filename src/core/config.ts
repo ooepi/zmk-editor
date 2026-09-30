@@ -25,6 +25,8 @@ export interface ZmkConfig {
   layout?: PhysicalLayout;
   /** A keyboard designed in the editor; its shield files are generated from it and it supplies the layout. */
   hardware?: KeyboardHardware;
+  /** Read from a ZMK Studio keyboard, with no repository behind it: only its keymap can change. */
+  studio?: { device: string };
 }
 
 /** Repo path → file contents. */

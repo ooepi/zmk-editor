@@ -149,4 +149,50 @@ export const CONFIG: HelpSection[] = [
       </>
     ),
   },
+  {
+    id: 'studio',
+    title: 'ZMK Studio (live changes)',
+    body: (
+      <>
+        <p>
+          ZMK Studio lets the editor change a keyboard's keys and layers over USB while you use it, without building new
+          firmware. It works in Chrome or Edge on a computer. Combos, behaviors, macros, settings and modules still need{' '}
+          <Ui>Build &amp; flash</Ui>.
+        </p>
+        <Sub id="studio-enable" title="Turning it on">
+          <p>
+            In <Ui>Settings</Ui> ▸ <Ui>ZMK Studio</Ui>, switch on <Ui>Change keys without rebuilding</Ui>. The editor adds
+            Studio to the central half's build and a few <strong>spare layers</strong> (Studio can switch those on, but can't
+            add more). Put the <strong>Studio unlock</strong> key on your keymap (<Ui>Place it</Ui>), then build and flash once.
+          </p>
+        </Sub>
+        <Sub id="studio-connect" title="Connecting">
+          <p>
+            Plug the keyboard in over USB and press <Ui>Connect keyboard</Ui> in the top bar. The keyboard stays locked until
+            you press its unlock key. If the keyboard's keymap differs from your config, the editor asks which one both
+            should have. Once connected, every key and layer change is sent straight away. A change the keyboard can't take,
+            such as a macro it doesn't have yet, gets a small amber dot and reaches it with the next build.
+          </p>
+          <p>
+            Changes are live but not kept when the keyboard loses power until you press <Ui>Save to keyboard</Ui>.{' '}
+            <Ui>Discard</Ui> puts back what it had saved.
+          </p>
+        </Sub>
+        <Sub id="studio-only" title="Without a GitHub config">
+          <p>
+            A keyboard that already runs Studio can be edited on its own: choose <Ui>Connect a Studio keyboard</Ui> on the
+            welcome screen, or connect while the demo is open. The editor reads the keyboard's keymap and layout, and only
+            the keys, layers and behaviors it has can change.
+          </p>
+        </Sub>
+        <Sub id="studio-restore" title="After a new build">
+          <p>
+            Once Studio has saved a keymap, the keyboard keeps using it even after you flash a new build. Connect again and
+            choose <Ui>Send my config to the keyboard</Ui>, then <Ui>Save to keyboard</Ui>, so it matches your config.
+            ZMK Studio's own app calls the same idea <strong>Restore stock settings</strong>.
+          </p>
+        </Sub>
+      </>
+    ),
+  },
 ];

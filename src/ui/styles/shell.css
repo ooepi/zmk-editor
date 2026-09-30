@@ -250,3 +250,145 @@
   color: var(--text-muted);
   font-size: 12px;
 }
+
+/* ZMK Studio: connect a keyboard, then a pill that says it's live. */
+.studio-connect {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.studio-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 36px;
+  padding: 0 var(--s-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+button.studio-pill {
+  cursor: pointer;
+}
+
+button.studio-pill:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+button.studio-pill:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.studio-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.studio-status.connected .studio-dot {
+  background: var(--success);
+  box-shadow: 0 0 0 3px var(--success-soft);
+}
+
+.studio-status.locked .studio-dot {
+  background: var(--warning);
+  animation: studio-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes studio-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-status.locked .studio-dot {
+    animation: none;
+  }
+}
+
+.studio-live {
+  color: var(--success-text);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.studio-pending {
+  color: var(--warning-text);
+  font-weight: 600;
+}
+
+/* Changes live on the keyboard but not saved to it yet. */
+.studio-savebar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-3);
+  margin: 0 var(--s-5) var(--s-3);
+  padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  box-shadow: inset 4px 0 0 var(--warning);
+  font-size: var(--fs-sm);
+}
+
+.studio-savebar-text {
+  flex: 1;
+  min-width: 12em;
+}
+
+.studio-diff {
+  margin: 0 0 var(--s-4);
+  padding-left: var(--s-5);
+  font-size: var(--fs-sm);
+  line-height: 1.7;
+}
+
+.studio-choices {
+  gap: var(--s-2);
+}
+
+/* A view ZMK Studio can't change, for a keymap read from a keyboard. */
+.studio-only-note {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-3);
+  max-width: 34rem;
+  margin: var(--s-8) auto;
+  padding: var(--s-6);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+
+.studio-only-note h2 {
+  margin: 0;
+  font-size: var(--fs-lg);
+}
+
+.studio-only-note p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.studio-only-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}

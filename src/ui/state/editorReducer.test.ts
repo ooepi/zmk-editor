@@ -222,3 +222,27 @@ describe('editorReducer', () => {
     expect(editorReducer(twice, { type: 'selectLayer', index: 0 }).noticeSeq).toBe(twice.noticeSeq);
   });
 });
+
+describe('layer uids', () => {
+  const uids = (state: EditorState) => state.config.keymap.layers.map((l) => l.uid);
+
+  it('every layer has a uid from the start, after an edit, after load and after editConfig', () => {
+    const fresh = start();
+    expect(uids(fresh).every((u) => typeof u === 'number')).toBe(true);
+    const added = run(fresh, { type: 'addLayer', name: 'Extra' });
+    expect(uids(added).every((u) => typeof u === 'number')).toBe(true);
+    const plain = demoConfig().config;
+    const loaded = run(fresh, { type: 'load', config: plain, warnings: [] });
+    expect(uids(loaded).every((u) => typeof u === 'number')).toBe(true);
+    const edited = run(fresh, { type: 'editConfig', config: plain });
+    expect(uids(edited).every((u) => typeof u === 'number')).toBe(true);
+  });
+
+  it('keeps uids through a move, and undo brings the old order back', () => {
+    const fresh = start();
+    const before = uids(fresh);
+    const moved = run(fresh, { type: 'moveLayer', from: 0, to: 1 });
+    expect(uids(moved)).toEqual([before[1], before[0], ...before.slice(2)]);
+    expect(uids(run(moved, { type: 'undo' }))).toEqual(before);
+  });
+});

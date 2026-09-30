@@ -296,6 +296,35 @@ export default function DesignSystemPage() {
         <div className="notice warn">A warning needs your attention.</div>
       </section>
 
+      <section className="ds-section" aria-labelledby="ds-studio">
+        <h2 id="ds-studio">ZMK Studio</h2>
+        <p className="muted small">The top bar's keyboard connection in each state, and the bar for changes the keyboard hasn't saved.</p>
+        <div className="row wrap">
+          <button type="button" className="studio-pill">
+            Connect keyboard
+          </button>
+          <span className="studio-pill studio-status locked">
+            <span className="studio-dot" aria-hidden="true" />
+            Press your unlock key
+          </span>
+          <span className="studio-pill studio-status connected">
+            <span className="studio-dot" aria-hidden="true" />
+            <span className="studio-name">Corne</span>
+            <span className="studio-live">Live</span>
+            <span className="studio-pending">2 need a build</span>
+          </span>
+        </div>
+        <div className="studio-savebar">
+          <span className="studio-savebar-text">Live on the keyboard, not saved yet. Unplugging it loses these changes.</span>
+          <button type="button" className="button">
+            Discard
+          </button>
+          <button type="button" className="button primary">
+            Save to keyboard
+          </button>
+        </div>
+      </section>
+
       <section className="ds-section" aria-labelledby="ds-keycaps">
         <h2 id="ds-keycaps">Keycaps</h2>
         <div className="palette-tiles ds-narrow">

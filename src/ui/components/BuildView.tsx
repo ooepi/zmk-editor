@@ -66,7 +66,8 @@ export function BuildView({ config, dispatch, session }: BuildViewProps) {
   const [confirmedHandEdits, setConfirmedHandEdits] = useState<string | null>(null);
   const replaceHandEdits = handEdited.length > 0 && confirmedHandEdits === handEditKey;
   const busy = build.phase === 'committing' || build.phase === 'waiting' || build.phase === 'downloading';
-  const blocked = hardwareErrors.length > 0 || unsupported.length > 0 || encoderGaps.length > 0;
+  // A keymap read from a ZMK Studio keyboard has made-up behaviors; only a config from GitHub builds.
+  const blocked = hardwareErrors.length > 0 || unsupported.length > 0 || encoderGaps.length > 0 || config.studio !== undefined;
 
   const commitAndBuild = () => {
     if (connection) void session.commitAndBuild(connection, changes, generated, commitMessage);
@@ -82,6 +83,12 @@ export function BuildView({ config, dispatch, session }: BuildViewProps) {
 
   return (
     <div className="build-view">
+      {config.studio && (
+        <p className="notice">
+          This keymap came from your keyboard ({config.studio.device}) through ZMK Studio, so there’s nothing to build from it. Open your
+          zmk-config from GitHub here, then load it into the editor to change everything and build new firmware.
+        </p>
+      )}
       <ConnectSection
         connection={connection}
         reconnecting={session.reconnecting}
