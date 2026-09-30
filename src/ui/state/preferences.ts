@@ -7,7 +7,7 @@ export interface Preferences {
   unicodeLanguages: string[];
   /** Chosen layout variant per keyboard, for keyboards with several (e.g. 60% ANSI/ISO). */
   layouts: Record<string, string>;
-  /** How each Pro Micro diagram is drawn (key: 'left', 'right' or 'one'); wiring plans are often drawn from below. */
+  /** How each controller pinout is drawn (key: 'left', 'right' or 'one'); wiring plans are often drawn from below. */
   pinoutViews: Record<string, 'top' | 'bottom'>;
   /** Palette items placed most recently, newest first. */
   recent: PaletteItem[];

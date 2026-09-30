@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { PRO_MICRO_PINS, pinLabel } from '../../core/hardware/controllers.ts';
-import { DISPLAYS, DISPLAY_KINDS, halfDisplay, setDisplay } from '../../core/hardware/displays.ts';
+import { interconnectOf, pinLabel } from '../../core/hardware/interconnects.ts';
+import { availableDisplays, DISPLAYS, displayPins, halfDisplay, setDisplay } from '../../core/hardware/displays.ts';
 import type { DisplayKind, KeyboardHardware, Pin, Side } from '../../core/hardware/types.ts';
 import type { HardwareIssue } from '../../core/hardware/validate.ts';
 import {
@@ -15,7 +15,7 @@ import {
   type PinList,
 } from '../../core/hardware/wiring.ts';
 import { HardwareIssueList } from './HardwareIssueList.tsx';
-import { ProMicroPinout } from './ProMicroPinout.tsx';
+import { ControllerPinout } from './ControllerPinout.tsx';
 
 interface Slot {
   side?: Side;
@@ -37,6 +37,12 @@ export function HardwareWiringStep({ hw, issues, onChange, onAddEncoder, onRemov
   const [active, setActive] = useState<Slot | null>(null);
   const differently = hw.wiring.right !== undefined;
   const shown: (Side | undefined)[] = hw.split ? (differently ? ['left', 'right'] : ['left']) : [undefined];
+  const ic = interconnectOf(hw.controller);
+  /** The displays this controller takes, plus one already chosen that it can't take, so it stays visible (and flagged). */
+  const displayChoices = (current: DisplayKind | undefined) => {
+    const available = availableDisplays(ic);
+    return current && !available.includes(current) ? [current, ...available] : available;
+  };
   const title = (side: Side | undefined) =>
     side === 'right' ? 'Right half' : side === 'left' ? (differently ? 'Left half' : 'Left half (the right half mirrors it)') : undefined;
   return (
@@ -84,7 +90,7 @@ export function HardwareWiringStep({ hw, issues, onChange, onAddEncoder, onRemov
                   onRemoveEncoder={onRemoveEncoder}
                 />
               </div>
-              <ProMicroPinout
+              <ControllerPinout
                 hw={hw}
                 side={side}
                 label={active && active.side === side ? active.label : undefined}
@@ -118,9 +124,10 @@ export function HardwareWiringStep({ hw, issues, onChange, onAddEncoder, onRemov
                   onChange={(e) => onChange(setDisplay(hw, side, e.target.value === '' ? undefined : (e.target.value as DisplayKind)))}
                 >
                   <option value="">None</option>
-                  {DISPLAY_KINDS.map((kind) => (
+                  {displayChoices(halfDisplay(hw, side)).map((kind) => (
                     <option key={kind} value={kind}>
-                      {DISPLAYS[kind].label} ({DISPLAYS[kind].pins.map((p) => `D${p.pin}`).join(', ')})
+                      {DISPLAYS[kind].label} ({displayPins(kind, ic).map((p) => `D${p.pin}`).join(', ')})
+                      {availableDisplays(ic).includes(kind) ? '' : ' (not on this controller)'}
                     </option>
                   ))}
                 </select>
@@ -129,8 +136,9 @@ export function HardwareWiringStep({ hw, issues, onChange, onAddEncoder, onRemov
           })}
         </div>
         <p id="hw-display-help" className="muted small">
-          Displays use fixed pins: a nice!view D1, D2 and D3, an OLED D2 (SDA) and D3 (SCL). They can’t be used for rows,
-          columns or encoders on that half.
+          {ic.niceViewAdapter
+            ? `Displays use fixed pins: a nice!view D1, D2 and D3, an OLED D${ic.i2cPins.sda} (SDA) and D${ic.i2cPins.scl} (SCL). They can’t be used for rows, columns or encoders on that half.`
+            : `OLEDs use D${ic.i2cPins.sda} (SDA) and D${ic.i2cPins.scl} (SCL), which can’t then be used for rows, columns or encoders on that half. A nice!view on a ${ic.name} isn’t supported yet.`}
         </p>
       </fieldset>
       <HardwareIssueList issues={issues} />
@@ -218,7 +226,7 @@ function PinTables({ hw, side, active, onChange, onActivate, onAddEncoder, onRem
   );
 }
 
-/** A pin field: a select of Pro Micro pins that also arms the pinout for this field when pressed. */
+/** A pin field: a select of the controller's pins that also arms the pinout for this field when pressed. */
 function PinSelect({
   hw,
   side,
@@ -248,6 +256,7 @@ function PinSelect({
 }) {
   const id = `pin-${side ?? 'one'}-${list}-${index}`;
   const isActive = active !== null && active.side === side && active.list === list && active.index === index;
+  const { pins } = interconnectOf(hw.controller);
   return (
     <>
       <label className="field-label" htmlFor={id}>{label}</label>
@@ -259,7 +268,9 @@ function PinSelect({
         onChange={(e) => onChange(setPin(hw, side, list, index, e.target.value === '' ? null : Number(e.target.value)))}
       >
         <option value="">No pin</option>
-        {PRO_MICRO_PINS.map((p) => {
+        {/* A pin this controller doesn't have (it changed) stays selected until it's changed; validation flags it. */}
+        {pin !== null && !pins.includes(pin) && <option value={pin}>{pinLabel(pin)} (not on this controller)</option>}
+        {pins.map((p) => {
           const other = (uses.get(p) ?? []).filter((use) => use !== name);
           return (
             <option key={p} value={p}>

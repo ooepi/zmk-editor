@@ -36,12 +36,13 @@ export const KEYBOARD: HelpSection[] = [
           </p>
           <ol>
             <li>
-              <Ui>Basics</Ui>: name, controller (a wireless Pro Micro-sized nRF52840 board such as the nice!nano), split or
-              one piece, and wiring: a matrix with diodes (rows × columns) or one pin per key.
+              <Ui>Basics</Ui>: name, controller (a wireless nRF52840 board: Pro Micro-sized such as the nice!nano, or the
+              smaller Seeed XIAO nRF52840 with 11 pins), split or one piece, and wiring: a matrix with diodes (rows × columns)
+              or one pin per key.
             </li>
             <li>
               <Ui>Wiring</Ui>: which controller pin each row, column or key is soldered to (click a field, then a pin on the
-              diagram), plus encoders and displays (nice!view or OLED). On a split, the right half is a mirror of the left
+              diagram), plus encoders and displays (nice!view or OLED; a XIAO takes an OLED). On a split, the right half is a mirror of the left
               unless you say otherwise.
             </li>
             <li>

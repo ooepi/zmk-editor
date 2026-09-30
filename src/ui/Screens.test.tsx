@@ -2,6 +2,8 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { newHardwareConfig } from '../core/hardware/config.ts';
+import { testSplit } from '../core/hardware/testFixtures.ts';
 import { App } from './App.tsx';
 import { reloadPreferences } from './state/preferences.ts';
 
@@ -61,5 +63,17 @@ describe('nice!view screens tab', () => {
     // Clicking a pressed half button turns it off too.
     await user.click(within(card('nice!view Gem')).getByRole('button', { name: 'Right' }));
     expect(slotName('Right').textContent).toBe('Stock nice!view');
+  });
+});
+
+describe('Screens on a designed Seeed XIAO keyboard', () => {
+  it('says a nice!view needs a Pro Micro instead of suggesting the adapter', async () => {
+    const hw = { ...testSplit, controller: 'seeeduino_xiao_ble' };
+    localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config: newHardwareConfig(hw, 'v0.3') }));
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Screens' }));
+    expect(screen.getByRole('note').textContent).toContain('A nice!view needs a Pro Micro controller; your keyboard uses a Seeed XIAO.');
+    expect(screen.getByRole('note').textContent).not.toContain('nice_view_adapter');
   });
 });

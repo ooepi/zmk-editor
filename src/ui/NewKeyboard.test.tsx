@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PRO_MICRO_PINS } from '../core/hardware/controllers.ts';
+import { PRO_MICRO } from '../core/hardware/interconnects.ts';
 import { newHardwareConfig } from '../core/hardware/config.ts';
 import { DEFAULT_BASICS, gridHardware } from '../core/hardware/grid.ts';
 import { testPad, testSplit } from '../core/hardware/testFixtures.ts';
@@ -93,14 +93,14 @@ describe('Design your own keyboard', () => {
     render(<App />);
     await openWizard(user);
     await type(user, 'Columns', '16');
-    expect(screen.getByText('A 3 × 16 matrix needs 19 pins per half, but the controller has 18.')).toBeTruthy();
+    expect(screen.getByText('A 3 × 16 matrix needs 19 pins per half, but a Pro Micro has 18.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Next' })).toHaveProperty('disabled', true);
   });
 
   it('doesn’t get stuck on Basics editing a direct-wired keyboard with a staggered key', async () => {
     const hw: KeyboardHardware = {
       ...gridHardware({ ...DEFAULT_BASICS, name: 'direct18', displayName: 'Direct18', split: false, wiring: 'direct', rows: 3, cols: 6 }),
-      wiring: { kind: 'direct', pins: [...PRO_MICRO_PINS] },
+      wiring: { kind: 'direct', pins: [...PRO_MICRO.pins] },
     };
     // One key nudged off its grid position: basicsOf must not guess a bogus rows/cols from this.
     const staggered: KeyboardHardware = { ...hw, keys: hw.keys.map((k, i) => (i === 0 ? { ...k, y: k.y + 25 } : k)) };
@@ -514,5 +514,76 @@ describe('Displays in the wizard', () => {
     const saved = stored();
     expect(saved.hardware.displays).toEqual({ left: 'nice_view', right: 'oled_128x32' });
     expect(saved.build.include.map((t: { shield: string }) => t.shield)).toEqual(['test_split_left nice_view_adapter nice_view', 'test_split_right']);
+  });
+});
+
+describe('Seeed XIAO in the wizard', () => {
+  const xiaoPinout = () => screen.getByRole('figure', { name: /^Seeed XIAO pinout/ });
+  const padOrder = (figure: HTMLElement) =>
+    within(figure).getAllByText(/^(D\d+|GND|5V|3V3)$/).map((el) => el.textContent);
+
+  async function wiringOnXiao(user: ReturnType<typeof userEvent.setup>) {
+    await openWizard(user);
+    const controller = screen.getByLabelText('Controller');
+    expect(within(controller).getByRole('group', { name: 'Pro Micro footprint' })).toBeTruthy();
+    expect(within(within(controller).getByRole('group', { name: 'Seeed XIAO footprint' })).getAllByRole('option').map((o) => o.textContent)).toEqual([
+      'Seeed Studio XIAO nRF52840',
+    ]);
+    await user.selectOptions(controller, 'seeeduino_xiao_ble');
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+  }
+
+  it('shows the XIAO’s 11 pins and its pinout, and assigns a pad by clicking it', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await wiringOnXiao(user);
+    // "No pin" and D0–D10.
+    expect(within(screen.getByLabelText('Left row 0')).getAllByRole('option')).toHaveLength(12);
+    expect(padOrder(xiaoPinout())).toEqual(['D0', 'D1', 'D2', 'D3', 'D4', 'D5', 'D6', '5V', 'GND', '3V3', 'D10', 'D9', 'D8', 'D7']);
+    expect(within(xiaoPinout()).queryByRole('button', { name: '5V' })).toBeNull();
+    expect(within(xiaoPinout()).getByText('P1.15')).toBeTruthy();
+
+    await user.click(screen.getByLabelText('Left row 0'));
+    await user.click(within(xiaoPinout()).getByRole('button', { name: 'D10' }));
+    expect(screen.getByLabelText('Left row 0')).toHaveProperty('value', '10');
+
+    // From below the columns swap sides, USB still at the top.
+    await user.click(within(xiaoPinout()).getByRole('button', { name: 'Bottom' }));
+    expect(padOrder(xiaoPinout())[0]).toBe('5V');
+  });
+
+  it('offers OLEDs on D4/D5 but no nice!view', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await wiringOnXiao(user);
+    const options = within(screen.getByLabelText('Left display')).getAllByRole('option').map((o) => (o as HTMLOptionElement).value);
+    expect(options).toEqual(['', 'oled_128x32', 'oled_128x64']);
+    expect(screen.getByText(/OLEDs use D4 \(SDA\) and D5 \(SCL\)/)).toBeTruthy();
+    await user.selectOptions(screen.getByLabelText('Left display'), 'oled_128x32');
+    expect(within(xiaoPinout()).getByRole('button', { name: 'D4: Display SDA' })).toBeTruthy();
+  });
+
+  it('keeps pins and a nice!view the XIAO doesn’t have when switching to it, and flags them', async () => {
+    const hw: KeyboardHardware = { ...testSplit, wiring: { kind: 'matrix', diodeDirection: 'col2row', rows: [21], cols: [6, 7] }, displays: { left: 'nice_view' } };
+    localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config: newHardwareConfig(hw, 'v0.3') }));
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Change keyboard: Test Split' }));
+    await user.click(screen.getByRole('button', { name: 'Edit hardware' }));
+    await user.selectOptions(screen.getByLabelText('Controller'), 'seeeduino_xiao_ble');
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+
+    expect(screen.getByLabelText('Left row 0')).toHaveProperty('value', '21');
+    expect(screen.getByLabelText('Left column 1')).toHaveProperty('value', '7');
+    expect(screen.getByText('Row 0 on the left half uses D21, which isn’t a Seeed XIAO pin.')).toBeTruthy();
+    expect(screen.getByLabelText('Left display')).toHaveProperty('value', 'nice_view');
+    expect(
+      screen.getByText('The nice!view on the left half needs ZMK’s nice!view adapter, which only fits a Pro Micro; on a Seeed XIAO use an OLED for now.'),
+    ).toBeTruthy();
+    expect(within(screen.getByLabelText('Left display')).getByRole('option', { name: 'nice!view (D1, D2, D3) (not on this controller)' })).toBeTruthy();
+    // Nothing flagged can be saved.
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByRole('button', { name: 'Save hardware' })).toHaveProperty('disabled', true);
   });
 });

@@ -1,4 +1,5 @@
 import { HARDWARE_CONTROLLERS } from '../../core/hardware/controllers.ts';
+import { INTERCONNECTS, interconnectOf } from '../../core/hardware/interconnects.ts';
 import { hardwareName, type HardwareBasics } from '../../core/hardware/grid.ts';
 import type { HardwareIssue } from '../../core/hardware/validate.ts';
 import { HardwareIssueList } from './HardwareIssueList.tsx';
@@ -48,9 +49,16 @@ export function HardwareBasicsStep({ basics, editing, issues, onChange }: Props)
       <div className="field">
         <label className="field-label" htmlFor="hw-controller">Controller</label>
         <select id="hw-controller" className="input" value={basics.controller} onChange={(e) => set({ controller: e.target.value })}>
-          {HARDWARE_CONTROLLERS.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
+          {INTERCONNECTS.map((ic) => {
+            const controllers = HARDWARE_CONTROLLERS.filter((c) => interconnectOf(c.id) === ic);
+            return controllers.length === 0 ? null : (
+              <optgroup key={ic.id} label={`${ic.name} footprint`}>
+                {controllers.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </optgroup>
+            );
+          })}
         </select>
       </div>
       <label className="field checkbox">

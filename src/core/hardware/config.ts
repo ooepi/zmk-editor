@@ -4,6 +4,7 @@ import type { BuildTarget } from '../files/build.ts';
 import { parseKconfig } from '../files/kconfig.ts';
 import { halfDisplay } from './displays.ts';
 import { sensorOrder } from './encoders.ts';
+import { interconnectOf } from './interconnects.ts';
 import { remapKeyPositions, remapSensors } from './keys.ts';
 import { starterKeymap } from './starter.ts';
 import type { KeyboardHardware, Side } from './types.ts';
@@ -49,7 +50,7 @@ export function newHardwareConfig(hw: KeyboardHardware, zmkVersion: string): Zmk
  * (undefined for added keys), and `sensorNewToOld` the same for encoders
  * in sensor order; the keymap, combos and sensor bindings follow. The
  * keyboard's build targets move to the new controller, keeping their
- * extra shields.
+ * extra shields, except nice!view ones on a controller ZMK's adapter doesn't fit.
  */
 export function applyHardware(
   config: ZmkConfig,
@@ -60,6 +61,8 @@ export function applyHardware(
   const remapped = remapKeyPositions(config.keymap, newToOld);
   const model = remapSensors(remapped.model, sensorNewToOld);
   const shields = new Set(shieldNames(hw));
+  const adapterFits = interconnectOf(hw.controller).niceViewAdapter;
+  let droppedView = false;
   const include = config.build.include.map((t) => {
     const base = t.shield?.split(' ')[0] ?? '';
     if (!shields.has(base)) return t;
@@ -68,8 +71,16 @@ export function applyHardware(
     const side = sideOf(hw, base);
     const niceView = halfDisplay(hw, side) === 'nice_view';
     const hadNiceView = config.hardware ? halfDisplay(config.hardware, side) === 'nice_view' : false;
-    const shield = niceView === hadNiceView ? t.shield : withDisplayShields(t.shield ?? base, niceView);
+    let shield = niceView === hadNiceView ? t.shield : withDisplayShields(t.shield ?? base, niceView);
+    // A nice!view added by hand would break the build on a controller the adapter doesn't fit.
+    if (!adapterFits && shield !== undefined && shield !== withDisplayShields(shield, false)) {
+      shield = withDisplayShields(shield, false);
+      droppedView = true;
+    }
     return { ...t, board: hw.controller, shield };
   });
-  return { config: { ...config, keymap: model, hardware: hw, build: { include } }, notes: remapped.notes };
+  const notes = droppedView
+    ? [...remapped.notes, 'Removed the nice!view from the build: ZMK’s nice!view adapter only fits a Pro Micro controller.']
+    : remapped.notes;
+  return { config: { ...config, keymap: model, hardware: hw, build: { include } }, notes };
 }

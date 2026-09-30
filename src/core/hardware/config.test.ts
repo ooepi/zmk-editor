@@ -124,6 +124,20 @@ describe('configs with a designed keyboard', () => {
     ]);
   });
 
+  it('moves the build to a XIAO, dropping nice!view shields its adapter can’t fit, with a note', () => {
+    const start = newHardwareConfig(testSplit, 'v0.3');
+    const legacy = { ...start, build: { include: start.build.include.map((t) => ({ ...t, shield: `${t.shield} rgbled_adapter nice_view_adapter nice_view` })) } };
+    const xiao = { ...testSplit, controller: 'seeeduino_xiao_ble' };
+    const { config, notes } = applyHardware(legacy, xiao, testSplit.keys.map((_, i) => i));
+    expect(config.build.include).toEqual([
+      { board: 'seeeduino_xiao_ble', shield: 'test_split_left rgbled_adapter' },
+      { board: 'seeeduino_xiao_ble', shield: 'test_split_right rgbled_adapter' },
+    ]);
+    expect(notes).toContain('Removed the nice!view from the build: ZMK’s nice!view adapter only fits a Pro Micro controller.');
+    expect(applyHardware(start, xiao, testSplit.keys.map((_, i) => i)).notes).toEqual([]);
+    expect(newHardwareConfig(xiao, 'v0.3').build.include.map((t) => t.board)).toEqual(['seeeduino_xiao_ble', 'seeeduino_xiao_ble']);
+  });
+
   it('keeps the shield order when a nice!view is chosen that build.yaml already has', () => {
     const start = newHardwareConfig(testSplit, 'v0.3');
     const legacy = { ...start, build: { include: start.build.include.map((t) => ({ ...t, shield: `${t.shield} rgbled_adapter nice_view_adapter nice_view` })) } };
