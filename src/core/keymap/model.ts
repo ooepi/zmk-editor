@@ -50,6 +50,8 @@ export interface KeymapModel {
   behaviors: Behavior[];
   combos: Combo[];
   layers: Layer[];
+  /** Spare layers (`status = "reserved"`) that ZMK Studio can switch on; always after `layers`. */
+  reservedLayers?: DtNode[];
   /** Properties set directly on the root node. */
   rootProperties: DtProperty[];
   /** Root children the model doesn't cover, kept as generic nodes. */

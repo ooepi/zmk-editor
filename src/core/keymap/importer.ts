@@ -35,9 +35,12 @@ export function importKeymap(text: string): ImportResult<KeymapModel> {
         case 'combos':
           importContainer(child, model.combos, toCombo, model, warnings, 'zmk,combos');
           break;
-        case 'keymap':
-          importContainer(child, model.layers, toLayer, model, warnings, 'zmk,keymap');
+        case 'keymap': {
+          const reserved = child.children.filter(isReserved);
+          if (reserved.length > 0) model.reservedLayers = reserved;
+          importContainer({ ...child, children: child.children.filter((c) => !isReserved(c)) }, model.layers, toLayer, model, warnings, 'zmk,keymap');
           break;
+        }
         default:
           model.extraNodes.push(child);
       }
@@ -195,6 +198,12 @@ function toLayer(node: DtNode): Layer | null {
     else layer.properties.push(property);
   }
   return hasBindings ? layer : null;
+}
+
+/** A spare layer for ZMK Studio: `status = "reserved"`. */
+function isReserved(node: DtNode): boolean {
+  const status = node.properties.find((p) => p.name === 'status');
+  return status !== undefined && stringValue(status) === 'reserved';
 }
 
 function stringValue(property: DtProperty): string | undefined {
