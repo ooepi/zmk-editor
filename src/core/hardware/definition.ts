@@ -28,6 +28,7 @@ export function serializeHardware(hw: KeyboardHardware): string {
         ? { rightEncoders: hw.rightEncoders.map(({ a, b }) => ({ a, b })) }
         : {}),
       ...(hw.displays ? { displays: { ...(hw.displays.left ? { left: hw.displays.left } : {}), ...(hw.displays.right ? { right: hw.displays.right } : {}) } } : {}),
+      ...(hw.encoderSpots?.some(Boolean) ? { encoderSpots: hw.encoderSpots.map((s) => (s ? { x: s.x, y: s.y } : null)) } : {}),
       keys: [],
     },
     null,
@@ -111,6 +112,12 @@ export function parseHardware(text: string): KeyboardHardware {
     if (data.displays.left !== undefined) displays.left = kind(data.displays.left, 'displays.left');
     if (data.displays.right !== undefined) displays.right = kind(data.displays.right, 'displays.right');
     hardware.displays = displays;
+  }
+  if (data.encoderSpots !== undefined) {
+    if (!Array.isArray(data.encoderSpots)) throw new Error('encoderSpots must be a list');
+    hardware.encoderSpots = data.encoderSpots.map((s: unknown, i: number) =>
+      s === null ? null : isRecord(s) ? { x: num(s.x, `encoderSpots ${i} x`), y: num(s.y, `encoderSpots ${i} y`) } : null,
+    );
   }
   return hardware;
 }

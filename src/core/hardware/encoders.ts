@@ -1,3 +1,4 @@
+import type { EncoderSpot } from '../layouts/types.ts';
 import type { Encoder, KeyboardHardware, Side } from './types.ts';
 import { halfEncoders } from './wiring.ts';
 
@@ -40,6 +41,15 @@ export function carryEncoderOrigins(
   });
 }
 
+/** Knob positions after an add or remove: each stays with its encoder (`map` as in carryEncoderOrigins). */
+function withCarriedSpots(before: KeyboardHardware, after: KeyboardHardware, map: (side: Side | undefined, index: number) => number | undefined): KeyboardHardware {
+  const { encoderSpots: _, ...rest } = after;
+  if (!before.encoderSpots?.some(Boolean)) return rest;
+  const from = carryEncoderOrigins(before, after, sensorOrder(before).map((_, i) => i), map);
+  const spots = from.map((j): EncoderSpot | null => (j === undefined ? null : (before.encoderSpots?.[j] ?? null)));
+  return spots.some(Boolean) ? { ...rest, encoderSpots: spots } : rest;
+}
+
 export function addEncoder(draft: EncoderDraft, side?: Side): EncoderDraft {
   const list = owner(draft.hw, side);
   const blank = { a: null, b: null };
@@ -47,18 +57,14 @@ export function addEncoder(draft: EncoderDraft, side?: Side): EncoderDraft {
     ? { ...draft.hw, rightEncoders: [...(draft.hw.rightEncoders ?? []), blank] }
     : { ...draft.hw, encoders: [...(draft.hw.encoders ?? []), blank] };
   const oldCount = (s: Side | undefined) => halfEncoders(draft.hw, s).length;
-  return {
-    hw,
-    origins: carryEncoderOrigins(draft.hw, hw, draft.origins, (s, i) => (owner(draft.hw, s) === list && i >= oldCount(s) ? undefined : i)),
-  };
+  const map = (s: Side | undefined, i: number) => (owner(draft.hw, s) === list && i >= oldCount(s) ? undefined : i);
+  return { hw: withCarriedSpots(draft.hw, hw, map), origins: carryEncoderOrigins(draft.hw, hw, draft.origins, map) };
 }
 
 export function removeEncoder(draft: EncoderDraft, side: Side | undefined, index: number): EncoderDraft {
   const list = owner(draft.hw, side);
   const drop = (encoders: Encoder[] | undefined) => (encoders ?? []).filter((_, i) => i !== index);
   const hw = list === 'right' ? { ...draft.hw, rightEncoders: drop(draft.hw.rightEncoders) } : { ...draft.hw, encoders: drop(draft.hw.encoders) };
-  return {
-    hw,
-    origins: carryEncoderOrigins(draft.hw, hw, draft.origins, (s, i) => (owner(draft.hw, s) === list && i >= index ? i + 1 : i)),
-  };
+  const map = (s: Side | undefined, i: number) => (owner(draft.hw, s) === list && i >= index ? i + 1 : i);
+  return { hw: withCarriedSpots(draft.hw, hw, map), origins: carryEncoderOrigins(draft.hw, hw, draft.origins, map) };
 }

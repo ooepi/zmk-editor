@@ -1,4 +1,4 @@
-import type { PhysicalKey, PhysicalLayout } from '../layouts/types.ts';
+import type { EncoderSpot, PhysicalKey, PhysicalLayout } from '../layouts/types.ts';
 
 /** A `&pro_micro` pin number, or null while none is picked yet. */
 export type Pin = number | null;
@@ -65,9 +65,12 @@ export interface KeyboardHardware {
   rightEncoders?: Encoder[];
   /** A display per half; a one-piece keyboard uses `left`. */
   displays?: { left?: DisplayKind; right?: DisplayKind };
+  /** Where each encoder's knob is drawn, in `sensorOrder`; null for the default spot under its half. */
+  encoderSpots?: (EncoderSpot | null)[];
 }
 
 /** The keys' positions as a physical layout. */
 export function hardwareLayout(hw: KeyboardHardware): PhysicalLayout {
-  return { name: hw.displayName, keys: hw.keys.map(({ x, y, w, h, r, rx, ry }) => ({ x, y, w, h, r, rx, ry })) };
+  const keys = hw.keys.map(({ x, y, w, h, r, rx, ry }) => ({ x, y, w, h, r, rx, ry }));
+  return hw.encoderSpots?.some(Boolean) ? { name: hw.displayName, keys, encoders: hw.encoderSpots } : { name: hw.displayName, keys };
 }

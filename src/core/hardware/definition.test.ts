@@ -49,3 +49,11 @@ describe('hardware definition with displays', () => {
     expect(() => parseHardware(serializeHardware(withDisplays).replace('"oled_128x64"', '"crt"'))).toThrow('displays.right must be one of nice_view, oled_128x32, oled_128x64');
   });
 });
+
+describe('encoder knob positions in the definition', () => {
+  it('round-trip, and are left out when there are none', () => {
+    const withKnobs = { ...hw, encoders: [{ a: 2, b: 3 }], encoderSpots: [{ x: 150, y: 250 }, null] };
+    expect(parseHardware(serializeHardware(withKnobs))).toEqual(withKnobs);
+    expect(serializeHardware({ ...hw, encoderSpots: [null] })).not.toContain('encoderSpots');
+  });
+});
