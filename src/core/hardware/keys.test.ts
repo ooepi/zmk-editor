@@ -146,8 +146,7 @@ describe('numberFromPositions', () => {
 
   it('counts keys without a half on a split as the left half’s', () => {
     const grid = gridHardware({ ...DEFAULT_BASICS, rows: 1, cols: 2 });
-    const [first, ...rest] = grid.keys;
-    const loose = { ...grid, keys: [{ ...first!, side: undefined, col: 5 }, ...rest] };
+    const loose = { ...grid, keys: grid.keys.map((k, i) => (i === 0 ? { ...k, side: undefined, col: 5 } : k)) };
     expect(numberFromPositions(loose).keys[0]?.col).toBe(0);
   });
 });
