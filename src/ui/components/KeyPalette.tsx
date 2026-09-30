@@ -18,6 +18,7 @@ import { setPreferences, usePreferences } from '../state/preferences.ts';
 import { CategoryRail, type RailEntry } from './palette/CategoryRail.tsx';
 import { ModifierBar } from './palette/ModifierBar.tsx';
 import { Icon, type IconName } from './Icon.tsx';
+import { PaletteResizer } from './PaletteResizer.tsx';
 import { IconButton } from './ui/IconButton.tsx';
 import { PaletteStatus } from './palette/PaletteStatus.tsx';
 
@@ -80,7 +81,8 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm, startAt
   const scroller = useRef<HTMLDivElement>(null);
   /** The section last jumped to from the rail; while `settling`, its smooth scroll is left alone. */
   const jumped = useRef<{ id: string; settling: boolean } | null>(null);
-  const { recent, paletteCollapsed: collapsed } = usePreferences();
+  const { recent, paletteCollapsed: collapsed, paletteHeight } = usePreferences();
+  const section = useRef<HTMLElement>(null);
   const hasEncoders = sensorCount(keymap) > 0;
   const searching = query.trim() !== '';
 
@@ -237,7 +239,13 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm, startAt
   })();
 
   return (
-    <section className={`palette${collapsed ? ' collapsed' : ''}`} aria-label="Key palette">
+    <section
+      ref={section}
+      className={`palette${collapsed ? ' collapsed' : ''}${!collapsed && paletteHeight !== null ? ' sized' : ''}`}
+      style={!collapsed && paletteHeight !== null ? { height: `${paletteHeight}px` } : undefined}
+      aria-label="Key palette"
+    >
+      {!collapsed && <PaletteResizer height={paletteHeight} palette={() => section.current} />}
       <div className="palette-head">
         <PaletteStatus armed={armedName ? { name: armedName } : null} selection={selection} hasEncoders={hasEncoders} collapsed={collapsed} onStop={onDisarm} />
         <IconButton

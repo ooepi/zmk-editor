@@ -8,6 +8,7 @@ import { physicalLayoutFor } from '../core/layouts/index.ts';
 import { BehaviorsView } from './components/BehaviorsView.tsx';
 import { BindingPanel } from './components/BindingPanel.tsx';
 import { BuildView } from './components/BuildView.tsx';
+import { CanvasCamera } from './components/CanvasCamera.tsx';
 import { useBuildSession, type BuildState } from './state/buildSession.ts';
 import { pendingChanges } from '../core/github/changes.ts';
 import { ComboBanner } from './components/ComboBanner.tsx';
@@ -323,8 +324,8 @@ function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => 
               active={['keyboard', 'designer', 'newKeyboard', 'editHardware'].includes(view)}
               onClick={() => setView('keyboard')}
             />
-            <VersionSelect config={config} dispatch={dispatch} />
             <StudioConnect session={studio} supported={studioSupported} />
+            <VersionSelect config={config} dispatch={dispatch} />
           </div>
           <div className="topbar-actions">
             <Toolbar
@@ -481,10 +482,7 @@ function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => 
                   />
                 )}
                 {/* In the combos view a click beside the keyboard (not in a gap between keys) finishes the combo. */}
-                <div
-                  className="canvas"
-                  onClick={view === 'combos' ? (event) => event.target === event.currentTarget && finishCombo() : undefined}
-                >
+                <CanvasCamera key={config.keyboard} enabled={view === 'keymap'} onEmptyClick={view === 'combos' ? finishCombo : undefined}>
                   <KeyboardCanvas
                     keymap={keymap}
                     layout={layout}
@@ -512,7 +510,7 @@ function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => 
                       }}
                     />
                   )}
-                </div>
+                </CanvasCamera>
               </div>
               {view === 'keymap' && (
                 <KeyPalette

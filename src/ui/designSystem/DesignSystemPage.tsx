@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Icon } from '../components/Icon.tsx';
 import { ThemeToggle } from '../components/ThemeToggle.tsx';
 import { Dialog } from '../components/ui/Dialog.tsx';
 import { IconButton } from '../components/ui/IconButton.tsx';
@@ -300,19 +301,26 @@ export default function DesignSystemPage() {
         <h2 id="ds-studio">ZMK Studio</h2>
         <p className="muted small">The top bar's keyboard connection in each state, and the bar for changes the keyboard hasn't saved.</p>
         <div className="row wrap">
-          <button type="button" className="studio-pill">
-            Connect keyboard
-          </button>
-          <span className="studio-pill studio-status locked">
-            <span className="studio-dot" aria-hidden="true" />
-            Press your unlock key
-          </span>
-          <span className="studio-pill studio-status connected">
-            <span className="studio-dot" aria-hidden="true" />
-            <span className="studio-name">Corne</span>
-            <span className="studio-live">Live</span>
-            <span className="studio-pending">2 need a build</span>
-          </span>
+          {(
+            [
+              ['idle', 'usb', 'Connect keyboard', 'ZMK Studio · USB', ''],
+              ['locked', 'lock', 'Press your unlock key', 'ZMK Studio · locked', ''],
+              ['connected', 'usb', 'Corne', 'ZMK Studio · live', ' · 2 need a build'],
+            ] as const
+          ).map(([phase, icon, name, meta, pending]) => (
+            <span key={phase} className={`studio-pill studio-status ${phase}`}>
+              <span className="studio-icon" aria-hidden="true">
+                <Icon name={icon} size={17} />
+              </span>
+              <span className="studio-text">
+                <span className="studio-name">{name}</span>
+                <span className="studio-meta">
+                  {meta}
+                  {pending && <span className="studio-pending">{pending}</span>}
+                </span>
+              </span>
+            </span>
+          ))}
         </div>
         <div className="studio-savebar">
           <span className="studio-savebar-text">Live on the keyboard, not saved yet. Unplugging it loses these changes.</span>

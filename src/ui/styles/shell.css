@@ -28,16 +28,24 @@
   color: var(--accent-text);
 }
 
-/* The keyboard and ZMK version controls: labelled, full-size, easy to spot. */
-.top-field {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+/* The ZMK version: a small pill with its label inside. */
+.version-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding-left: var(--s-4);
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out);
 }
 
-.top-field-label {
-  /* Lined up with the text inside the pill below it. */
-  padding-left: var(--s-4);
+.version-pill:hover {
+  border-color: var(--border-strong);
+}
+
+.version-pill-label {
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
@@ -46,24 +54,15 @@
 }
 
 .top-select {
-  min-height: 36px;
-  padding: 0 var(--s-4);
-  border: 1px solid transparent;
+  min-height: 34px;
+  padding: 0 var(--s-3) 0 var(--s-2);
+  border: 0;
   border-radius: var(--r-pill);
-  background: var(--surface-2);
+  background: transparent;
   color: var(--text);
   font-size: var(--fs-md);
   font-weight: 700;
   cursor: pointer;
-  transition: border-color var(--dur-fast) var(--ease-out);
-}
-
-.top-select:hover {
-  border-color: var(--border-strong);
-}
-
-.top-select.active {
-  border-color: var(--accent-line);
 }
 
 /*
@@ -222,13 +221,96 @@
 }
 
 .canvas {
+  position: relative;
   flex: 1;
   display: grid;
   place-items: center;
   padding: var(--s-4) var(--s-6) var(--s-8);
-  overflow: auto;
+  /* The camera moves the keyboard past the edges; the canvas clips it rather than scrolling. */
+  overflow: hidden;
   /* The keyboard sizes itself to this area's height too (see .keyboard). */
   container-type: size;
+  /* A box-select drag that starts beside the keyboard shouldn't select page text. */
+  user-select: none;
+}
+
+/* What the camera scales and moves: the keyboard and its encoders, from the top-left corner. */
+.camera-stage {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 16px;
+  width: 100%;
+  transform-origin: 0 0;
+}
+
+.canvas.dot-grid {
+  background-image: radial-gradient(circle, var(--border-strong) 1px, transparent 1.5px);
+  background-size: 24px 24px;
+}
+
+.canvas.panning,
+.canvas.panning * {
+  cursor: grabbing;
+}
+
+/* Zoom out, the zoom level (click to fit), zoom in, and the dot grid. */
+.camera-controls {
+  position: absolute;
+  right: var(--s-3);
+  bottom: var(--s-3);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
+}
+
+.camera-controls .icon-button[aria-pressed='true'] {
+  color: var(--accent-text);
+}
+
+.camera-zoom {
+  min-width: 48px;
+  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* When the keyboard has been panned or zoomed out of sight. */
+.camera-lost {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-4);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
+  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+}
+
+.camera-lost:hover {
+  background: var(--surface-2);
+}
+
+.camera-divider {
+  width: 1px;
+  height: 20px;
+  margin: 0 2px;
+  background: var(--border);
 }
 
 /* Room for the encoder strip under the keyboard. */
@@ -251,30 +333,28 @@
   font-size: 12px;
 }
 
-/* ZMK Studio: connect a keyboard, then a pill that says it's live. */
-.studio-connect {
+/* ZMK Studio: shaped like the keyboard button, an icon and two lines saying where it's at. */
+.studio-pill {
   display: flex;
   align-items: center;
-  gap: 2px;
-}
-
-.studio-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-2);
-  min-height: 36px;
-  padding: 0 var(--s-4);
+  gap: var(--s-3);
+  min-height: 48px;
+  padding: 5px var(--s-4) 5px 5px;
   border: 1px solid var(--border);
   border-radius: var(--r-pill);
   background: var(--surface);
   color: var(--text);
-  font-size: var(--fs-sm);
-  font-weight: 600;
+  text-align: left;
   white-space: nowrap;
+}
+
+.studio-status {
+  padding-right: 4px;
 }
 
 button.studio-pill {
   cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
 }
 
 button.studio-pill:hover:not(:disabled) {
@@ -286,41 +366,58 @@ button.studio-pill:disabled {
   cursor: not-allowed;
 }
 
-.studio-dot {
-  width: 8px;
-  height: 8px;
+.studio-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background: var(--text-muted);
+  background: var(--surface-2);
+  color: var(--text-muted);
 }
 
-.studio-status.connected .studio-dot {
-  background: var(--success);
-  box-shadow: 0 0 0 3px var(--success-soft);
+.studio-status.connected .studio-icon {
+  background: var(--success-soft);
+  color: var(--success-text);
 }
 
-.studio-status.locked .studio-dot {
-  background: var(--warning);
+.studio-status.locked .studio-icon {
+  background: var(--warning-soft);
+  color: var(--warning-text);
   animation: studio-pulse 1.2s ease-in-out infinite;
 }
 
 @keyframes studio-pulse {
   50% {
-    opacity: 0.35;
+    opacity: 0.45;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .studio-status.locked .studio-dot {
+  .studio-status.locked .studio-icon {
     animation: none;
   }
 }
 
-.studio-live {
-  color: var(--success-text);
-  font-size: 11px;
+.studio-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.studio-name {
+  font-size: var(--fs-md);
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+}
+
+.studio-meta {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.studio-status.connected .studio-meta {
+  color: var(--success-text);
 }
 
 .studio-pending {

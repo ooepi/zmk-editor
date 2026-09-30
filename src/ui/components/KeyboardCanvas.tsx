@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties, type PointerEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { describeBinding, displayContext } from '../../core/keymap/display.ts';
 import type { KeymapModel } from '../../core/keymap/model.ts';
 import { layoutExtent, type PhysicalLayout } from '../../core/layouts/index.ts';
@@ -58,42 +58,67 @@ export function KeyboardCanvas({
     '--unit': `${(100 / width) * 100}cqw`,
   } as CSSProperties;
 
-  /** The pointer position in layout units. */
-  const toLayout = (event: PointerEvent<HTMLDivElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    return {
-      x: ((event.clientX - rect.left) / rect.width) * width - originX,
-      y: ((event.clientY - rect.top) / rect.height) * height - originY,
-    };
-  };
+  const board = useRef<HTMLDivElement>(null);
+  const latest = useRef({ width, height, originX, originY, layout, onSelectBox });
+  useEffect(() => {
+    latest.current = { width, height, originX, originY, layout, onSelectBox };
+  });
+  const boxSelect = onSelectBox !== undefined;
 
-  const boxHandlers = onSelectBox
-    ? {
-        onPointerDown: (event: PointerEvent<HTMLDivElement>) => {
-          // Keys handle their own presses; only the empty area starts a box.
-          if (event.target !== event.currentTarget || event.button !== 0) return;
-          event.currentTarget.setPointerCapture?.(event.pointerId);
-          const p = toLayout(event);
-          setMarquee({ box: { x1: p.x, y1: p.y, x2: p.x, y2: p.y }, additive: event.ctrlKey || event.metaKey || event.shiftKey });
-        },
-        onPointerMove: (event: PointerEvent<HTMLDivElement>) => {
-          if (!marquee) return;
-          const p = toLayout(event);
-          setMarquee({ ...marquee, box: { ...marquee.box, x2: p.x, y2: p.y } });
-        },
-        onPointerUp: () => {
-          if (!marquee) return;
-          const { box, additive } = marquee;
-          const dragged = Math.abs(box.x2 - box.x1) > DRAG_THRESHOLD || Math.abs(box.y2 - box.y1) > DRAG_THRESHOLD;
-          onSelectBox(dragged ? keysInBox(layout.keys, box) : [], additive);
-          setMarquee(null);
-        },
-        onPointerCancel: () => setMarquee(null),
-      }
-    : {};
+  // Box select starts anywhere on the empty canvas around the keyboard, not only inside it: the
+  // listeners go on the canvas, and positions are measured against the keyboard (camera included).
+  useEffect(() => {
+    const keyboard = board.current;
+    if (!boxSelect || !keyboard) return;
+    const area = keyboard.closest<HTMLElement>('.canvas') ?? keyboard;
+    let current: { box: Box; additive: boolean } | null = null;
+    const toLayout = (event: globalThis.PointerEvent) => {
+      const { width: w, height: h, originX: ox, originY: oy } = latest.current;
+      const rect = keyboard.getBoundingClientRect();
+      return { x: ((event.clientX - rect.left) / rect.width) * w - ox, y: ((event.clientY - rect.top) / rect.height) * h - oy };
+    };
+    /** Empty space: the canvas, the camera stage or the keyboard itself; not a key, an encoder or a control. */
+    const empty = (target: EventTarget | null) =>
+      target === area || target === keyboard || (target instanceof HTMLElement && target.classList.contains('camera-stage'));
+    const down = (event: globalThis.PointerEvent) => {
+      if (event.button !== 0 || !empty(event.target)) return;
+      area.setPointerCapture?.(event.pointerId);
+      const p = toLayout(event);
+      current = { box: { x1: p.x, y1: p.y, x2: p.x, y2: p.y }, additive: event.ctrlKey || event.metaKey || event.shiftKey };
+      setMarquee(current);
+    };
+    const move = (event: globalThis.PointerEvent) => {
+      if (!current) return;
+      const p = toLayout(event);
+      current = { ...current, box: { ...current.box, x2: p.x, y2: p.y } };
+      setMarquee(current);
+    };
+    const up = () => {
+      if (!current) return;
+      const { box, additive } = current;
+      current = null;
+      setMarquee(null);
+      const dragged = Math.abs(box.x2 - box.x1) > DRAG_THRESHOLD || Math.abs(box.y2 - box.y1) > DRAG_THRESHOLD;
+      latest.current.onSelectBox?.(dragged ? keysInBox(latest.current.layout.keys, box) : [], additive);
+    };
+    const cancel = () => {
+      current = null;
+      setMarquee(null);
+    };
+    area.addEventListener('pointerdown', down);
+    area.addEventListener('pointermove', move);
+    area.addEventListener('pointerup', up);
+    area.addEventListener('pointercancel', cancel);
+    return () => {
+      area.removeEventListener('pointerdown', down);
+      area.removeEventListener('pointermove', move);
+      area.removeEventListener('pointerup', up);
+      area.removeEventListener('pointercancel', cancel);
+    };
+  }, [boxSelect]);
 
   return (
-    <div className="keyboard" style={style} role="group" aria-label="Keyboard layout" {...boxHandlers}>
+    <div ref={board} className="keyboard" style={style} role="group" aria-label="Keyboard layout">
       {flagged && flagged.size > 0 && (
         <span id={NEEDS_BUILD_NOTE} hidden>
           Needs a build: the keyboard can’t take this change live.

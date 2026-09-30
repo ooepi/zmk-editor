@@ -27,7 +27,7 @@ describe('the keyboard connection in the top bar', () => {
     await user.click(topbar().getByRole('button', { name: 'Connect keyboard' }));
     await waitFor(() => expect(topbar().getByText('Press your unlock key')).toBeTruthy());
     act(() => device.unlock());
-    await waitFor(() => expect(topbar().getByRole('status').textContent).toBe('Fake KeyboardLive'));
+    await waitFor(() => expect(topbar().getByRole('status').textContent).toBe('Fake KeyboardZMK Studio · live'));
     await user.click(topbar().getByRole('button', { name: 'Keyboard connection' }));
     await user.click(screen.getByRole('menuitem', { name: 'Disconnect' }));
     expect(topbar().getByRole('button', { name: 'Connect keyboard' })).toBeTruthy();
@@ -44,7 +44,7 @@ describe('the keyboard connection in the top bar', () => {
     const user = userEvent.setup();
     renderWith(fakeDeviceFor({ ...demoConfig().config, studio: { device: 'Studio Board' } }, { locked: false }));
     await user.click(topbar().getByRole('button', { name: 'Connect keyboard' }));
-    await waitFor(() => expect(topbar().getByRole('status').textContent).toBe('Studio BoardLive'));
+    await waitFor(() => expect(topbar().getByRole('status').textContent).toBe('Studio BoardZMK Studio · live'));
     expect(topbar().getByRole('button', { name: 'Change keyboard: Lily58' })).toBeTruthy();
   });
 });
@@ -69,7 +69,7 @@ function ownConfig() {
 async function connectLive(user: ReturnType<typeof userEvent.setup>) {
   const device = renderWith(fakeDeviceFor(ownConfig(), { locked: false }));
   await user.click(topbar().getByRole('button', { name: 'Connect keyboard' }));
-  await waitFor(() => expect(topbar().getByRole('status').textContent).toContain('Live'));
+  await waitFor(() => expect(topbar().getByRole('status').textContent).toContain('ZMK Studio · live'));
   return device;
 }
 
@@ -212,7 +212,7 @@ describe('keys the keyboard can’t take', () => {
     });
     renderWith(device);
     await user.click(topbar().getByRole('button', { name: 'Connect keyboard' }));
-    await waitFor(() => expect(topbar().getByRole('status').textContent).toContain('Live'));
+    await waitFor(() => expect(topbar().getByRole('status').textContent).toContain('ZMK Studio · live'));
     await user.click(screen.getByRole('button', { name: /^Key 1:/ }));
     await user.click(palette().getByRole('button', { name: 'Behaviors' }));
     await user.click(palette().getByRole('button', { name: 'Place CapsWd' }));
@@ -253,5 +253,19 @@ describe('ZMK Studio in Settings', () => {
     await user.click(toggle);
     expect(toggle.checked).toBe(false);
     expect(screen.queryByRole('spinbutton', { name: 'Spare layers' })).toBeNull();
+  });
+});
+
+describe('the top bar layout', () => {
+  it('puts the keyboard, then the Studio connection, then the ZMK version', () => {
+    render(<App studioOpen={async () => fakeDeviceFor(demoConfig().config)} />);
+    const controls = [
+      topbar().getByRole('button', { name: /^Change keyboard/ }),
+      topbar().getByRole('button', { name: 'Connect keyboard' }),
+      topbar().getByRole('combobox', { name: 'ZMK version' }),
+    ];
+    const order = controls.map((c) => [...document.querySelectorAll('header.topbar button, header.topbar select')].indexOf(c as HTMLElement));
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(controls[1]?.textContent).toContain('ZMK Studio');
   });
 });
