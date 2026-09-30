@@ -42,7 +42,7 @@ export const KEYBOARD: HelpSection[] = [
             </li>
             <li>
               <Ui>Wiring</Ui>: which controller pin each row, column or key is soldered to (click a field, then a pin on the
-              diagram), plus encoders and displays (nice!view or OLED; a XIAO takes an OLED). On a split, the right half is a mirror of the left
+              diagram), plus encoders and displays (nice!view or OLED, on their standard pins or any you choose). On a split, the right half is a mirror of the left
               unless you say otherwise.
             </li>
             <li>
