@@ -292,6 +292,24 @@ export function unsupportedHardwareSettings(config: ZmkConfig): UnsupportedSetti
   });
 }
 
+/**
+ * Settings that clash with the rest of the build, so the firmware won't link. The stock nice!view
+ * screen draws its own WPM counter on the central half, with the same names as ZMK's WPM widget.
+ */
+export function conflictingSettings(config: ZmkConfig): UnsupportedSetting[] {
+  const wpm = findSetting('ZMK_WIDGET_WPM_STATUS');
+  if (!wpm || readSetting(config.kconfig, wpm) !== true) return [];
+  const stockView = config.build.include.some((t) => (t.shield ?? '').split(/\s+/).includes('nice_view'));
+  const builtInScreen = config.kconfig.lines.some((l) => l.kind === 'set' && l.name === 'CONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN' && l.value === 'y');
+  if (!stockView || builtInScreen) return [];
+  return [
+    {
+      name: wpm.name,
+      message: 'The nice!view screen already shows words per minute. With the WPM widget on as well, the central half won’t build.',
+    },
+  ];
+}
+
 /** Whether a setting needs hardware this designed keyboard doesn't have (always false for catalog keyboards). */
 export function lacksHardwareFor(config: ZmkConfig, name: string): boolean {
   if (!config.hardware || !HARDWARE_FEATURES.some((f) => f.name === name)) return false;
@@ -316,7 +334,9 @@ export function settingWarnings(config: ZmkConfig): SettingWarning[] {
   const { keys, sensors } = usedBehaviors(config);
   /** A warning about `name` whose fix sets it to `to`. */
   const fixing = (name: string, to: SettingValue, message: string): SettingWarning => ({ message, setting: name, fix: { name, value: to } });
-  const warnings: SettingWarning[] = unsupportedHardwareSettings(config).map(({ name, message }) => fixing(name, false, message));
+  const warnings: SettingWarning[] = [...unsupportedHardwareSettings(config), ...conflictingSettings(config)].map(({ name, message }) =>
+    fixing(name, false, message),
+  );
   // Don't suggest turning on something the keyboard has no hardware for.
   const canUse = (name: string) => !lacksHardwareFor(config, name);
   if (['mkp', 'mmv', 'msc'].some((b) => keys.has(b)) && value('ZMK_POINTING') !== true) {

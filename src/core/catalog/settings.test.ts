@@ -6,7 +6,16 @@ import { generateKconfig, parseKconfig } from '../files/kconfig.ts';
 import { newHardwareConfig } from '../hardware/config.ts';
 import { setDisplay } from '../hardware/displays.ts';
 import { testSplit } from '../hardware/testFixtures.ts';
-import { findSetting, readSetting, SETTING_GROUPS, SETTINGS, settingWarnings, unsupportedHardwareSettings, writeSetting } from './settings.ts';
+import {
+  conflictingSettings,
+  findSetting,
+  readSetting,
+  SETTING_GROUPS,
+  SETTINGS,
+  settingWarnings,
+  unsupportedHardwareSettings,
+  writeSetting,
+} from './settings.ts';
 
 const fixture = (name: string) => readFileSync(join(import.meta.dirname, '../../../test/fixtures/lily58', name), 'utf8');
 const load = () =>
@@ -202,5 +211,30 @@ describe('settings a designed keyboard has no hardware for', () => {
       setting: 'ZMK_DISPLAY',
       fix: { name: 'ZMK_DISPLAY', value: true },
     });
+  });
+});
+
+describe('settings that clash with the build', () => {
+  const withWpm = () => {
+    const config = load();
+    return { ...config, kconfig: writeSetting(config.kconfig, setting('ZMK_WIDGET_WPM_STATUS'), true) };
+  };
+
+  it('the WPM widget with the stock nice!view screen stops the central half linking', () => {
+    const conflicts = conflictingSettings(withWpm());
+    expect(conflicts.map((c) => c.name)).toEqual(['ZMK_WIDGET_WPM_STATUS']);
+    expect(conflicts[0]?.message).toContain('won’t build');
+    const warning = settingWarnings(withWpm()).find((w) => w.setting === 'ZMK_WIDGET_WPM_STATUS');
+    expect(warning?.fix).toEqual({ name: 'ZMK_WIDGET_WPM_STATUS', value: false });
+  });
+
+  it('is fine with the WPM widget off, another screen, or ZMK’s built-in status screen', () => {
+    expect(conflictingSettings(load())).toEqual([]);
+    const other = withWpm();
+    const noView = { ...other, build: { include: other.build.include.map((t) => ({ ...t, shield: t.shield?.replace(/ nice_view$/, ' nice_view_gem') })) } };
+    expect(conflictingSettings(noView)).toEqual([]);
+    const builtIn = { ...other, kconfig: parseKconfig(`${generateKconfig(other.kconfig)}CONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=y
+`) };
+    expect(conflictingSettings(builtIn)).toEqual([]);
   });
 });
