@@ -16,6 +16,41 @@
   max-height: none;
 }
 
+/* A height the user dragged to (inline); no default cap then. */
+.palette.sized {
+  position: relative;
+  max-height: none;
+}
+
+/* The top edge: drag it to resize. A thin bar that shows on hover and focus. */
+.palette-resizer {
+  position: relative;
+  height: 10px;
+  margin-bottom: -10px;
+  z-index: 1;
+  cursor: row-resize;
+  touch-action: none;
+}
+
+.palette-resizer::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  width: 40px;
+  height: 4px;
+  margin-left: -20px;
+  border-radius: var(--r-pill);
+  background: var(--border-strong);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.palette:hover .palette-resizer::after,
+.palette-resizer:focus-visible::after {
+  opacity: 1;
+}
+
 /* What a click will do, and the fold button. */
 .palette-head {
   display: flex;

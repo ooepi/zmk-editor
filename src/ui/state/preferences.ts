@@ -13,6 +13,8 @@ export interface Preferences {
   recent: PaletteItem[];
   /** The key palette folded down to its status line, so the keyboard gets the room. */
   paletteCollapsed: boolean;
+  /** The palette's height in px, dragged by its top edge; null for the default. */
+  paletteHeight: number | null;
   /** The first-visit "Get started" card was answered or dismissed. */
   welcomed: boolean;
   /** This browser's first visit showed the card and it's still unanswered (it survives a reload). */
@@ -26,6 +28,7 @@ const DEFAULTS: Preferences = {
   pinoutViews: {},
   recent: [],
   paletteCollapsed: false,
+  paletteHeight: null,
   welcomed: false,
   welcomePending: false,
 };
@@ -50,6 +53,7 @@ function load(): Preferences {
       ...stored,
       recent: validRecent(stored.recent),
       paletteCollapsed: stored.paletteCollapsed === true,
+      paletteHeight: typeof stored.paletteHeight === 'number' && Number.isFinite(stored.paletteHeight) ? stored.paletteHeight : null,
       welcomed: stored.welcomed === true,
       welcomePending: stored.welcomePending === true,
     };
