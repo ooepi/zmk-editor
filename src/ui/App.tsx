@@ -32,6 +32,8 @@ import { ModulesView } from './components/ModulesView.tsx';
 import { ScreensView } from './components/ScreensView.tsx';
 import { SettingsView } from './components/SettingsView.tsx';
 import { StudioConnect } from './components/StudioConnect.tsx';
+import { StudioMismatchDialog } from './components/StudioMismatchDialog.tsx';
+import { StudioSaveBar } from './components/StudioSaveBar.tsx';
 import { Toolbar } from './components/Toolbar.tsx';
 import { VersionSelect } from './components/VersionSelect.tsx';
 import type { KeyRef } from './dnd.ts';
@@ -153,6 +155,13 @@ function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => 
   useEffect(() => {
     if (studioMessage) dispatch({ type: 'notify', notice: studioMessage });
   }, [studioMessage, dispatch]);
+  // Closing the tab with changes the keyboard hasn't saved asks first.
+  useEffect(() => {
+    if (!studio.unsaved) return;
+    const onBeforeUnload = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [studio.unsaved]);
 
   /** Remembers a palette item placed from the palette for its Recent row. */
   const remember = (item: PaletteItem) => setPreferences({ recent: pushRecent(recent, item) });
@@ -360,6 +369,7 @@ function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => 
             </span>
           )}
         </nav>
+        <StudioSaveBar session={studio} />
         {state.notice && (
           <div className="notice" role="status">
             {state.notice}
@@ -517,6 +527,7 @@ function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => 
           </main>
         )}
       </div>
+      <StudioMismatchDialog session={studio} keymap={keymap} />
       <WelcomeDialog
         open={showWelcome}
         onKeyboard={() => {
