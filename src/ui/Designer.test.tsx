@@ -40,7 +40,7 @@ describe('Layout designer', () => {
     const user = userEvent.setup();
     render(<App />);
     await openDesigner(user);
-    const keys = within(screen.getByRole('group', { name: 'Layout canvas' })).getAllByRole('button');
+    const keys = within(screen.getByRole('group', { name: 'Layout canvas' })).getAllByRole('button', { name: /^Key \d+:/ });
     expect(keys).toHaveLength(58);
     expect(screen.getByRole('button', { name: 'Save layout' })).toHaveProperty('disabled', true);
   });
@@ -103,5 +103,39 @@ describe('Layout designer', () => {
     await user.click(screen.getByRole('button', { name: 'Save layout' }));
     await user.click(screen.getByRole('button', { name: 'Remove saved layout' }));
     expect(screen.queryByText('Using your own layout (saved as config/info.json).')).toBeNull();
+  });
+});
+
+describe('encoder knobs in the layout designer', () => {
+  const knob = () => within(screen.getByRole('group', { name: 'Layout canvas' })).getByRole('button', { name: 'Encoder 1' });
+  const cx = () => Number(knob().querySelector('circle')?.getAttribute('cx'));
+
+  it('moves a knob with the arrow keys and its fields, and saves it with the layout', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await openDesigner(user);
+    await user.click(knob());
+    const x = screen.getByRole('spinbutton', { name: 'X (keys)' });
+    await user.clear(x);
+    await user.type(x, '3');
+    expect(cx()).toBe(300);
+    knob().focus();
+    await user.keyboard('{ArrowRight}');
+    expect(cx()).toBe(325);
+    await user.click(screen.getByRole('button', { name: 'Save layout' }));
+    const stored = JSON.parse(localStorage.getItem('zmk-editor.config.v1') ?? '{}') as { config?: { layout?: { encoders?: { x: number }[] } } };
+    expect(stored.config?.layout?.encoders?.[0]?.x).toBe(325);
+  });
+
+  it('puts a moved knob back in its default place', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await openDesigner(user);
+    const start = cx();
+    await user.click(knob());
+    await user.keyboard('{ArrowRight}');
+    expect(cx()).toBe(start + 25);
+    await user.click(screen.getByRole('button', { name: 'Default position' }));
+    expect(cx()).toBe(start);
   });
 });

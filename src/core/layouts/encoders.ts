@@ -68,3 +68,17 @@ export function knobBox(spot: EncoderSpot, width: number, height: number, origin
     height: `${(KNOB_SIZE / height) * 100}%`,
   };
 }
+
+/**
+ * Saved knob positions with encoder `index` set to `spot` (null: back to its default). Returns
+ * undefined once no encoder has a saved position.
+ */
+export function setEncoderSpot(
+  saved: (EncoderSpot | null)[] | undefined,
+  index: number,
+  spot: EncoderSpot | null,
+  count: number,
+): (EncoderSpot | null)[] | undefined {
+  const next = Array.from({ length: Math.max(count, index + 1) }, (_, i) => (i === index ? spot : (saved?.[i] ?? null)));
+  return next.some(Boolean) ? next : undefined;
+}

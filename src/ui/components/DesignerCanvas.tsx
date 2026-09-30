@@ -1,5 +1,7 @@
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { layoutBounds, type PhysicalKey, type PhysicalLayout } from '../../core/layouts/index.ts';
+import { KNOB_SIZE, type EncoderSpot } from '../../core/layouts/types.ts';
+import { Section } from './ui/Section.tsx';
 import { keysInBox, moveKeys, type Box } from '../../core/layouts/selection.ts';
 
 const SNAP = 25;
@@ -68,6 +70,24 @@ export function UnitField({ label, value, min, onChange }: { label: string; valu
   return <LiveNumberField label={`${label} (keys)`} value={value} step={0.25} scale={100} min={min} onChange={onChange} />;
 }
 
+/** A selected encoder knob: its centre as fields, and the way back to its default spot. */
+export function KnobFields({ index, spot, saved, onMove }: { index: number; spot: EncoderSpot; saved: boolean; onMove: (spot: EncoderSpot | null) => void }) {
+  return (
+    <Section title={`Encoder ${index + 1}`} lead={<span className="mini-key panel-key" aria-hidden="true">↻</span>}>
+      <p className="muted small">Where its knob is drawn on the Keymap tab (its centre). The firmware doesn't use this.</p>
+      <div className="field-grid">
+        <UnitField key={`kx-${index}`} label="X" value={spot.x} onChange={(x) => onMove({ ...spot, x })} />
+        <UnitField key={`ky-${index}`} label="Y" value={spot.y} onChange={(y) => onMove({ ...spot, y })} />
+      </div>
+      <div className="row wrap">
+        <button type="button" className="button" disabled={!saved} onClick={() => onMove(null)}>
+          Default position
+        </button>
+      </div>
+    </Section>
+  );
+}
+
 /** Degrees, clockwise. */
 export function RotationField({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   return <LiveNumberField label="Rotation (°)" value={value} step={1} scale={1} min={-360} max={360} onChange={onChange} />;
@@ -86,6 +106,10 @@ export function DesignerCanvas({
   onChange,
   onDelete,
   flagged,
+  knobs = [],
+  selectedKnob = null,
+  onSelectKnob,
+  onMoveKnob,
 }: {
   layout: PhysicalLayout;
   labels: string[];
@@ -96,6 +120,11 @@ export function DesignerCanvas({
   /** Delete/Backspace removes the selected keys, when the caller allows it. */
   onDelete?: (indices: number[]) => void;
   flagged?: Set<number>;
+  /** Every encoder's knob position (saved or default). */
+  knobs?: EncoderSpot[];
+  selectedKnob?: number | null;
+  onSelectKnob?: (index: number | null) => void;
+  onMoveKnob?: (index: number, spot: EncoderSpot) => void;
 }) {
   const svg = useRef<SVGSVGElement>(null);
   // Keys being dragged, with the layout as it was when the drag started.
@@ -103,12 +132,17 @@ export function DesignerCanvas({
   // A pointer press on a key is handled there; the focus it causes must not change the selection again.
   const pressing = useRef(false);
   const [marquee, setMarquee] = useState<{ box: Box; additive: boolean } | null>(null);
+  // A knob being dragged, with where it was when the drag started.
+  const knobDrag = useRef<{ index: number; startX: number; startY: number; spot: EncoderSpot } | null>(null);
   // The view box is fixed while dragging so the canvas doesn't rescale under the pointer.
   const [frozenBox, setFrozenBox] = useState<string | null>(null);
   const bounds = layoutBounds(layout);
-  const minX = Math.min(0, ...layout.keys.map((k) => k.x)) - MARGIN;
-  const minY = Math.min(0, ...layout.keys.map((k) => k.y)) - MARGIN;
-  const box = frozenBox ?? `${minX} ${minY} ${bounds.width - minX + MARGIN} ${bounds.height - minY + MARGIN}`;
+  const half = KNOB_SIZE / 2;
+  const minX = Math.min(0, ...layout.keys.map((k) => k.x), ...knobs.map((s) => s.x - half)) - MARGIN;
+  const minY = Math.min(0, ...layout.keys.map((k) => k.y), ...knobs.map((s) => s.y - half)) - MARGIN;
+  const maxX = Math.max(bounds.width, ...knobs.map((s) => s.x + half));
+  const maxY = Math.max(bounds.height, ...knobs.map((s) => s.y + half));
+  const box = frozenBox ?? `${minX} ${minY} ${maxX - minX + MARGIN} ${maxY - minY + MARGIN}`;
   const selected = new Set(selection);
 
   const toSvg = (event: PointerEvent) => {
@@ -142,7 +176,23 @@ export function DesignerCanvas({
     onChange({ ...layout, keys: moveKeys(layout.keys, moving, move[0], move[1]) });
   };
 
+  const onKnobKeyDown = (event: KeyboardEvent, index: number) => {
+    const spot = knobs[index];
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      onSelectKnob?.(null);
+      return;
+    }
+    const step = event.shiftKey ? 100 : SNAP;
+    const moves: Record<string, [number, number]> = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
+    const move = moves[event.key];
+    if (!move || !spot) return;
+    event.preventDefault();
+    onMoveKnob?.(index, { x: spot.x + move[0], y: spot.y + move[1] });
+  };
+
   const endPointer = () => {
+    knobDrag.current = null;
     if (marquee) {
       const hits = keysInBox(layout.keys, marquee.box);
       onSelectionChange(marquee.additive ? [...new Set([...selection, ...hits])] : hits);
@@ -173,6 +223,12 @@ export function DesignerCanvas({
         setFrozenBox(box);
       }}
       onPointerMove={(event) => {
+        const k = knobDrag.current;
+        if (k) {
+          const at = toSvg(event);
+          if (at) onMoveKnob?.(k.index, { x: k.spot.x + snap(at.x - k.startX), y: k.spot.y + snap(at.y - k.startY) });
+          return;
+        }
         const p = (drag.current || marquee) && toSvg(event);
         if (!p) return;
         if (marquee) {
@@ -226,6 +282,40 @@ export function DesignerCanvas({
           </text>
           <text x={key.x + key.w / 2} y={key.y + key.h / 2 + 26} textAnchor="middle" className="designer-index">
             {index}
+          </text>
+        </g>
+      ))}
+      {knobs.map((spot, index) => (
+        <g
+          key={`knob-${index}`}
+          role="button"
+          tabIndex={0}
+          aria-label={`Encoder ${index + 1}`}
+          aria-pressed={selectedKnob === index}
+          className={`designer-knob${selectedKnob === index ? ' selected' : ''}`}
+          onFocus={() => {
+            if (!pressing.current && selectedKnob !== index) onSelectKnob?.(index);
+          }}
+          onKeyDown={(e) => onKnobKeyDown(e, index)}
+          onPointerDown={(event) => {
+            pressing.current = true;
+            onSelectKnob?.(index);
+            const p = toSvg(event);
+            if (!p) return;
+            (event.target as Element).setPointerCapture?.(event.pointerId);
+            knobDrag.current = { index, startX: p.x, startY: p.y, spot };
+            setFrozenBox(box);
+          }}
+          onPointerUp={() => {
+            if (!knobDrag.current) pressing.current = false;
+          }}
+        >
+          <circle cx={spot.x} cy={spot.y} r={half - 4} />
+          <text x={spot.x} y={spot.y - 4} textAnchor="middle" className="designer-label">
+            ↺ ↻
+          </text>
+          <text x={spot.x} y={spot.y + 26} textAnchor="middle" className="designer-index">
+            E{index + 1}
           </text>
         </g>
       ))}

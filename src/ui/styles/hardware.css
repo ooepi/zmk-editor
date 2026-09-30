@@ -136,6 +136,30 @@
   stroke-width: 6;
 }
 
+/* Encoder knobs: round, with a dashed rim so they don't read as keys. */
+.designer-knob {
+  cursor: grab;
+  outline: none;
+}
+
+.designer-knob circle {
+  fill: var(--surface-2);
+  stroke: var(--keycap-edge);
+  stroke-width: 4;
+  stroke-dasharray: 10 6;
+}
+
+.designer-knob:hover circle {
+  stroke: var(--text-muted);
+}
+
+.designer-knob.selected circle,
+.designer-knob:focus-visible circle {
+  stroke: var(--accent);
+  stroke-width: 6;
+  stroke-dasharray: none;
+}
+
 .designer-label {
   fill: var(--text);
   font-size: 26px;

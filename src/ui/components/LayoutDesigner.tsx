@@ -5,9 +5,13 @@ import { describeBinding, displayContext } from '../../core/keymap/display.ts';
 import { layoutDtsi } from '../../core/layouts/dtsi.ts';
 import { physicalLayoutFor, type PhysicalKey, type PhysicalLayout } from '../../core/layouts/index.ts';
 import { gridTemplate, splitTemplate } from '../../core/layouts/templates.ts';
+import { placeEncoders, setEncoderSpot } from '../../core/layouts/encoders.ts';
+import type { EncoderSpot } from '../../core/layouts/types.ts';
+import { encoderSides } from '../../core/encoderSides.ts';
+import { sensorCount } from '../../core/keymap/sensorEdit.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
 import { usePreferences } from '../state/preferences.ts';
-import { DesignerCanvas, RotationField, UnitField } from './DesignerCanvas.tsx';
+import { DesignerCanvas, KnobFields, RotationField, UnitField } from './DesignerCanvas.tsx';
 import { HelpLink } from '../help/HelpLink.tsx';
 import { Section } from './ui/Section.tsx';
 
@@ -28,8 +32,26 @@ export function LayoutDesigner({ config, dispatch, onClose }: LayoutDesignerProp
   const keyCount = config.keymap.layers[0]?.bindings.length ?? 0;
   const { layouts } = usePreferences();
   const initial = physicalLayoutFor(config.keyboard, keyCount, layouts[config.keyboard], config.layout);
-  const [draft, setDraft] = useState<PhysicalLayout>(() => ({ name: 'custom', keys: initial.keys.map((k) => ({ ...k })) }));
-  const [selection, setSelection] = useState<number[]>([0]);
+  /** The layout being edited, starting from the current one (its knob positions too). */
+  const start = (): PhysicalLayout => ({
+    name: 'custom',
+    keys: initial.keys.map((k) => ({ ...k })),
+    ...(initial.encoders ? { encoders: initial.encoders.map((s) => (s ? { ...s } : null)) } : {}),
+  });
+  const [draft, setDraft] = useState<PhysicalLayout>(start);
+  const [selection, setSelectionState] = useState<number[]>([0]);
+  /** The selected encoder knob; selecting keys clears it, and the other way round. */
+  const [knob, setKnob] = useState<number | null>(null);
+  const setSelection = (indices: number[]) => {
+    setSelectionState(indices);
+    if (indices.length > 0) setKnob(null);
+  };
+  const selectKnob = (index: number | null) => {
+    setKnob(index);
+    if (index !== null) setSelectionState([]);
+  };
+  const encoderCount = sensorCount(config.keymap);
+  const knobs = placeEncoders(draft, encoderSides(config), encoderCount);
   const selected = selection.length === 1 ? (selection[0] ?? null) : null;
   const [dirty, setDirty] = useState(false);
   const labels = useMemo(() => {
@@ -40,6 +62,12 @@ export function LayoutDesigner({ config, dispatch, onClose }: LayoutDesignerProp
   const update = (next: PhysicalLayout) => {
     setDraft(next);
     setDirty(true);
+  };
+  /** Moves one knob (null: back to its default spot); the other knobs keep theirs. */
+  const moveKnob = (index: number, spot: EncoderSpot | null) => {
+    const { encoders: _, ...rest } = draft;
+    const encoders = setEncoderSpot(draft.encoders, index, spot, encoderCount);
+    update(encoders ? { ...rest, encoders } : rest);
   };
   const updateKey = (index: number, patch: Partial<PhysicalKey>) =>
     update({ ...draft, keys: draft.keys.map((k, i) => (i === index ? { ...k, ...patch } : k)) });
@@ -63,7 +91,7 @@ export function LayoutDesigner({ config, dispatch, onClose }: LayoutDesignerProp
                 className="button"
                 disabled={!dirty}
                 onClick={() => {
-                  setDraft({ name: 'custom', keys: initial.keys.map((k) => ({ ...k })) });
+                  setDraft(start());
                   setDirty(false);
                 }}
               >
@@ -80,13 +108,25 @@ export function LayoutDesigner({ config, dispatch, onClose }: LayoutDesignerProp
             <HelpLink to="designer" />
           </p>
         </div>
-        <DesignerCanvas layout={draft} labels={labels} selection={selection} onSelectionChange={setSelection} onChange={update} />
+        <DesignerCanvas
+          layout={draft}
+          labels={labels}
+          selection={selection}
+          onSelectionChange={setSelection}
+          onChange={update}
+          knobs={knobs}
+          selectedKnob={knob}
+          onSelectKnob={selectKnob}
+          onMoveKnob={moveKnob}
+        />
       </div>
 
       <aside className="designer-panel" aria-label="Layout settings">
         <TemplatePanel keyCount={keyCount} onApply={(layout) => { update(layout); setSelection([0]); }} />
 
-        {key && selected !== null ? (
+        {knob !== null && knobs[knob] ? (
+          <KnobFields index={knob} spot={knobs[knob]} saved={!!draft.encoders?.[knob]} onMove={(spot) => moveKnob(knob, spot)} />
+        ) : key && selected !== null ? (
           <Section
             title={`Key ${selected}`}
             lead={
