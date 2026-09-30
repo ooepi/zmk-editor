@@ -104,3 +104,25 @@ describe('Row and column for several keys', () => {
     expect(panel().getByRole('button', { name: 'Number from positions' })).toBeTruthy();
   });
 });
+
+describe('Row and column fields, edge cases', () => {
+  it('goes back to the keys’ value when left empty, and shows mixed halves as blank', async () => {
+    const user = userEvent.setup();
+    await layoutStep(user);
+    select(0, 1);
+    await user.clear(panel().getByLabelText('Row'));
+    await user.tab();
+    expect(panel().getByLabelText('Row')).toHaveProperty('value', '0');
+    select(0, 6);
+    expect(panel().getByLabelText('Half')).toHaveProperty('value', '');
+  });
+
+  it('says when numbering needs a bigger matrix', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const user = userEvent.setup();
+    await layoutStep(user);
+    await user.click(panel().getByRole('button', { name: 'Add key (left)' }));
+    await user.click(panel().getByRole('button', { name: 'Number from positions' }));
+    expect(confirm.mock.calls.at(-1)?.[0]).toMatch(/It needs a \d+ × \d+ matrix per half \(it’s 3 × 6\); change the size in Basics\./);
+  });
+});
