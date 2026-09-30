@@ -3,6 +3,7 @@ import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { newHardwareConfig } from '../core/hardware/config.ts';
+import { setDisplay } from '../core/hardware/displays.ts';
 import { testSplit } from '../core/hardware/testFixtures.ts';
 import { App } from './App.tsx';
 import { reloadPreferences } from './state/preferences.ts';
@@ -67,13 +68,13 @@ describe('nice!view screens tab', () => {
 });
 
 describe('Screens on a designed Seeed XIAO keyboard', () => {
-  it('says a nice!view needs a Pro Micro instead of suggesting the adapter', async () => {
-    const hw = { ...testSplit, controller: 'seeeduino_xiao_ble' };
+  it('lists the half with a nice!view, which builds without the adapter', async () => {
+    const hw = setDisplay({ ...testSplit, controller: 'seeeduino_xiao_ble' }, 'left', 'nice_view');
     localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config: newHardwareConfig(hw, 'v0.3') }));
     const user = userEvent.setup();
     render(<App />);
     await user.click(screen.getByRole('button', { name: 'Screens' }));
-    expect(screen.getByRole('note').textContent).toContain('A nice!view needs a Pro Micro controller; your keyboard uses a Seeed XIAO.');
-    expect(screen.getByRole('note').textContent).not.toContain('nice_view_adapter');
+    expect(screen.getByLabelText('Left screen')).toBeTruthy();
+    expect(screen.queryByLabelText('Right screen')).toBeNull();
   });
 });

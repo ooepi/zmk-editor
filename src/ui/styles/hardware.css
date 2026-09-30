@@ -432,6 +432,29 @@
   gap: 8px;
 }
 
+/* Displays: each half's display and, under it, its pins. */
+.display-halves {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.display-half {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.display-half .link-button {
+  align-self: flex-start;
+}
+
+/* Labels that wrap ("Left display clock") keep the selects in line. */
+.display-half .pin-grid {
+  align-items: end;
+}
+
 .encoder-pins {
   display: grid;
   grid-template-columns: repeat(2, minmax(104px, 1fr)) auto;

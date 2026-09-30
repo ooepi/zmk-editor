@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_BASICS, gridHardware } from './grid.ts';
 import type { KeyboardHardware } from './types.ts';
-import { setDisplay } from './displays.ts';
+import { setDisplay, setDisplayPin } from './displays.ts';
 import { hasErrors, validateBasics, validateHardware } from './validate.ts';
 
 const basics = { ...DEFAULT_BASICS, name: 'test_split', displayName: 'Test Split', rows: 2, cols: 3 };
@@ -148,22 +148,43 @@ describe('validateHardware on a Seeed XIAO', () => {
     expect(messages(tooMany)[0]).toBe('The wiring on the left half needs 12 pins, but a Seeed XIAO has 11.');
   });
 
-  it('puts OLEDs on D4/D5 and flags a nice!view, which needs the Pro Micro adapter', () => {
+  it('puts OLEDs on D4/D5 and a nice!view on D9/D10/D8', () => {
     const hw = xiao(); // rows [4, 5], cols [6, 7, 8]
     expect(messages(setDisplay(hw, 'left', 'oled_128x32'))).toEqual([
       'D4 is used for both Row 0 and Display SDA on the left half.',
       'D5 is used for both Row 1 and Display SCL on the left half.',
     ]);
-    const free = { ...hw, wiring: { kind: 'matrix' as const, diodeDirection: 'col2row' as const, rows: [0, 1], cols: [6, 7, 8] } };
+    const free = { ...hw, wiring: { kind: 'matrix' as const, diodeDirection: 'col2row' as const, rows: [0, 1], cols: [2, 3, 6] } };
     expect(messages(setDisplay(free, 'left', 'oled_128x32'))).toEqual([]);
-    expect(validateHardware(setDisplay(free, 'right', 'nice_view'))).toContainEqual({
-      level: 'error',
-      area: 'wiring',
-      message: 'The nice!view on the right half needs ZMK’s nice!view adapter, which only fits a Pro Micro; on a Seeed XIAO use an OLED for now.',
-    });
+    expect(messages(setDisplay(free, 'right', 'nice_view'))).toEqual([]);
+    expect(messages(setDisplay(hw, 'left', 'nice_view'))).toEqual(['D8 is used for both Column 2 and Display clock on the left half.']);
+  });
+});
+
+describe('validateHardware with display pins', () => {
+  it('needs a pin for every display signal', () => {
+    const view = setDisplay(wired(), 'left', 'nice_view');
+    expect(messages(setDisplayPin(view, 'left', 'cs', null))).toEqual(['Display CS on the left half has no pin.']);
+  });
+
+  it('checks moved display pins against the rest of their half, mirrored or not', () => {
+    const view = setDisplay(wired(), 'left', 'nice_view'); // rows [4, 5], cols [6, 7, 8]
+    expect(messages(setDisplayPin(view, 'left', 'cs', 4))).toEqual(['D4 is used for both Row 0 and Display CS on the left half.']);
+    // The right half mirrors the left's pins; its own display is checked against them.
+    const oled = setDisplayPin(setDisplay(wired(), 'right', 'oled_128x32'), 'right', 'sda', 4);
+    expect(messages(oled)).toEqual(['D4 is used for both Row 0 and Display SDA on the right half.']);
+  });
+
+  it('warns that a Mikoto display on D6 assumes the board’s default revision', () => {
+    const hw = { ...wired(), controller: 'mikoto', wiring: { kind: 'matrix' as const, diodeDirection: 'col2row' as const, rows: [4, 5], cols: [7, 8, 9] } };
+    const view = setDisplayPin(setDisplay(hw, 'left', 'nice_view'), 'left', 'clock', 6);
+    expect(messages(view)).toEqual([]);
+    expect(messages(view, 'warning')).toContain(
+      'Display clock on the left half uses D6, which is a different pin on Mikoto v6 and later; the build assumes Mikoto 5.20.',
+    );
   });
 
   it('still rejects controllers it doesn’t know', () => {
-    expect(messages({ ...xiao(), controller: 'nope' })).toEqual(['nope isn’t a supported controller.']);
+    expect(messages({ ...wired(), controller: 'nope' })).toEqual(['nope isn’t a supported controller.']);
   });
 });

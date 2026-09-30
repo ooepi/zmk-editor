@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import { interconnectOf, pinLabel } from '../../core/hardware/interconnects.ts';
-import { availableDisplays, DISPLAYS, displayPins, halfDisplay, setDisplay } from '../../core/hardware/displays.ts';
+import {
+  clearDisplayPins,
+  defaultDisplayPins,
+  DISPLAY_KINDS,
+  DISPLAYS,
+  halfDisplay,
+  halfDisplayPins,
+  setDisplay,
+} from '../../core/hardware/displays.ts';
 import type { DisplayKind, KeyboardHardware, Pin, Side } from '../../core/hardware/types.ts';
 import type { HardwareIssue } from '../../core/hardware/validate.ts';
 import {
@@ -38,11 +46,6 @@ export function HardwareWiringStep({ hw, issues, onChange, onAddEncoder, onRemov
   const differently = hw.wiring.right !== undefined;
   const shown: (Side | undefined)[] = hw.split ? (differently ? ['left', 'right'] : ['left']) : [undefined];
   const ic = interconnectOf(hw.controller);
-  /** The displays this controller takes, plus one already chosen that it can't take, so it stays visible (and flagged). */
-  const displayChoices = (current: DisplayKind | undefined) => {
-    const available = availableDisplays(ic);
-    return current && !available.includes(current) ? [current, ...available] : available;
-  };
   const title = (side: Side | undefined) =>
     side === 'right' ? 'Right half' : side === 'left' ? (differently ? 'Left half' : 'Left half (the right half mirrors it)') : undefined;
   return (
@@ -108,37 +111,79 @@ export function HardwareWiringStep({ hw, issues, onChange, onAddEncoder, onRemov
       </div>
       <fieldset className="fieldset">
         <legend>Displays</legend>
-        <div className="pin-grid">
+        <div className="display-halves">
           {(hw.split ? (['left', 'right'] as const) : [undefined]).map((side) => {
             const id = `display-${side ?? 'one'}`;
+            const title = side === 'left' ? 'Left display' : side === 'right' ? 'Right display' : 'Display';
+            const pins = halfDisplayPins(hw, side);
+            const uses = pinUses(hw, side);
             return (
-              <div key={id} className="field">
-                <label className="field-label" htmlFor={id}>
-                  {side === 'left' ? 'Left display' : side === 'right' ? 'Right display' : 'Display'}
-                </label>
-                <select
-                  id={id}
-                  className="input"
-                  aria-describedby="hw-display-help"
-                  value={halfDisplay(hw, side) ?? ''}
-                  onChange={(e) => onChange(setDisplay(hw, side, e.target.value === '' ? undefined : (e.target.value as DisplayKind)))}
-                >
-                  <option value="">None</option>
-                  {displayChoices(halfDisplay(hw, side)).map((kind) => (
-                    <option key={kind} value={kind}>
-                      {DISPLAYS[kind].label} ({displayPins(kind, ic).map((p) => `D${p.pin}`).join(', ')})
-                      {availableDisplays(ic).includes(kind) ? '' : ' (not on this controller)'}
-                    </option>
-                  ))}
-                </select>
+              <div key={id} className="display-half">
+                <div className="field">
+                  <label className="field-label" htmlFor={id}>
+                    {title}
+                  </label>
+                  <select
+                    id={id}
+                    className="input"
+                    aria-describedby="hw-display-help"
+                    value={halfDisplay(hw, side) ?? ''}
+                    onChange={(e) => {
+                      onChange(setDisplay(hw, side, e.target.value === '' ? undefined : (e.target.value as DisplayKind)));
+                      // An armed display pin field may belong to the display that just went away.
+                      if (active?.list.startsWith('display.') && active.side === side) setActive(null);
+                    }}
+                  >
+                    <option value="">None</option>
+                    {DISPLAY_KINDS.map((kind) => (
+                      <option key={kind} value={kind}>
+                        {DISPLAYS[kind].label} ({defaultDisplayPins(kind, ic).map((p) => `D${p.pin}`).join(', ')})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {pins.length > 0 && (
+                  <div className="pin-grid">
+                    {pins.map(({ signal, pin, use }) => (
+                      <div key={signal} className="field">
+                        <PinSelect
+                          hw={hw}
+                          side={side}
+                          list={`display.${signal}`}
+                          index={0}
+                          name={use}
+                          label={`${title} ${use.slice('Display '.length)}`}
+                          pin={pin}
+                          uses={uses}
+                          active={active}
+                          onChange={onChange}
+                          onActivate={setActive}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {hw.displayPins?.[side === 'right' ? 'right' : 'left'] && (
+                  <button
+                    type="button"
+                    className="link-button"
+                    aria-label={`Use the standard pins for the ${side ? `${side} ` : ''}display`}
+                    onClick={() => onChange(clearDisplayPins(hw, side))}
+                  >
+                    Use the standard pins
+                  </button>
+                )}
               </div>
             );
           })}
         </div>
         <p id="hw-display-help" className="muted small">
+          A nice!view defaults to{' '}
           {ic.niceViewAdapter
-            ? `Displays use fixed pins: a nice!view D1, D2 and D3, an OLED D${ic.i2cPins.sda} (SDA) and D${ic.i2cPins.scl} (SCL). They can’t be used for rows, columns or encoders on that half.`
-            : `OLEDs use D${ic.i2cPins.sda} (SDA) and D${ic.i2cPins.scl} (SCL), which can’t then be used for rows, columns or encoders on that half. A nice!view on a ${ic.name} isn’t supported yet.`}
+            ? `D${ic.niceViewPins.cs} (CS), D${ic.niceViewPins.data} (data) and D${ic.niceViewPins.clock} (clock) through ZMK’s adapter; on other pins the shield sets up its own SPI bus and builds without the adapter.`
+            : `D${ic.niceViewPins.cs} (CS), D${ic.niceViewPins.data} (data) and D${ic.niceViewPins.clock} (clock); the shield sets up its SPI bus itself, without ZMK’s adapter.`}{' '}
+          An OLED defaults to D{ic.i2cPins.sda} (SDA) and D{ic.i2cPins.scl} (SCL). Display pins can’t also be used for rows, columns or
+          encoders on that half.
         </p>
       </fieldset>
       <HardwareIssueList issues={issues} />

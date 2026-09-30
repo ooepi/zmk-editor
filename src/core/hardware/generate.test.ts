@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { setDisplay } from './displays.ts';
+import { setDisplay, setDisplayPin } from './displays.ts';
 import { generateShield, staleShieldFiles } from './generate.ts';
 import { testPad, testSplit } from './testFixtures.ts';
 import type { KeyboardHardware } from './types.ts';
@@ -394,6 +394,97 @@ describe('generateShield: Seeed XIAO', () => {
     expect(files).toContain('a-gpios = <&xiao_d  8 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;');
     expect(generateShield(split)[`${dir('test_split')}/test_split_left.overlay`]).toContain('&xiao_i2c {\n    status = "okay";');
     expect(files).not.toContain('pro_micro');
+  });
+});
+
+describe('generateShield: display pins', () => {
+  it('gives a nice!view off the adapter’s pins its own SPI bus', () => {
+    const pad: KeyboardHardware = setDisplayPin(
+      setDisplay({ ...testPad, wiring: { kind: 'direct', pins: [6, 7] } }, undefined, 'nice_view'),
+      undefined,
+      'cs',
+      5,
+    );
+    const overlay = generateShield(pad)[`${dir('test_pad')}/test_pad.overlay`];
+    expect(overlay).toContain(`&pinctrl {
+    nice_view_spi_default: nice_view_spi_default {
+        group1 {
+            psels = <NRF_PSEL(SPIM_SCK, 0, 20)>,
+                <NRF_PSEL(SPIM_MOSI, 0, 17)>;
+        };
+    };
+    nice_view_spi_sleep: nice_view_spi_sleep {
+        group1 {
+            psels = <NRF_PSEL(SPIM_SCK, 0, 20)>,
+                <NRF_PSEL(SPIM_MOSI, 0, 17)>;
+            low-power-enable;
+        };
+    };
+};
+
+nice_view_spi: &pro_micro_spi {
+    compatible = "nordic,nrf-spim";
+    pinctrl-0 = <&nice_view_spi_default>;
+    pinctrl-1 = <&nice_view_spi_sleep>;
+    pinctrl-names = "default", "sleep";
+    cs-gpios = <&pro_micro 5 GPIO_ACTIVE_HIGH>;
+};
+
+&pro_micro_i2c {
+    status = "disabled";
+};
+`);
+  });
+
+  it('sets up a XIAO nice!view on its default pins, on its half only', () => {
+    const split = setDisplay({ ...testSplit, controller: 'seeeduino_xiao_ble', wiring: { kind: 'matrix', diodeDirection: 'col2row', rows: [0], cols: [1, 2] } }, 'left', 'nice_view');
+    const files = generateShield(split);
+    const left = files[`${dir('test_split')}/test_split_left.overlay`];
+    expect(left).toContain('nice_view_spi: &xiao_spi {');
+    expect(left).toContain('psels = <NRF_PSEL(SPIM_SCK, 1, 13)>,\n                <NRF_PSEL(SPIM_MOSI, 1, 15)>;');
+    expect(left).toContain('cs-gpios = <&xiao_d 9 GPIO_ACTIVE_HIGH>;');
+    expect(left).toContain('&xiao_i2c {\n    status = "disabled";\n};');
+    expect(files[`${dir('test_split')}/test_split_right.overlay`]).not.toContain('nice_view_spi');
+    expect(files[`${dir('test_split')}/test_split.dtsi`]).not.toContain('nice_view_spi');
+  });
+
+  it('moves an OLED’s I2C bus to the chosen pins', () => {
+    const split = setDisplayPin(
+      setDisplayPin(setDisplay({ ...testSplit, controller: 'puchi_ble_v1' }, 'left', 'oled_128x32'), 'left', 'sda', 8),
+      'left',
+      'scl',
+      9,
+    );
+    const left = generateShield(split)[`${dir('test_split')}/test_split_left.overlay`];
+    expect(left).toContain(`&pinctrl {
+    oled_i2c_default: oled_i2c_default {
+        group1 {
+            psels = <NRF_PSEL(TWIM_SDA, 0, 10)>,
+                <NRF_PSEL(TWIM_SCL, 1, 6)>;
+        };
+    };
+    oled_i2c_sleep: oled_i2c_sleep {
+        group1 {
+            psels = <NRF_PSEL(TWIM_SDA, 0, 10)>,
+                <NRF_PSEL(TWIM_SCL, 1, 6)>;
+            low-power-enable;
+        };
+    };
+};
+
+&pro_micro_i2c {
+    status = "okay";
+    pinctrl-0 = <&oled_i2c_default>;
+    pinctrl-1 = <&oled_i2c_sleep>;
+    pinctrl-names = "default", "sleep";
+
+    oled: ssd1306@3c {`);
+  });
+
+  it('adds nothing for displays on their standard pins', () => {
+    const files = Object.values(generateShield(setDisplay(setDisplay(testSplit, 'left', 'nice_view'), 'right', 'oled_128x32'))).join('\n');
+    expect(files).not.toContain('nice_view_spi');
+    expect(files).not.toContain('pinctrl');
   });
 });
 

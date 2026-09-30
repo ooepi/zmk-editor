@@ -1,8 +1,9 @@
 import { isRecord } from '../files/yaml-util.ts';
-import { DISPLAY_KINDS } from './displays.ts';
-import type { DirectWiring, DisplayKind, Encoder, HardwareKey, KeyboardHardware, MatrixWiring, Pin, Wiring } from './types.ts';
+import { DISPLAY_KINDS, DISPLAY_SIGNALS } from './displays.ts';
+import type { DirectWiring, DisplayKind, DisplayPinOverrides, DisplaySignal, Encoder, HardwareKey, KeyboardHardware, MatrixWiring, Pin, Wiring } from './types.ts';
 
-const VERSION = 1;
+/** Version 2 adds `displayPins`; files without them are still written as version 1, unchanged. */
+const VERSION = 2;
 
 export const shieldDir = (name: string) => `config/boards/shields/${name}`;
 export const definitionPath = (name: string) => `${shieldDir(name)}/${name}.editor.json`;
@@ -16,7 +17,7 @@ export function serializeHardware(hw: KeyboardHardware): string {
       : { kind: w.kind, pins: w.pins, ...(w.right ? { right: w.right } : {}) };
   const head = JSON.stringify(
     {
-      version: VERSION,
+      version: hw.displayPins ? VERSION : 1,
       name: hw.name,
       displayName: hw.displayName,
       controller: hw.controller,
@@ -28,6 +29,7 @@ export function serializeHardware(hw: KeyboardHardware): string {
         ? { rightEncoders: hw.rightEncoders.map(({ a, b }) => ({ a, b })) }
         : {}),
       ...(hw.displays ? { displays: { ...(hw.displays.left ? { left: hw.displays.left } : {}), ...(hw.displays.right ? { right: hw.displays.right } : {}) } } : {}),
+      ...(hw.displayPins ? { displayPins: serializeDisplayPins(hw.displayPins) } : {}),
       ...(hw.encoderSpots?.some(Boolean) ? { encoderSpots: hw.encoderSpots.map((s) => (s ? { x: s.x, y: s.y } : null)) } : {}),
       keys: [],
     },
@@ -41,10 +43,16 @@ export function serializeHardware(hw: KeyboardHardware): string {
   return `${head.replace('"keys": []', `"keys": ${list}`)}\n`;
 }
 
+/** Overrides with their signals in a fixed order. */
+function serializeDisplayPins(pins: NonNullable<KeyboardHardware['displayPins']>) {
+  const half = (o: DisplayPinOverrides) => Object.fromEntries(DISPLAY_SIGNALS.filter((s) => s in o).map((s) => [s, o[s]]));
+  return { ...(pins.left ? { left: half(pins.left) } : {}), ...(pins.right ? { right: half(pins.right) } : {}) };
+}
+
 export function parseHardware(text: string): KeyboardHardware {
   const data: unknown = JSON.parse(text);
   if (!isRecord(data)) throw new Error('it isn’t a JSON object');
-  if (data.version !== VERSION) throw new Error(`version ${String(data.version)} isn’t supported; update the editor`);
+  if (data.version !== 1 && data.version !== VERSION) throw new Error(`version ${String(data.version)} isn’t supported; update the editor`);
   const str = (value: unknown, what: string): string => {
     if (typeof value !== 'string') throw new Error(`${what} is missing`);
     return value;
@@ -112,6 +120,23 @@ export function parseHardware(text: string): KeyboardHardware {
     if (data.displays.left !== undefined) displays.left = kind(data.displays.left, 'displays.left');
     if (data.displays.right !== undefined) displays.right = kind(data.displays.right, 'displays.right');
     hardware.displays = displays;
+  }
+  if (data.displayPins !== undefined) {
+    if (!isRecord(data.displayPins)) throw new Error('displayPins must be an object');
+    const displayPins: NonNullable<KeyboardHardware['displayPins']> = {};
+    for (const side of ['left', 'right'] as const) {
+      const half = data.displayPins[side];
+      if (half === undefined) continue;
+      if (!isRecord(half)) throw new Error(`displayPins.${side} must be an object`);
+      const overrides: DisplayPinOverrides = {};
+      for (const [signal, pin] of Object.entries(half)) {
+        if (!(DISPLAY_SIGNALS as string[]).includes(signal)) throw new Error(`displayPins.${side}.${signal} isn’t a display signal`);
+        overrides[signal as DisplaySignal] = pin === null ? null : num(pin, `displayPins.${side}.${signal}`);
+      }
+      if (Object.keys(overrides).length > 0) displayPins[side] = overrides;
+    }
+    // Empty ones would only turn the file into version 2.
+    if (displayPins.left || displayPins.right) hardware.displayPins = displayPins;
   }
   if (data.encoderSpots !== undefined) {
     if (!Array.isArray(data.encoderSpots)) throw new Error('encoderSpots must be a list');

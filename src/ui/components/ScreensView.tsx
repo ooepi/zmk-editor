@@ -1,6 +1,5 @@
 import { useState, type Dispatch } from 'react';
 import type { ZmkConfig } from '../../core/config.ts';
-import { interconnectOf } from '../../core/hardware/interconnects.ts';
 import { COLLECTION_CREDIT, SCREENS, findScreen, type ScreenDef, type ScreenOption, type ScreenPreview } from '../../core/catalog/screens.ts';
 import { moduleRevision, findModule } from '../../core/catalog/modules.ts';
 import {
@@ -92,14 +91,8 @@ export function ScreensView({ config, dispatch, onKeyboard }: ScreensViewProps) 
 
       {slots.length === 0 ? (
         <div className="notice" role="note">
-          None of your builds has a nice!view.{' '}
-          {config.hardware && !interconnectOf(config.hardware.controller).niceViewAdapter ? (
-            <>A nice!view needs a Pro Micro controller; your keyboard uses a {interconnectOf(config.hardware.controller).name}.</>
-          ) : (
-            <>
-              Turn on the nice!view for your keyboard (or add <code>nice_view_adapter nice_view</code> to its build) first.
-            </>
-          )}{' '}
+          None of your builds has a nice!view. Turn on the nice!view for your keyboard (or add{' '}
+          <code>nice_view_adapter nice_view</code> to its build) first.{' '}
           <button type="button" className="link-button" onClick={onKeyboard}>
             Keyboard settings
           </button>

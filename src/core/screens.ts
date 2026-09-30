@@ -40,12 +40,15 @@ function slotLabel(base: string, target: BuildTarget, all: BuildTarget[]): strin
   return same ? `${side} (${target.board})` : side;
 }
 
-/** Builds that use the nice!view adapter, in `build.yaml` order. */
+/** A build with a nice!view: through ZMK's adapter, or with a screen shield on a keyboard that sets up the SPI bus itself. */
+const hasNiceView = (list: string[]) => list.includes(NICE_VIEW_ADAPTER) || list.some((n) => SCREEN_SHIELDS.includes(n));
+
+/** Builds with a nice!view, in `build.yaml` order. */
 export function screenSlots(config: ZmkConfig): ScreenSlot[] {
   const all = config.build.include;
   return all.flatMap((target, index): ScreenSlot[] => {
     const list = names(target);
-    if (!list.includes(NICE_VIEW_ADAPTER)) return [];
+    if (!hasNiceView(list)) return [];
     const label = slotLabel(list[0] ?? '', target, all);
     const shield = list.find((n) => SCREEN_SHIELDS.includes(n));
     if (!shield) {
@@ -100,7 +103,7 @@ function pruneModule(config: ZmkConfig, moduleId: string): ZmkConfig {
 export function setScreen(config: ZmkConfig, index: number, screenId: string | null): ZmkConfig {
   const target = config.build.include[index];
   const list = names(target);
-  if (!target || !list.includes(NICE_VIEW_ADAPTER)) throw new Error('That build has no nice!view.');
+  if (!target || !hasNiceView(list)) throw new Error('That build has no nice!view.');
   const screen = screenId === null ? null : findScreen(screenId);
   if (screenId !== null && !screen) throw new Error(`Unknown screen ${screenId}`);
 

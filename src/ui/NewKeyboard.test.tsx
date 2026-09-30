@@ -552,18 +552,18 @@ describe('Seeed XIAO in the wizard', () => {
     expect(padOrder(xiaoPinout())[0]).toBe('5V');
   });
 
-  it('offers OLEDs on D4/D5 but no nice!view', async () => {
+  it('offers OLEDs on D4/D5 and a nice!view on D9/D10/D8', async () => {
     const user = userEvent.setup();
     render(<App />);
     await wiringOnXiao(user);
     const options = within(screen.getByLabelText('Left display')).getAllByRole('option').map((o) => (o as HTMLOptionElement).value);
-    expect(options).toEqual(['', 'oled_128x32', 'oled_128x64']);
-    expect(screen.getByText(/OLEDs use D4 \(SDA\) and D5 \(SCL\)/)).toBeTruthy();
+    expect(options).toEqual(['', 'nice_view', 'oled_128x32', 'oled_128x64']);
+    expect(within(screen.getByLabelText('Left display')).getByRole('option', { name: 'nice!view (D9, D10, D8)' })).toBeTruthy();
     await user.selectOptions(screen.getByLabelText('Left display'), 'oled_128x32');
     expect(within(xiaoPinout()).getByRole('button', { name: 'D4: Display SDA' })).toBeTruthy();
   });
 
-  it('keeps pins and a nice!view the XIAO doesn’t have when switching to it, and flags them', async () => {
+  it('keeps pins the XIAO doesn’t have when switching to it, and flags them; a nice!view moves to the XIAO’s pins', async () => {
     const hw: KeyboardHardware = { ...testSplit, wiring: { kind: 'matrix', diodeDirection: 'col2row', rows: [21], cols: [6, 7] }, displays: { left: 'nice_view' } };
     localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config: newHardwareConfig(hw, 'v0.3') }));
     const user = userEvent.setup();
@@ -577,13 +577,54 @@ describe('Seeed XIAO in the wizard', () => {
     expect(screen.getByLabelText('Left column 1')).toHaveProperty('value', '7');
     expect(screen.getByText('Row 0 on the left half uses D21, which isn’t a Seeed XIAO pin.')).toBeTruthy();
     expect(screen.getByLabelText('Left display')).toHaveProperty('value', 'nice_view');
-    expect(
-      screen.getByText('The nice!view on the left half needs ZMK’s nice!view adapter, which only fits a Pro Micro; on a Seeed XIAO use an OLED for now.'),
-    ).toBeTruthy();
-    expect(within(screen.getByLabelText('Left display')).getByRole('option', { name: 'nice!view (D1, D2, D3) (not on this controller)' })).toBeTruthy();
+    expect(within(xiaoPinout()).getByRole('button', { name: 'D9: Display CS' })).toBeTruthy();
     // Nothing flagged can be saved.
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(screen.getByRole('button', { name: 'Save hardware' })).toHaveProperty('disabled', true);
+  });
+});
+
+describe('Display pins in the wizard', () => {
+  async function editWiring(user: ReturnType<typeof userEvent.setup>, hw: KeyboardHardware) {
+    localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config: newHardwareConfig(hw, 'v0.3') }));
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: `Change keyboard: ${hw.displayName}` }));
+    await user.click(screen.getByRole('button', { name: 'Edit hardware' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+  }
+  const value = (label: string) => (screen.getByLabelText(label) as HTMLSelectElement).value;
+
+  it('moves a nice!view’s pins by select or pinout, and builds it without the adapter', async () => {
+    const user = userEvent.setup();
+    await editWiring(user, testSplit);
+    await user.selectOptions(screen.getByLabelText('Left display'), 'nice_view');
+    expect([value('Left display CS'), value('Left display data'), value('Left display clock')]).toEqual(['1', '2', '3']);
+    expect(screen.queryByRole('button', { name: 'Use the standard pins for the left display' })).toBeNull();
+
+    await user.click(screen.getByLabelText('Left display CS'));
+    await user.click(within(screen.getByRole('figure', { name: /^Pro Micro pinout/ })).getByRole('button', { name: 'D5' }));
+    expect(value('Left display CS')).toBe('5');
+    expect(screen.getByRole('button', { name: 'D5: Display CS' })).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'Use the standard pins for the left display' }));
+    expect(value('Left display CS')).toBe('1');
+
+    await user.selectOptions(screen.getByLabelText('Left display CS'), '5');
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.click(screen.getByRole('button', { name: 'Save hardware' }));
+    const saved = stored();
+    expect(saved.hardware.displayPins).toEqual({ left: { cs: 5 } });
+    expect(saved.build.include.map((t: { shield: string }) => t.shield)).toEqual(['test_split_left nice_view', 'test_split_right']);
+  });
+
+  it('puts a XIAO nice!view on D9, D10 and D8, and gives an OLED SDA and SCL fields', async () => {
+    const user = userEvent.setup();
+    await editWiring(user, { ...testSplit, controller: 'seeeduino_xiao_ble', wiring: { kind: 'matrix', diodeDirection: 'col2row', rows: [0], cols: [1, 2] } });
+    await user.selectOptions(screen.getByLabelText('Left display'), 'nice_view');
+    expect([value('Left display CS'), value('Left display data'), value('Left display clock')]).toEqual(['9', '10', '8']);
+    await user.selectOptions(screen.getByLabelText('Right display'), 'oled_128x32');
+    expect([value('Right display SDA'), value('Right display SCL')]).toEqual(['4', '5']);
   });
 });

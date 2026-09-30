@@ -29,6 +29,14 @@ describe('nice!view screens', () => {
     ]);
   });
 
+  it('finds nice!views built without the adapter too (the shield sets up their SPI bus)', () => {
+    const xiao = newHardwareConfig(setDisplay({ ...testSplit, controller: 'seeeduino_xiao_ble' }, 'left', 'nice_view'), 'v0.3');
+    expect(screenSlots(xiao).map((s) => [s.index, s.label, s.screen])).toEqual([[0, 'Left', null]]);
+    const gem = setScreen(xiao, 0, 'gem');
+    expect(shields(gem)).toEqual(['test_split_left nice_view_gem', 'test_split_right']);
+    expect(screenSlots(gem)[0]?.screen?.id).toBe('gem');
+  });
+
   it('puts a screen on one half and adds its module at the pinned commit', () => {
     const config = setScreen(load(), 1, 'luffy-wanted');
     expect(shields(config)).toEqual(['lily58_left nice_view_adapter nice_view', 'lily58_right nice_view_adapter nice_luffy_wanted']);

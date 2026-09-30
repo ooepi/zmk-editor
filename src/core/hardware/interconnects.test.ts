@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { HARDWARE_CONTROLLERS } from './controllers.ts';
-import { interconnectOf, pinLabel, PRO_MICRO, SEEED_XIAO } from './interconnects.ts';
+import { interconnectOf, nrfPin, pinLabel, PRO_MICRO, SEEED_XIAO } from './interconnects.ts';
 
 const labels = (pads: { label: string }[]) => pads.map((p) => p.label);
 
@@ -9,7 +9,8 @@ describe('interconnects', () => {
     expect(PRO_MICRO.pins).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16, 18, 19, 20, 21]);
     expect(PRO_MICRO.header.left).toHaveLength(12);
     expect(PRO_MICRO.header.right).toHaveLength(12);
-    expect(PRO_MICRO.header.left[0]?.mcu).toEqual({ nice_nano: 'P0.06', nice_nano_v2: 'P0.06' });
+    expect(PRO_MICRO.header.left[0]?.mcu?.nice_nano_v2).toBe('P0.06');
+    expect(PRO_MICRO.header.left[0]?.mcu?.puchi_ble_v1).toBe('P0.06');
     expect(pinLabel(4)).toBe('D4');
   });
 
@@ -31,6 +32,28 @@ describe('interconnects', () => {
     expect(interconnectOf('nice_nano_v2')).toBe(PRO_MICRO);
     expect(interconnectOf('seeeduino_xiao_ble')).toBe(SEEED_XIAO);
     expect(interconnectOf('nope')).toBe(PRO_MICRO);
+  });
+});
+
+describe('nrfPin', () => {
+  it('maps D-pins to each board’s nRF52840 pins, from ZMK v0.3', () => {
+    expect(nrfPin('nice_nano_v2', 2)).toEqual({ port: 0, pin: 17 });
+    expect(nrfPin('nice_nano', 18)).toEqual({ port: 1, pin: 15 });
+    expect(nrfPin('puchi_ble_v1', 2)).toEqual({ port: 0, pin: 15 });
+    expect(nrfPin('nrfmicro_13', 20)).toEqual({ port: 0, pin: 31 });
+    expect(nrfPin('bluemicro840_v1', 20)).toEqual({ port: 0, pin: 26 });
+    expect(nrfPin('nrfmicro_11_flipped', 2)).toEqual({ port: 0, pin: 30 });
+    expect(nrfPin('mikoto', 6)).toEqual({ port: 1, pin: 0 });
+    expect(nrfPin('mikoto', 0)).toEqual({ port: 0, pin: 4 });
+    expect(nrfPin('seeeduino_xiao_ble', 10)).toEqual({ port: 1, pin: 15 });
+    expect(nrfPin('nice_nano_v2', 11)).toBeUndefined();
+    expect(nrfPin('nope', 2)).toBeUndefined();
+  });
+
+  it('knows every pin of every controller the wizard offers', () => {
+    for (const c of HARDWARE_CONTROLLERS) {
+      for (const pin of interconnectOf(c.id).pins) expect(nrfPin(c.id, pin), `${c.id} D${pin}`).toBeDefined();
+    }
   });
 });
 

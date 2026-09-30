@@ -1,8 +1,8 @@
-import { displayPins, halfDisplay } from './displays.ts';
-import { interconnectOf } from './interconnects.ts';
-import type { DirectWiring, Encoder, HardwareKey, KeyboardHardware, MatrixPins, MatrixWiring, Pin, Side } from './types.ts';
+import { halfDisplayPins, setDisplayPin } from './displays.ts';
+import type { DirectWiring, DisplaySignal, Encoder, HardwareKey, KeyboardHardware, MatrixPins, MatrixWiring, Pin, Side } from './types.ts';
 
-export type PinList = 'rows' | 'cols' | 'pins' | 'encoderA' | 'encoderB';
+/** A list of pin fields; `display.cs` and the like are a half's display pins. */
+export type PinList = 'rows' | 'cols' | 'pins' | 'encoderA' | 'encoderB' | `display.${DisplaySignal}`;
 
 /** The halves to generate: both on a split, one unnamed half otherwise. */
 export function halves(hw: KeyboardHardware): (Side | undefined)[] {
@@ -60,6 +60,7 @@ export function setEncoderPin(hw: KeyboardHardware, side: Side | undefined, inde
 /** Sets one pin. Setting a pin on a mirrored right half gives it its own pins first. */
 export function setPin(hw: KeyboardHardware, side: Side | undefined, list: PinList, index: number, pin: Pin): KeyboardHardware {
   if (list === 'encoderA' || list === 'encoderB') return setEncoderPin(hw, side, index, list === 'encoderA' ? 'a' : 'b', pin);
+  if (list.startsWith('display.')) return setDisplayPin(hw, side, list.slice('display.'.length) as DisplaySignal, pin);
   const put = (pins: Pin[]) => pins.map((p, i) => (i === index ? pin : p));
   const wiring = hw.wiring;
   if (wiring.kind === 'direct') {
@@ -139,7 +140,6 @@ export function pinUses(hw: KeyboardHardware, side?: Side): Map<number, string[]
     add(e.a, `Encoder ${i} A`);
     add(e.b, `Encoder ${i} B`);
   });
-  const display = halfDisplay(hw, side);
-  if (display) for (const { pin, use } of displayPins(display, interconnectOf(hw.controller))) add(pin, use);
+  for (const { pin, use } of halfDisplayPins(hw, side)) add(pin, use);
   return uses;
 }
