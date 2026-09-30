@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, createEvent, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App.tsx';
 import { reloadPreferences } from './state/preferences.ts';
 
@@ -59,7 +59,7 @@ describe('resizing the palette', () => {
 
 const view = () => screen.getByRole('group', { name: 'Keymap view' });
 const stage = () => document.querySelector<HTMLElement>('.camera-stage');
-const zoomLabel = () => screen.getByRole('button', { name: /^Fit the keyboard/ }).textContent;
+const zoomLabel = () => screen.getByRole('toolbar', { name: 'Zoom' }).querySelector('.camera-zoom')?.textContent;
 
 describe('the keymap camera', () => {
   it('zooms with the buttons and fits again', async () => {
@@ -72,7 +72,7 @@ describe('the keymap camera', () => {
     await user.click(screen.getByRole('button', { name: 'Zoom out' }));
     await user.click(screen.getByRole('button', { name: 'Zoom out' }));
     expect(zoomLabel()).toBe('80%');
-    await user.click(screen.getByRole('button', { name: /^Fit the keyboard/ }));
+    await user.click(screen.getByRole('button', { name: 'Fit keyboard' }));
     expect(zoomLabel()).toBe('100%');
     expect(stage()?.style.transform).toBe('');
   });
@@ -101,5 +101,53 @@ describe('the keymap camera', () => {
     render(<App />);
     expect(screen.getByRole('button', { name: 'Dot grid' }).getAttribute('aria-pressed')).toBe('true');
     expect(view()).toBeTruthy();
+  });
+});
+
+/** jsdom has no PointerEvent; set the pointer fields on a plain event. */
+function pointer(type: 'pointerDown' | 'pointerMove' | 'pointerUp', target: HTMLElement, x: number, y: number, button = 0) {
+  const event = createEvent[type](target);
+  for (const [name, value] of Object.entries({ clientX: x, clientY: y, button, pointerId: 1 })) Object.defineProperty(event, name, { value });
+  fireEvent(target, event);
+}
+
+/** The keyboard drawn at (100, 100), 800×300, moved by the camera's translate. */
+function fakeGeometry() {
+  const canvas = document.querySelector<HTMLElement>('.canvas');
+  const board = screen.getByRole('group', { name: 'Keyboard layout' });
+  if (!canvas) throw new Error('no canvas');
+  vi.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({ left: 0, top: 0, right: 1000, bottom: 600, width: 1000, height: 600 } as DOMRect);
+  vi.spyOn(board, 'getBoundingClientRect').mockImplementation(() => {
+    const m = /translate\((-?[\d.]+)px, (-?[\d.]+)px\)/.exec(stage()?.style.transform ?? '');
+    const x = 100 + Number(m?.[1] ?? 0);
+    const y = 100 + Number(m?.[2] ?? 0);
+    return { left: x, top: y, right: x + 800, bottom: y + 300, width: 800, height: 300 } as DOMRect;
+  });
+  return canvas;
+}
+
+describe('finding the keyboard again', () => {
+  it('offers to bring the keyboard back once it is out of view', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const canvas = fakeGeometry();
+    expect(screen.queryByRole('button', { name: /Bring it back/ })).toBeNull();
+    pointer('pointerDown', canvas, 500, 300, 1);
+    pointer('pointerMove', canvas, 2500, 300, 1);
+    pointer('pointerUp', canvas, 2500, 300, 1);
+    await user.click(await screen.findByRole('button', { name: /Bring it back/ }));
+    expect(stage()?.style.transform).toBe('');
+    await waitFor(() => expect(screen.queryByRole('button', { name: /Bring it back/ })).toBeNull());
+  });
+});
+
+describe('box select', () => {
+  it('starts anywhere on the empty canvas, not only on the keyboard', () => {
+    render(<App />);
+    const canvas = fakeGeometry();
+    pointer('pointerDown', canvas, 20, 20);
+    pointer('pointerMove', canvas, 990, 590);
+    pointer('pointerUp', canvas, 990, 590);
+    expect(screen.getByRole('heading', { name: '58 keys selected · BASE' })).toBeTruthy();
   });
 });

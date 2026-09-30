@@ -230,6 +230,8 @@
   overflow: hidden;
   /* The keyboard sizes itself to this area's height too (see .keyboard). */
   container-type: size;
+  /* A box-select drag that starts beside the keyboard shouldn't select page text. */
+  user-select: none;
 }
 
 /* What the camera scales and moves: the keyboard and its encoders, from the top-left corner. */
@@ -271,20 +273,36 @@
 }
 
 .camera-zoom {
-  min-width: 52px;
-  height: 32px;
-  padding: 0 var(--s-2);
-  border: 0;
-  border-radius: var(--r-pill);
-  background: transparent;
+  min-width: 48px;
   color: var(--text);
   font-size: var(--fs-sm);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* When the keyboard has been panned or zoomed out of sight. */
+.camera-lost {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-4);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
+  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
   cursor: pointer;
 }
 
-.camera-zoom:hover {
+.camera-lost:hover {
   background: var(--surface-2);
 }
 

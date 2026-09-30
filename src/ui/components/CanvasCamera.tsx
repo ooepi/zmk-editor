@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent, type PointerEvent, type ReactNode } from 'react';
+import { Icon } from './Icon.tsx';
 import { setPreferences, usePreferences } from '../state/preferences.ts';
 import { IconButton } from './ui/IconButton.tsx';
 
@@ -15,6 +16,8 @@ interface Camera {
 }
 
 const HOME: Camera = { x: 0, y: 0, zoom: 1 };
+/** Less than this share of the keyboard on screen counts as lost. */
+const LOST = 0.15;
 const clampZoom = (z: number) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
 
 interface CanvasCameraProps {
@@ -39,6 +42,24 @@ export function CanvasCamera({ enabled, onEmptyClick, children }: CanvasCameraPr
   const space = useRef(false);
   const [panning, setPanning] = useState(false);
   const cam = enabled ? camera : HOME;
+  /** The keyboard is (nearly) out of view: offer to bring it back. */
+  const [lost, setLost] = useState(false);
+
+  // After the camera moves (and the page has drawn it), check how much of the keyboard still shows.
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      const area = canvas.current?.getBoundingClientRect();
+      const board = canvas.current?.querySelector('.keyboard')?.getBoundingClientRect();
+      if (!enabled || !area || !board || area.width === 0 || board.width * board.height === 0) {
+        setLost(false);
+        return;
+      }
+      const w = Math.max(0, Math.min(area.right, board.right) - Math.max(area.left, board.left));
+      const h = Math.max(0, Math.min(area.bottom, board.bottom) - Math.max(area.top, board.top));
+      setLost((w * h) / (board.width * board.height) < LOST);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [camera, enabled]);
 
   /** Zooms by `factor`, keeping the point under (clientX, clientY) where it is. */
   const zoomAt = (factor: number, clientX: number, clientY: number) =>
@@ -133,20 +154,21 @@ export function CanvasCamera({ enabled, onEmptyClick, children }: CanvasCameraPr
       <div ref={stage} className="camera-stage" style={moved ? { transform: `translate(${cam.x}px, ${cam.y}px) scale(${cam.zoom})` } : undefined}>
         {children}
       </div>
+      {enabled && lost && (
+        <button type="button" className="camera-lost" onClick={() => setCamera(HOME)}>
+          <Icon name="focus" size={16} />
+          Lost the keyboard? Bring it back
+        </button>
+      )}
       {enabled && (
         <div className="camera-controls" role="toolbar" aria-label="Zoom">
           <IconButton icon="minus" label="Zoom out" disabled={camera.zoom <= MIN_ZOOM} onClick={() => zoomAtCenter(1 / STEP)} />
-          <button
-            type="button"
-            className="camera-zoom"
-            aria-label={`Fit the keyboard (${Math.round(camera.zoom * 100)}%)`}
-            title="Fit the keyboard"
-            onClick={() => setCamera(HOME)}
-          >
+          <span className="camera-zoom" aria-live="polite">
             {Math.round(camera.zoom * 100)}%
-          </button>
+          </span>
           <IconButton icon="plus" label="Zoom in" disabled={camera.zoom >= MAX_ZOOM} onClick={() => zoomAtCenter(STEP)} />
           <span className="camera-divider" aria-hidden="true" />
+          <IconButton icon="focus" label="Fit keyboard" title="Fit the keyboard in view" onClick={() => setCamera(HOME)} />
           <IconButton icon="grid" label="Dot grid" aria-pressed={canvasGrid} onClick={() => setPreferences({ canvasGrid: !canvasGrid })} />
         </div>
       )}
