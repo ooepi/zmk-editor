@@ -4,6 +4,7 @@ import { layoutLabel, physicalLayoutNode } from '../layouts/dtsi.ts';
 import { normalizedLayout } from '../layouts/normalize.ts';
 import { definitionPath, parseHardware, serializeHardware, shieldDir } from './definition.ts';
 import { halfDisplay } from './displays.ts';
+import { interconnectOf } from './interconnects.ts';
 import { sensorLabel, sensorOrder } from './encoders.ts';
 import { hardwareLayout, type DisplayKind, type KeyboardHardware, type Pin, type Side } from './types.ts';
 import { directPins, halfSize, matrixPins } from './wiring.ts';
@@ -33,13 +34,14 @@ endchoice
 function encoderNodes(hw: KeyboardHardware): string {
   const sensors = sensorOrder(hw);
   if (sensors.length === 0) return '';
+  const { gpio } = interconnectOf(hw.controller);
   const pin = (p: Pin) => String(p ?? '?').padStart(2);
   const nodes = sensors.map(({ side, index, encoder }) =>
     [
       `    ${sensorLabel(side, index)}: ${side ? `encoder_${side}_${index}` : `encoder_${index}`} {`,
       '        compatible = "alps,ec11";',
-      `        a-gpios = <&pro_micro ${pin(encoder.a)} ${ENCODER_FLAGS}>;`,
-      `        b-gpios = <&pro_micro ${pin(encoder.b)} ${ENCODER_FLAGS}>;`,
+      `        a-gpios = <&${gpio} ${pin(encoder.a)} ${ENCODER_FLAGS}>;`,
+      `        b-gpios = <&${gpio} ${pin(encoder.b)} ${ENCODER_FLAGS}>;`,
       '        steps = <80>;',
       ...(hw.split ? ['        status = "disabled";'] : []),
       '    };',
@@ -55,14 +57,14 @@ function encoderNodes(hw: KeyboardHardware): string {
   return [...nodes, sensorsNode].join('\n\n');
 }
 
-/** OLED nodes as in ZMK's Corne (128×32) and Kyria (128×64), on the Pro Micro's I2C, plus the chosen display. */
-function oledNodes(kind: DisplayKind): string {
+/** OLED nodes as in ZMK's Corne (128×32) and Kyria (128×64), on the controller's I2C bus, plus the chosen display. */
+function oledNodes(kind: DisplayKind, i2c: string): string {
   const size =
     kind === 'oled_128x32'
       ? ['        width = <128>;', '        height = <32>;', '        segment-offset = <0>;', '        page-offset = <0>;', '        display-offset = <0>;', '        multiplex-ratio = <31>;', '        segment-remap;', '        com-invdir;', '        com-sequential;', '        inversion-on;', '        prechargep = <0x22>;']
       : ['        width = <128>;', '        height = <64>;', '        segment-offset = <0>;', '        page-offset = <0>;', '        display-offset = <0>;', '        multiplex-ratio = <63>;', '        prechargep = <0x22>;', '        inversion-on;'];
   return [
-    '&pro_micro_i2c {',
+    `&${i2c} {`,
     '    status = "okay";',
     '',
     '    oled: ssd1306@3c {',
@@ -151,7 +153,7 @@ function zmkYml(hw: KeyboardHardware): string {
     `id: ${hw.name}`,
     `name: ${yamlScalar(hw.displayName)}`,
     'type: shield',
-    'requires: [pro_micro]',
+    `requires: [${interconnectOf(hw.controller).id}]`,
     'features:',
     '  - keys',
   ];
@@ -164,16 +166,17 @@ const INPUT = '(GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)';
 const OUTPUT = 'GPIO_ACTIVE_HIGH';
 const DIRECT = '(GPIO_ACTIVE_LOW | GPIO_PULL_UP)';
 
-function gpioList(property: string, pins: Pin[], flags: string, indent: string): string {
-  const entries = pins.map((pin, i) => `${indent}    ${i === 0 ? '=' : ','} <&pro_micro ${String(pin ?? '?').padStart(2)} ${flags}>`);
+function gpioList(gpio: string, property: string, pins: Pin[], flags: string, indent: string): string {
+  const entries = pins.map((pin, i) => `${indent}    ${i === 0 ? '=' : ','} <&${gpio} ${String(pin ?? '?').padStart(2)} ${flags}>`);
   return [`${indent}${property}`, ...entries, `${indent}    ;`].join('\n');
 }
 
 function kscanPins(hw: KeyboardHardware, side: Side | undefined, indent: string): string {
-  if (hw.wiring.kind === 'direct') return gpioList('input-gpios', directPins(hw.wiring, side), DIRECT, indent);
+  const { gpio } = interconnectOf(hw.controller);
+  if (hw.wiring.kind === 'direct') return gpioList(gpio, 'input-gpios', directPins(hw.wiring, side), DIRECT, indent);
   const { rows, cols } = matrixPins(hw.wiring, side);
   const rowsRead = hw.wiring.diodeDirection === 'col2row';
-  return [gpioList('row-gpios', rows, rowsRead ? INPUT : OUTPUT, indent), gpioList('col-gpios', cols, rowsRead ? OUTPUT : INPUT, indent)].join('\n\n');
+  return [gpioList(gpio, 'row-gpios', rows, rowsRead ? INPUT : OUTPUT, indent), gpioList(gpio, 'col-gpios', cols, rowsRead ? OUTPUT : INPUT, indent)].join('\n\n');
 }
 
 function kscanNode(hw: KeyboardHardware, withPins: boolean): string {
@@ -208,7 +211,7 @@ function transformNode(hw: KeyboardHardware): string {
 /** A one-piece keyboard's OLED, appended after the root block of its overlay. */
 function oledSection(hw: KeyboardHardware, withPins: boolean): string {
   const display = halfDisplay(hw);
-  return withPins && isOled(display) ? `\n${oledNodes(display)}\n` : '';
+  return withPins && isOled(display) ? `\n${oledNodes(display, interconnectOf(hw.controller).i2c)}\n` : '';
 }
 
 function rootFile(hw: KeyboardHardware, withPins: boolean): string {
@@ -240,7 +243,7 @@ function halfOverlay(hw: KeyboardHardware, side: Side): string {
   }
   parts.push(`&kscan0 {\n${kscanPins(hw, side, '    ')}\n};`);
   const display = halfDisplay(hw, side);
-  if (isOled(display)) parts.push(oledNodes(display));
+  if (isOled(display)) parts.push(oledNodes(display, interconnectOf(hw.controller).i2c));
   return `${parts.join('\n\n')}\n`;
 }
 

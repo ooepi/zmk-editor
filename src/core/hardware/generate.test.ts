@@ -373,6 +373,30 @@ endif
   });
 });
 
+describe('generateShield: Seeed XIAO', () => {
+  const xiaoPad: KeyboardHardware = { ...testPad, controller: 'seeeduino_xiao_ble', wiring: { kind: 'direct', pins: [0, 10] } };
+
+  it('uses &xiao_d pins and requires the seeed_xiao interconnect, like ZMK’s tester_xiao', () => {
+    const files = generateShield(xiaoPad);
+    expect(files[`${dir('test_pad')}/test_pad.overlay`]).toContain(`        input-gpios
+            = <&xiao_d  0 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+            , <&xiao_d 10 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+            ;`);
+    expect(files[`${dir('test_pad')}/test_pad.zmk.yml`]).toContain('requires: [seeed_xiao]\n');
+  });
+
+  it('puts encoders on &xiao_d and an OLED on &xiao_i2c', () => {
+    const split: KeyboardHardware = {
+      ...setDisplay({ ...testSplit, controller: 'seeeduino_xiao_ble' }, 'left', 'oled_128x32'),
+      encoders: [{ a: 8, b: 9 }],
+    };
+    const files = Object.values(generateShield(split)).join('\n');
+    expect(files).toContain('a-gpios = <&xiao_d  8 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;');
+    expect(generateShield(split)[`${dir('test_split')}/test_split_left.overlay`]).toContain('&xiao_i2c {\n    status = "okay";');
+    expect(files).not.toContain('pro_micro');
+  });
+});
+
 describe('staleShieldFiles', () => {
   it('lists shield files the repo’s previous definition generated and the current one no longer does', () => {
     const repo = generateShield(setDisplay(testSplit, 'left', 'oled_128x32'));
