@@ -168,4 +168,88 @@ describe('layerWarnings', () => {
       { kind: 'unreachable', layer: 1 },
     ]);
   });
+
+  it('warns about conditional layers that use layers that do not exist', () => {
+    const tri = `conditional_layers { compatible = "zmk,conditional-layers"; tri { if-layers = <1 9>; then-layer = <2>; }; };`;
+    expect(layerWarnings(keymap(['&mo 1 &kp A', '&trans &trans', '&kp B &kp C'], tri))[0]).toEqual({
+      kind: 'missing-layer',
+      token: '9',
+      from: { kind: 'conditional', name: 'tri', ifLayers: [1, 9] },
+    });
+  });
+
+  it('counts toggling another layer on the way back', () => {
+    expect(kinds(keymap(['&kp A &to 1', '&kp B &tog 2', '&to 0 &kp C']))).toEqual([]);
+  });
+
+  it('follows #defines that name other #defines', () => {
+    const model = keymap(['&kp A &mo NAV', '&kp B &trans'], '', '#define L_NAV 1\n#define NAV L_NAV');
+    expect(layerReferences(model)[0]).toMatchObject({ to: 1, token: 'NAV' });
+    expect(layerWarnings(model)).toEqual([]);
+  });
+
+  it('does not guess about layers named outside the keymap, and says so', () => {
+    const combos = `combos { compatible = "zmk,combos"; back { key-positions = <0 1>; bindings = <&to 0>; layers = <GAME>; }; };`;
+    const model = keymap(['&kp A &mo NAV &to 2', '&kp B &trans &trans', '&kp C &kp D &kp E'], combos, '#include "layers.h"');
+    expect(layerWarnings(model)).toEqual([{ kind: 'unresolved', tokens: ['NAV', 'GAME'] }]);
+    expect(layerReferences(model).find((r) => r.from.kind === 'combo')?.from).toEqual({
+      kind: 'combo',
+      name: 'back',
+      layers: 'all',
+    });
+  });
+
+  it('knows custom sticky, toggle, momentary and to-layer behaviors', () => {
+    const extra = `behaviors {
+      sl2: sl2 { compatible = "zmk,behavior-sticky-key"; #binding-cells = <1>; bindings = <&mo>; };
+      tog_on: tog_on { compatible = "zmk,behavior-toggle-layer"; #binding-cells = <1>; toggle-mode = "on"; };
+      mo2: mo2 { compatible = "zmk,behavior-momentary-layer"; #binding-cells = <1>; };
+      to2: to2 { compatible = "zmk,behavior-to-layer"; #binding-cells = <1>; };
+    };`;
+    const model = keymap(
+      [
+        '&sl2 1 &tog_on 2 &mo2 3 &to2 0',
+        '&trans &trans &trans &trans',
+        '&kp A &trans &kp B &kp C',
+        '&trans &trans &trans &trans',
+      ],
+      extra,
+    );
+    expect(layerReferences(model).map((r) => [r.behavior, r.to, r.kind, r.mode])).toEqual([
+      ['sl2', 1, 'sticky', undefined],
+      ['tog_on', 2, 'toggle', 'on'],
+      ['mo2', 3, 'momentary', undefined],
+      ['to2', 0, 'to', undefined],
+    ]);
+    // Layer 2 falls through to &tog_on, which only turns it on.
+    expect(layerWarnings(model)).toEqual([{ kind: 'no-way-back', layer: 2, entries: [layerReferences(model)[1]] }]);
+  });
+
+  it('knows macros that pass their param to a layer behavior', () => {
+    const extra = `behaviors {
+      my_mo: my_mo { compatible = "zmk,behavior-macro-one-param"; #binding-cells = <1>; bindings = <&macro_param_1to1>, <&mo MACRO_PLACEHOLDER>; };
+    };`;
+    const model = keymap(['&kp A &my_mo 1', '&kp B &trans'], extra);
+    expect(layerReferences(model)).toEqual([
+      { from: { kind: 'key', layer: 0, key: 1 }, to: 1, token: '1', behavior: 'mo', via: 'my_mo', kind: 'momentary' },
+    ]);
+    expect(layerWarnings(model)).toEqual([]);
+  });
+
+  it('does not say there is no way back from a conditional layer, which turns itself off', () => {
+    const tri = `conditional_layers { compatible = "zmk,conditional-layers"; tri { if-layers = <1 2>; then-layer = <3>; }; };`;
+    expect(
+      kinds(keymap(['&mo 1 &mo 2 &tog 3', '&trans &trans &trans', '&trans &trans &trans', '&kp A &kp B &kp C'], tri)),
+    ).toEqual([]);
+  });
+
+  it('is quick on a big keymap with nowhere to go', () => {
+    // Every base key jumps to a layer, and every layer only holds others: lots of layer sets to search, none with a way out.
+    const row = (layer: number) =>
+      Array.from({ length: 100 }, (_, k) => (layer === 0 ? `&to ${(k % 9) + 1}` : `&mo ${(k % 9) + 1}`)).join(' ');
+    const model = keymap(Array.from({ length: 10 }, (_, l) => row(l)));
+    const start = performance.now();
+    layerWarnings(model);
+    expect(performance.now() - start).toBeLessThan(250);
+  });
 });

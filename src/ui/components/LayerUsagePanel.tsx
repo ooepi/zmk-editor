@@ -1,7 +1,6 @@
-import { useMemo, type Dispatch, type ReactNode } from 'react';
+import { Fragment, useMemo, type Dispatch, type ReactNode } from 'react';
 import {
-  layerReferences,
-  layerWarnings,
+  layerUsage,
   type LayerRefKind,
   type LayerReference,
   type LayerSource,
@@ -19,6 +18,40 @@ const KIND_TEXT: Record<LayerRefKind, string> = {
   conditional: 'together',
 };
 
+/** How many transparent base keys the warning names before "and N more". */
+const BASE_TRANS_SHOWN = 6;
+
+/** A stable React key for where a reference is. */
+function sourceKey(from: LayerSource): string {
+  switch (from.kind) {
+    case 'key':
+      return `k${from.layer}.${from.key}`;
+    case 'encoder':
+      return `e${from.layer}.${from.sensor}`;
+    case 'combo':
+    case 'conditional':
+      return `${from.kind}:${from.name}`;
+  }
+}
+
+function warningKey(w: LayerWarning): string {
+  switch (w.kind) {
+    case 'missing-layer':
+      return `missing:${sourceKey(w.from)}:${w.token}`;
+    case 'unreachable':
+    case 'no-way-back':
+      return `${w.kind}:${w.layer}`;
+    case 'unresolved':
+    case 'base-trans':
+      return w.kind;
+  }
+}
+
+/** Refs that turn the layer on from elsewhere: a layer's own off switch isn't a way in. */
+function waysIn(refs: LayerReference[], layer: number): LayerReference[] {
+  return refs.filter((r) => r.to === layer && r.mode !== 'off' && !('layer' in r.from && r.from.layer === layer));
+}
+
 interface Props {
   keymap: KeymapModel;
   dispatch: Dispatch<EditorAction>;
@@ -27,8 +60,7 @@ interface Props {
 
 /** What turns each layer on, and layer mistakes to fix before a build. */
 export function LayerUsagePanel({ keymap, dispatch, onOpenCombo }: Props) {
-  const refs = useMemo(() => layerReferences(keymap), [keymap]);
-  const warnings = useMemo(() => layerWarnings(keymap), [keymap]);
+  const { references: refs, warnings } = useMemo(() => layerUsage(keymap), [keymap]);
   const layerName = (index: number) => {
     const layer = keymap.layers[index];
     return layer ? (layer.displayName ?? layer.name) : `Layer ${index}`;
@@ -59,9 +91,7 @@ export function LayerUsagePanel({ keymap, dispatch, onOpenCombo }: Props) {
   /** A button that goes to the key, encoder or combo; conditional layers have nowhere to go. */
   const source = (from: LayerSource, label: string, children: ReactNode) =>
     from.kind === 'conditional' ? (
-      <span className="chip layer-ref static" aria-label={label}>
-        {children}
-      </span>
+      <span className="chip layer-ref static">{children}</span>
     ) : (
       <button type="button" className="chip layer-ref" aria-label={label} onClick={() => go(from)}>
         {children}
@@ -89,6 +119,13 @@ export function LayerUsagePanel({ keymap, dispatch, onOpenCombo }: Props) {
             {source(w.from, `Go to ${where(w.from)}`, where(w.from))} uses layer {w.token}, which doesn't exist.
           </>
         );
+      case 'unresolved':
+        return (
+          <>
+            {w.tokens.join(', ')} {w.tokens.length === 1 ? 'is a layer name' : 'are layer names'} defined outside this keymap, so
+            which layers you can reach isn't checked.
+          </>
+        );
       case 'unreachable':
         return (
           <>
@@ -100,7 +137,7 @@ export function LayerUsagePanel({ keymap, dispatch, onOpenCombo }: Props) {
           <>
             <strong>{layerName(w.layer)}</strong>: no way back. Once{' '}
             {w.entries.map((e, i) => (
-              <span key={i}>
+              <span key={sourceKey(e.from)}>
                 {i > 0 && ' or '}
                 {source(e.from, `Go to ${where(e.from)}`, where(e.from))}
               </span>
@@ -111,14 +148,15 @@ export function LayerUsagePanel({ keymap, dispatch, onOpenCombo }: Props) {
       case 'base-trans':
         return (
           <>
-            {w.keys.map((key, i) => (
+            {w.keys.slice(0, BASE_TRANS_SHOWN).map((key, i) => (
               <span key={key}>
                 {i > 0 && ' '}
                 {source({ kind: 'key', layer: 0, key }, `Go to ${where({ kind: 'key', layer: 0, key })}`, `Key ${key}`)}
               </span>
-            ))}{' '}
-            on {layerName(0)} {w.keys.length === 1 ? 'is' : 'are'} transparent, with no layer below:{' '}
-            {w.keys.length === 1 ? 'it does' : 'they do'} nothing.
+            ))}
+            {w.keys.length > BASE_TRANS_SHOWN && ` and ${w.keys.length - BASE_TRANS_SHOWN} more`} on {layerName(0)}{' '}
+            {w.keys.length === 1 ? 'is' : 'are'} transparent, with no layer below: {w.keys.length === 1 ? 'it does' : 'they do'}{' '}
+            nothing.
           </>
         );
     }
@@ -132,10 +170,12 @@ export function LayerUsagePanel({ keymap, dispatch, onOpenCombo }: Props) {
       icon="layers"
       description="What turns each layer on. Pick one to go to it."
     >
-      {warnings.length > 0 && (
+      {warnings.length === 0 ? (
+        <p className="muted small">No layer problems found.</p>
+      ) : (
         <ul className="layer-warnings" aria-label="Layer problems">
-          {warnings.map((w, i) => (
-            <li key={i} className="notice">
+          {warnings.map((w) => (
+            <li key={warningKey(w)} className="notice">
               {warningText(w)}
             </li>
           ))}
@@ -143,7 +183,7 @@ export function LayerUsagePanel({ keymap, dispatch, onOpenCombo }: Props) {
       )}
       <ul className="layer-usage">
         {keymap.layers.map((layer, index) => {
-          const into = refs.filter((r) => r.to === index);
+          const into = waysIn(refs, index);
           return (
             <li key={layer.uid ?? layer.name} aria-label={layerName(index)}>
               <span className="layer-usage-name">{layerName(index)}</span>
@@ -153,10 +193,8 @@ export function LayerUsagePanel({ keymap, dispatch, onOpenCombo }: Props) {
                 <span className="muted small">Nothing turns it on</span>
               ) : (
                 <div className="chips">
-                  {into.map((r, i) => (
-                    <span key={i} className="layer-ref-item">
-                      {refChip(r)}
-                    </span>
+                  {into.map((r) => (
+                    <Fragment key={`${sourceKey(r.from)}:${r.behavior}:${r.token}`}>{refChip(r)}</Fragment>
                   ))}
                 </div>
               )}

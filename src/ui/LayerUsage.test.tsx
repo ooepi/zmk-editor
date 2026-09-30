@@ -33,6 +33,7 @@ describe('layer usage', () => {
   it('says the demo keymap has no layer problems', () => {
     render(<App />);
     expect(usage().queryByRole('list', { name: 'Layer problems' })).toBeNull();
+    expect(usage().getByText('No layer problems found.')).toBeTruthy();
     expect(within(usage().getByRole('listitem', { name: 'BASE' })).getByText('Always on')).toBeTruthy();
   });
 
@@ -52,6 +53,29 @@ describe('layer usage', () => {
     await user.click(problems.getByRole('button', { name: 'Go to l0 key 1' }));
     expect(dispatch.mock.calls).toEqual([[{ type: 'selectLayer', index: 0 }], [{ type: 'selectKey', index: 1 }]]);
     expect(within(screen.getByRole('listitem', { name: 'l2' })).getByText('Nothing turns it on')).toBeTruthy();
+  });
+
+  it("does not list a layer's own off switch as a way in", () => {
+    render(<App />);
+    const qwer = within(usage().getByRole('listitem', { name: 'QWER' }));
+    expect(qwer.getByRole('button', { name: 'PROG key 42: toggle (&tog)' })).toBeTruthy();
+    expect(qwer.queryByRole('button', { name: /^QWER key/ })).toBeNull();
+  });
+
+  it('names a few transparent base keys, then counts the rest', () => {
+    render(<LayerUsagePanel keymap={keymap([Array(9).fill('&trans').join(' ')])} dispatch={vi.fn()} onOpenCombo={vi.fn()} />);
+    const problem = within(screen.getByRole('list', { name: 'Layer problems' })).getByRole('listitem');
+    expect(within(problem).getAllByRole('button')).toHaveLength(6);
+    expect(problem.textContent).toContain('and 3 more on l0 are transparent');
+  });
+
+  it('says when layer names come from outside the keymap', () => {
+    const model = importKeymap(`#include "layers.h"
+/ { keymap { compatible = "zmk,keymap"; l0 { bindings = <&mo NAV &kp A>; }; l1 { bindings = <&trans &trans>; }; }; };`).model;
+    render(<LayerUsagePanel keymap={model} dispatch={vi.fn()} onOpenCombo={vi.fn()} />);
+    expect(screen.getByRole('list', { name: 'Layer problems' }).textContent).toBe(
+      "NAV is a layer name defined outside this keymap, so which layers you can reach isn't checked.",
+    );
   });
 
   it('opens a combo that turns a layer on', async () => {
