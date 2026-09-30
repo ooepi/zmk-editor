@@ -40,11 +40,12 @@ describe('the keyboard connection in the top bar', () => {
     expect(button.title).toContain('Chrome or Edge');
   });
 
-  it('takes the keymap from the keyboard when the editor holds the demo', async () => {
+  it('compares instead of replacing, even with the demo open', async () => {
     const user = userEvent.setup();
     renderWith(fakeDeviceFor({ ...demoConfig().config, studio: { device: 'Studio Board' } }, { locked: false }));
     await user.click(topbar().getByRole('button', { name: 'Connect keyboard' }));
-    await waitFor(() => expect(topbar().getByRole('button', { name: 'Change keyboard: Studio Board' })).toBeTruthy());
+    await waitFor(() => expect(topbar().getByRole('status').textContent).toBe('Studio BoardLive'));
+    expect(topbar().getByRole('button', { name: 'Change keyboard: Lily58' })).toBeTruthy();
   });
 });
 
@@ -143,6 +144,7 @@ describe('the mismatch dialog', () => {
     await waitFor(() => expect(mismatchDialog()).not.toBeNull());
     const dialog = within(mismatchDialog() as HTMLElement);
     expect(dialog.queryByRole('button', { name: 'Send my config to the keyboard' })).toBeNull();
+    expect(mismatchDialog()?.textContent).toContain('not committed');
     await user.click(dialog.getByRole('button', { name: 'Edit the keyboard’s own keymap' }));
     await waitFor(() => expect(topbar().getByRole('button', { name: 'Change keyboard: Other Board' })).toBeTruthy());
   });
@@ -159,8 +161,8 @@ async function studioOnly(user: ReturnType<typeof userEvent.setup>, { without = 
     spare,
     layout: (await full.layouts()).layouts[0] ?? { name: '', keys: [] },
   });
-  renderWith(device);
-  await user.click(topbar().getByRole('button', { name: 'Connect keyboard' }));
+  renderWith(device, true);
+  await user.click(screen.getByRole('button', { name: 'Connect a Studio keyboard' }));
   await waitFor(() => expect(topbar().getByRole('button', { name: 'Change keyboard: Studio Board' })).toBeTruthy());
   return device;
 }

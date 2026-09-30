@@ -42,3 +42,11 @@ describe('withLayerUids', () => {
     expect(generateKeymap(withLayerUids(plain))).toBe(generateKeymap(plain));
   });
 });
+
+describe('withLayerUids after a reload', () => {
+  it('never reuses a uid already in the model (stored configs keep theirs)', () => {
+    const stored = { ...model(), layers: model().layers.map((l, i) => ({ ...l, uid: 1_000_000 + i })) };
+    const added = withLayerUids(addLayer(withLayerUids(stored), 'New'));
+    expect(added.layers[2]?.uid).toBeGreaterThan(1_000_001);
+  });
+});

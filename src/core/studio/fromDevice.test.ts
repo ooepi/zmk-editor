@@ -99,3 +99,36 @@ describe('compareKeymaps', () => {
     expect(compareKeymaps(bigger, other, device).keyCountMatches).toBe(false);
   });
 });
+
+describe('unnamed layers', () => {
+  const plain = () =>
+    withLayerUids(
+      importKeymap(`/ {
+    keymap {
+        compatible = "zmk,keymap";
+        base { bindings = <&kp A &mo 1>; };
+        fn { bindings = <&kp B &trans>; };
+    };
+};
+`).model,
+    );
+  const board = (): DeviceKeymap => ({
+    layers: [
+      { id: 0, name: '', bindings: [kp('A'), { behaviorId: 2, param1: 3, param2: 0 }] },
+      { id: 3, name: '', bindings: [kp('B'), trans] },
+    ],
+    availableLayers: 0,
+  });
+
+  it('match a keyboard that reports no names (ZMK sends "" without display-name)', () => {
+    expect(compareKeymaps(plain(), board(), device).summary).toBe('');
+  });
+
+  it('keep the keymap without display-names when read back', () => {
+    const { keymap } = keymapFromDevice(plain(), board(), device, { invent: false });
+    expect(keymap.layers.map((l) => [l.name, l.displayName])).toEqual([
+      ['base', undefined],
+      ['fn', undefined],
+    ]);
+  });
+});

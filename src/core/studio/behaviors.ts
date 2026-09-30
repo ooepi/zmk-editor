@@ -68,10 +68,13 @@ export const BUILTIN_DISPLAY_NAMES: Record<string, string> = {
   'Studio Unlock': 'studio_unlock',
 };
 
-/** The name ZMK reports for a keymap behavior: its display-name, else its node name. */
+/** The name ZMK reports for a keymap behavior: its display-name, else its (older) label, else its node name. */
 export function deviceName(behavior: Behavior): string {
-  const display = behavior.properties.find((p) => p.name === 'display-name')?.values[0];
-  return display?.kind === 'string' ? display.value : behavior.name;
+  for (const property of ['display-name', 'label']) {
+    const value = behavior.properties.find((p) => p.name === property)?.values[0];
+    if (value?.kind === 'string') return value.value;
+  }
+  return behavior.name;
 }
 
 export interface BehaviorMap {

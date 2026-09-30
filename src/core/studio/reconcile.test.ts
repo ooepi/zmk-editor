@@ -94,3 +94,29 @@ describe('desiredKeymap', () => {
     expect(desired.layers[0]?.bindings[0]).toBeNull();
   });
 });
+
+describe('reconcile safety', () => {
+  it('ignores a second layer claiming the same keyboard id', () => {
+    const twin = { ...start, layers: [...start.layers, ...start.layers.slice(1, 2).map((l) => ({ ...l, uid: 999 }))] };
+    const ids = uidToId();
+    ids.set(999, 1);
+    const result = ops(twin, ids);
+    expect(result.filter((o) => o.kind === 'removeLayer')).toEqual([]);
+    expect(result).toContainEqual({ kind: 'addLayer', uid: 999 });
+  });
+
+  it('keeps syncing keys when a layer the keyboard refused to add is left out', () => {
+    const added = withLayerUids(setBinding(withLayerUids(addLayer(start, 'Sym')), 1, 0, { behavior: 'kp', params: ['C'] }));
+    const uid = added.layers[2]?.uid ?? -1;
+    const desired = desiredKeymap(added, uidToId(), device, resolveBehaviors(device, added));
+    expect(reconcile(mirror(), desired, new Set([uid]))).toEqual([{ kind: 'setBinding', layerId: 1, key: 0, binding: kp('C') }]);
+  });
+
+  it('waits for a layer whose keyboard id is gone instead of sending a stale id', () => {
+    const ids = uidToId();
+    const on: DeviceKeymap = { layers: mirror().layers.slice(0, 1), availableLayers: 0 };
+    const desired = desiredKeymap(start, ids, device, resolveBehaviors(device, start), new Set(on.layers.map((l) => l.id)));
+    expect(desired.layers[0]?.bindings[1]).toBeNull();
+    expect(desired.problems).toContainEqual({ uid: start.layers[0]?.uid, key: 1, reason: 'pending-layer' });
+  });
+});

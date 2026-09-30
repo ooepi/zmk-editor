@@ -138,3 +138,60 @@ describe('useStudioSession', () => {
     expect((await s.device.keymap()).layers).toHaveLength(count + 1);
   });
 });
+
+/** Counts the calls that change the keyboard. */
+function counted(device: FakeDevice) {
+  const writes: string[] = [];
+  const wrap = <K extends 'setBinding' | 'addLayer' | 'removeLayer' | 'moveLayer' | 'renameLayer'>(name: K) => {
+    const original = device[name].bind(device) as (...args: unknown[]) => Promise<unknown>;
+    (device as unknown as Record<string, unknown>)[name] = (...args: unknown[]) => {
+      writes.push(name);
+      return original(...args);
+    };
+  };
+  (['setBinding', 'addLayer', 'removeLayer', 'moveLayer', 'renameLayer'] as const).forEach(wrap);
+  return writes;
+}
+
+describe('review fixes', () => {
+  it('loading from the keyboard writes nothing to it', async () => {
+    const device = fakeDeviceFor({ ...demoConfig().config, studio: { device: 'Board' } }, { locked: false });
+    const writes = counted(device);
+    const s = await connected({ loadFromKeyboard: true, device });
+    await act(async () => {});
+    expect(writes).toEqual([]);
+    expect(s.result.current.studio.unsaved).toBe(false);
+  });
+
+  it('bringing the keyboard keymap in writes nothing to it', async () => {
+    const device = fakeDeviceFor(demoConfig().config, { locked: false });
+    const original = await deviceKey(device, 0, 0);
+    await device.setBinding(0, 0, { ...kp('Q'), behaviorId: original?.behaviorId ?? 0 });
+    await device.save();
+    const writes = counted(device);
+    const s = setup({ device });
+    await act(() => s.result.current.studio.connect());
+    await act(() => s.result.current.studio.resolveMismatch('keyboard'));
+    await act(async () => {});
+    expect(writes).toEqual([]);
+    expect(s.result.current.studio.unsaved).toBe(false);
+  });
+
+  it('an edit during discard still leaves the keyboard matching the editor', async () => {
+    const s = await connected();
+    act(() => s.result.current.dispatch({ type: 'placeOnKey', index: 0, item: { kind: 'keycode', token: 'X' } }));
+    await waitFor(() => expect(s.result.current.studio.unsaved).toBe(true));
+    let discarding!: Promise<void>;
+    act(() => {
+      discarding = s.result.current.studio.discard();
+      s.result.current.dispatch({ type: 'placeOnKey', index: 2, item: { kind: 'keycode', token: 'Y' } });
+    });
+    await act(() => discarding);
+    act(() => s.result.current.dispatch({ type: 'placeOnKey', index: 3, item: { kind: 'keycode', token: 'Z' } }));
+    await waitFor(async () => expect((await deviceKey(s.device, 0, 3))?.param1).toBe(encodeKey('Z')));
+    const keys = (await s.device.keymap()).layers[0]?.bindings ?? [];
+    const editor = s.result.current.state.config.keymap.layers[0]?.bindings ?? [];
+    expect(keys[0]?.param1 === encodeKey('X')).toBe(formatBinding(editor[0] ?? { behavior: '', params: [] }) === '&kp X');
+    expect(keys[2]?.param1 === encodeKey('Y')).toBe(formatBinding(editor[2] ?? { behavior: '', params: [] }) === '&kp Y');
+  });
+});

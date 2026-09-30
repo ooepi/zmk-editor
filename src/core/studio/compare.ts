@@ -1,7 +1,7 @@
 import { formatBinding } from '../keymap/bindings.ts';
 import type { KeymapModel } from '../keymap/model.ts';
 import { resolveBehaviors, type DeviceBehavior } from './behaviors.ts';
-import { contextFor, layerTitle, type DeviceKeymap } from './reconcile.ts';
+import { contextFor, deviceLayerName, type DeviceKeymap } from './reconcile.ts';
 import { fromDevice, toDevice } from './translate.ts';
 
 export interface KeyDifference {
@@ -48,7 +48,7 @@ export function compareKeymaps(keymap: KeymapModel, device: DeviceKeymap, behavi
     const layer = keymap.layers[i];
     const deviceLayer = device.layers[i];
     if (!layer || !deviceLayer) continue;
-    if (layerTitle(layer) !== deviceLayer.name) names++;
+    if (deviceLayerName(layer) !== deviceLayer.name) names++;
     layer.bindings.forEach((binding, key) => {
       const theirs = deviceLayer.bindings[key];
       const ours = toDevice(binding, ctx);

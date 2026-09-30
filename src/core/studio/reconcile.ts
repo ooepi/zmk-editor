@@ -37,10 +37,20 @@ export interface Desired {
   problems: { uid: number; key: number; reason: SendProblem }[];
 }
 
-export const layerTitle = (layer: { displayName?: string; name: string }) => layer.displayName ?? layer.name;
+/** A layer's name as ZMK Studio reports it: its display-name, or "" when it has none. */
+export const deviceLayerName = (layer: { displayName?: string | undefined }) => layer.displayName ?? '';
 
-/** A translate context for the editor's keymap, with layers matched to the keyboard's by uid. */
-export function contextFor(keymap: KeymapModel, uidToId: Map<number, number>, device: DeviceBehavior[], behaviors: BehaviorMap): TranslateContext {
+/**
+ * A translate context for the editor's keymap, with layers matched to the keyboard's by uid. With
+ * `live` (the ids the keyboard has now), a layer whose id is gone counts as not on the keyboard yet.
+ */
+export function contextFor(
+  keymap: KeymapModel,
+  uidToId: Map<number, number>,
+  device: DeviceBehavior[],
+  behaviors: BehaviorMap,
+  live?: ReadonlySet<number>,
+): TranslateContext {
   const idToIndex = new Map<number, number>();
   keymap.layers.forEach((layer, index) => {
     const id = layer.uid === undefined ? undefined : uidToId.get(layer.uid);
@@ -52,15 +62,22 @@ export function contextFor(keymap: KeymapModel, uidToId: Map<number, number>, de
     behaviors,
     layerId: (index) => {
       const uid = keymap.layers[index]?.uid;
-      return uid === undefined ? undefined : uidToId.get(uid);
+      const id = uid === undefined ? undefined : uidToId.get(uid);
+      return id !== undefined && (!live || live.has(id)) ? id : undefined;
     },
     layerIndex: (id) => idToIndex.get(id),
   };
 }
 
 /** What the keyboard should hold for the editor's keymap. */
-export function desiredKeymap(keymap: KeymapModel, uidToId: Map<number, number>, device: DeviceBehavior[], behaviors: BehaviorMap): Desired {
-  const ctx = contextFor(keymap, uidToId, device, behaviors);
+export function desiredKeymap(
+  keymap: KeymapModel,
+  uidToId: Map<number, number>,
+  device: DeviceBehavior[],
+  behaviors: BehaviorMap,
+  live?: ReadonlySet<number>,
+): Desired {
+  const ctx = contextFor(keymap, uidToId, device, behaviors, live);
   const problems: Desired['problems'] = [];
   const layers = keymap.layers.map((layer): DesiredLayer => {
     const uid = layer.uid ?? -1;
@@ -70,7 +87,7 @@ export function desiredKeymap(keymap: KeymapModel, uidToId: Map<number, number>,
       problems.push({ uid, key, reason: result.reason });
       return null;
     });
-    return { uid, id: uidToId.get(uid), name: layerTitle(layer), bindings };
+    return { uid, id: uidToId.get(uid), name: deviceLayerName(layer), bindings };
   });
   return { layers, problems };
 }
@@ -81,11 +98,18 @@ const same = (a: DeviceBinding | undefined, b: DeviceBinding) =>
 /**
  * The changes that take the keyboard (`mirror`) to `desired`, in the order to send them. After an
  * `addLayer` it stops: the new layer's id comes back from the keyboard, and the next pass continues.
+ * `refused`: layers (by uid) the keyboard wouldn't add; they wait for a build like when there's no room.
  */
-export function reconcile(mirror: DeviceKeymap, desired: Desired): StudioOp[] {
+export function reconcile(mirror: DeviceKeymap, desired: Desired, refused: ReadonlySet<number> = new Set()): StudioOp[] {
   const ops: StudioOp[] = [];
   const onKeyboard = new Set(mirror.layers.map((l) => l.id));
-  const wanted = desired.layers.map((l) => ({ ...l, id: l.id !== undefined && onKeyboard.has(l.id) ? l.id : undefined }));
+  // Each keyboard layer belongs to one editor layer; a second claim (a stale uid) is treated as new.
+  const claimed = new Set<number>();
+  const wanted = desired.layers.map((l) => {
+    const id = l.id !== undefined && onKeyboard.has(l.id) && !claimed.has(l.id) ? l.id : undefined;
+    if (id !== undefined) claimed.add(id);
+    return { ...l, id };
+  });
   const wantedIds = new Set(wanted.flatMap((l) => (l.id === undefined ? [] : [l.id])));
 
   const sim = [...mirror.layers];
@@ -97,7 +121,7 @@ export function reconcile(mirror: DeviceKeymap, desired: Desired): StudioOp[] {
     }
   }
 
-  const missing = wanted.filter((l) => l.id === undefined);
+  const missing = wanted.filter((l) => l.id === undefined && !refused.has(l.uid));
   const free = mirror.availableLayers + (mirror.layers.length - sim.length);
   const adds = missing.slice(0, Math.max(0, free));
   if (adds.length > 0) return [...ops, ...adds.map((l): StudioOp => ({ kind: 'addLayer', uid: l.uid }))];

@@ -5,7 +5,7 @@ import { withLayerUids } from '../keymap/layerIds.ts';
 import { emptyKeymap, type Behavior, type Binding, type KeymapModel, type Layer } from '../keymap/model.ts';
 import type { PhysicalLayout } from '../layouts/types.ts';
 import { resolveBehaviors, type DeviceBehavior } from './behaviors.ts';
-import { layerTitle, type DeviceKeymap } from './reconcile.ts';
+import type { DeviceKeymap } from './reconcile.ts';
 import { fromDevice, type TranslateContext } from './translate.ts';
 
 /** Marks a behavior the editor made up for a keyboard behavior it doesn't know (Studio-only configs). */
@@ -66,11 +66,13 @@ export function keymapFromDevice(base: KeymapModel, device: DeviceKeymap, behavi
       unreadable++;
       return old?.bindings[key] ?? NONE;
     });
-    const title = deviceLayer.name || (old ? layerTitle(old) : `Layer ${i}`);
-    const keepName = old && layerTitle(old) === title && !taken.has(old.name);
-    const name = keepName ? old.name : nodeName(title, taken);
+    // ZMK reports "" for a layer without a display-name: that keeps whatever name the editor had.
+    const title = deviceLayer.name;
+    const renamed = title !== '' && title !== old?.displayName;
+    const name = old && !renamed && !taken.has(old.name) ? old.name : nodeName(title || `layer_${i}`, taken);
     taken.add(name);
-    return old ? { ...old, name, displayName: title, bindings } : { name, displayName: title, bindings, properties: [] };
+    if (old) return renamed ? { ...old, name, displayName: title, bindings } : { ...old, name, bindings };
+    return title ? { name, displayName: title, bindings, properties: [] } : { name, bindings, properties: [] };
   });
 
   const keymap = withLayerUids({ ...model, layers });

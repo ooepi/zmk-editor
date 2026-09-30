@@ -150,7 +150,7 @@ function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => 
   const layout = physicalLayoutFor(config.keyboard, keyCount, layouts[config.keyboard], customLayout(config));
 
   /** The ZMK Studio connection: key and layer edits go to the keyboard while it's live. */
-  const studio = useStudioSession(config, dispatch, { open: studioOpen ?? openKeyboard, loadFromKeyboard: config.studio !== undefined || onDemo });
+  const studio = useStudioSession(config, dispatch, { open: studioOpen ?? openKeyboard, loadFromKeyboard: config.studio !== undefined });
   const studioSupported = studioOpen !== undefined || fakeStudioRequested() || serialSupported();
   const studioMessage = studio.status.phase === 'idle' ? studio.status.message : undefined;
   const studioLive = studio.status.phase === 'connected' || studio.status.phase === 'locked';
@@ -574,7 +574,7 @@ function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => 
           studioSupported
             ? () => {
                 setPreferences({ welcomed: true });
-                void studio.connect();
+                void studio.connect({ load: true });
               }
             : undefined
         }

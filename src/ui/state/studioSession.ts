@@ -108,6 +108,10 @@ export function useStudioSession(config: ZmkConfig, dispatch: Dispatch<EditorAct
   const pending = useRef<{ keymap: DeviceKeymap; layout: PhysicalLayout; comparison: Comparison } | null>(null);
   /** Changes the keyboard refused, so they aren't sent again and again. */
   const rejected = useRef(new Set<string>());
+  /** Layers (by uid) the keyboard wouldn't add: they wait for a build. */
+  const refused = useRef(new Set<number>());
+  /** A save or discard is running: syncing waits for it, so they never interleave. */
+  const busy = useRef(false);
   const locked = useRef(false);
   const unlockWaiters = useRef<(() => void)[]>([]);
   const syncing = useRef<Promise<void> | null>(null);
@@ -134,14 +138,15 @@ export function useStudioSession(config: ZmkConfig, dispatch: Dispatch<EditorAct
       return !before || !now || formatBinding(before) !== formatBinding(now);
     };
     const noRoom = mirror.current.availableLayers === 0;
+    const cannotAdd = (uid: number) => noRoom || refused.current.has(uid);
     const next = new Set<string>();
     for (const p of desired.problems) {
-      if (p.reason === 'pending-layer' && !noRoom) continue;
+      if (p.reason === 'pending-layer' && !noRoom && refused.current.size === 0) continue;
       if (changed(p.uid, p.key)) next.add(cellKey(p.uid, p.key));
     }
     for (const layer of desired.layers) {
       layer.bindings.forEach((binding, key) => {
-        if (layer.id === undefined && noRoom) next.add(cellKey(layer.uid, key));
+        if (layer.id === undefined && cannotAdd(layer.uid)) next.add(cellKey(layer.uid, key));
         else if (binding && layer.id !== undefined && rejected.current.has(opKey({ kind: 'setBinding', layerId: layer.id, key, binding }))) {
           next.add(cellKey(layer.uid, key));
         }
@@ -150,14 +155,20 @@ export function useStudioSession(config: ZmkConfig, dispatch: Dispatch<EditorAct
     setNeedsBuild((prev) => (prev.size === next.size && [...next].every((k) => prev.has(k)) ? prev : next));
   };
 
+  /** What the keyboard should hold for the editor's keymap now. */
+  const desire = () => {
+    const keymap = configRef.current.keymap;
+    const live = new Set(mirror.current.layers.map((l) => l.id));
+    return desiredKeymap(keymap, uidToId.current, behaviors.current, resolveBehaviors(behaviors.current, keymap), live);
+  };
+
   const runSync = async (g: number) => {
     try {
       while (dirty.current && current(g) && device.current) {
         dirty.current = false;
         const dev = device.current;
-        const keymap = configRef.current.keymap;
-        const desired = desiredKeymap(keymap, uidToId.current, behaviors.current, resolveBehaviors(behaviors.current, keymap));
-        const ops = reconcile(mirror.current, desired).filter((op) => !rejected.current.has(opKey(op)));
+        const desired = desire();
+        const ops = reconcile(mirror.current, desired, refused.current).filter((op) => !rejected.current.has(opKey(op)));
         for (const op of ops) {
           if (!current(g)) return;
           try {
@@ -173,6 +184,7 @@ export function useStudioSession(config: ZmkConfig, dispatch: Dispatch<EditorAct
               break;
             }
             if (err instanceof RejectedError) {
+              if (op.kind === 'addLayer') refused.current.add(op.uid);
               rejected.current.add(opKey(op));
               dirty.current = true;
               continue;
@@ -184,7 +196,7 @@ export function useStudioSession(config: ZmkConfig, dispatch: Dispatch<EditorAct
         }
         if (!current(g)) return;
         setFreeLayers(mirror.current.availableLayers);
-        trackProblems(desiredKeymap(configRef.current.keymap, uidToId.current, behaviors.current, resolveBehaviors(behaviors.current, configRef.current.keymap)), configRef.current.keymap);
+        trackProblems(desire(), configRef.current.keymap);
       }
     } catch (err) {
       if (current(g)) setStatus({ phase: 'error', message: message(err) });
@@ -193,22 +205,28 @@ export function useStudioSession(config: ZmkConfig, dispatch: Dispatch<EditorAct
 
   const requestSync = () => {
     dirty.current = true;
-    if (syncing.current) return;
-    const g = generation.current;
-    syncing.current = runSync(g).finally(() => {
+    if (syncing.current || busy.current) return;
+    syncing.current = runSync(generation.current).finally(() => {
       syncing.current = null;
-      if (dirty.current && current(g) && live.current) requestSync();
+      // Edits that came in meanwhile, even from a session started since, get their own pass.
+      if (dirty.current && live.current) requestSync();
     });
   };
 
-  const goLive = (keymap: DeviceKeymap, ids: Map<number, number>, base: KeymapModel) => {
+  /**
+   * Starts sending edits. `next` is the config the editor holds from now on: after a dispatch the
+   * render hasn't happened yet, so the ref is set here rather than read stale by the first pass.
+   */
+  const goLive = (keymap: DeviceKeymap, ids: Map<number, number>, next: ZmkConfig) => {
+    configRef.current = next;
     mirror.current = keymap;
     uidToId.current = ids;
-    baseline.current = base;
+    baseline.current = next.keymap;
     pending.current = null;
+    refused.current = new Set();
     live.current = true;
     setFreeLayers(keymap.availableLayers);
-    setStatus({ phase: 'connected' });
+    setStatus({ phase: locked.current ? 'locked' : 'connected' });
     requestSync();
   };
 
@@ -241,7 +259,8 @@ export function useStudioSession(config: ZmkConfig, dispatch: Dispatch<EditorAct
     setStatus(why ? { phase: 'idle', message: why } : { phase: 'idle' });
   };
 
-  const connect = async () => {
+  /** `load`: take the keyboard's keymap without comparing (the welcome's "Connect a Studio keyboard"). */
+  const connect = async ({ load = false }: { load?: boolean } = {}) => {
     disconnect();
     const g = generation.current;
     setError(null);
@@ -295,17 +314,17 @@ export function useStudioSession(config: ZmkConfig, dispatch: Dispatch<EditorAct
       const keyCount = keymap.layers[0]?.bindings.length ?? 0;
       const layout = layouts[active] ?? layouts[0] ?? rowLayout(keyCount);
 
-      if (optionsRef.current.loadFromKeyboard) {
+      if (load || optionsRef.current.loadFromKeyboard) {
         const loaded = configFromDevice(name, keymap, layout, found);
         setDeviceRefs(new Set(resolveBehaviors(found, loaded.config.keymap).refById.values()));
         dispatch({ type: 'load', config: loaded.config, warnings: [] });
-        goLive(keymap, loaded.uidToId, loaded.config.keymap);
+        goLive(keymap, loaded.uidToId, loaded.config);
         return;
       }
       setDeviceRefs(new Set(resolveBehaviors(found, configRef.current.keymap).refById.values()));
       const comparison = compareKeymaps(configRef.current.keymap, keymap, found);
       if (comparison.keyCountMatches && comparison.summary === '') {
-        goLive(keymap, comparison.uidToId, configRef.current.keymap);
+        goLive(keymap, comparison.uidToId, configRef.current);
         return;
       }
       pending.current = { keymap, layout, comparison };
@@ -322,19 +341,33 @@ export function useStudioSession(config: ZmkConfig, dispatch: Dispatch<EditorAct
       disconnect();
       return;
     }
-    const keymap = configRef.current.keymap;
+    const config = configRef.current;
     if (choice === 'editor') {
-      goLive(waiting.keymap, waiting.comparison.uidToId, keymap);
+      goLive(waiting.keymap, waiting.comparison.uidToId, config);
     } else if (choice === 'keyboard') {
-      const result = keymapFromDevice(keymap, waiting.keymap, behaviors.current, { invent: false });
+      const result = keymapFromDevice(config.keymap, waiting.keymap, behaviors.current, { invent: false });
       const skipped = result.unreadable > 0 ? ` ${result.unreadable} key${result.unreadable === 1 ? '' : 's'} the editor couldn’t read kept your config’s binding.` : '';
       dispatch({ type: 'edit', keymap: result.keymap, notice: `Brought in the keyboard’s keymap.${skipped}` });
-      goLive(waiting.keymap, result.uidToId, result.keymap);
+      goLive(waiting.keymap, result.uidToId, { ...config, keymap: result.keymap });
     } else {
       const loaded = configFromDevice(deviceName ?? 'Keyboard', waiting.keymap, waiting.layout, behaviors.current);
       setDeviceRefs(new Set(resolveBehaviors(behaviors.current, loaded.config.keymap).refById.values()));
       dispatch({ type: 'load', config: loaded.config, warnings: [] });
-      goLive(waiting.keymap, loaded.uidToId, loaded.config.keymap);
+      goLive(waiting.keymap, loaded.uidToId, loaded.config);
+    }
+  };
+
+  /** Runs a save or discard with syncing held off, then catches up on edits made meanwhile. */
+  const exclusive = async (work: () => Promise<void>) => {
+    busy.current = true;
+    try {
+      await syncing.current;
+      await work();
+    } catch (err) {
+      setError(message(err));
+    } finally {
+      busy.current = false;
+      if (dirty.current && live.current) requestSync();
     }
   };
 
@@ -342,13 +375,10 @@ export function useStudioSession(config: ZmkConfig, dispatch: Dispatch<EditorAct
     const dev = device.current;
     if (!dev) return;
     setError(null);
-    try {
-      await syncing.current;
+    await exclusive(async () => {
       await dev.save();
       setUnsaved(false);
-    } catch (err) {
-      setError(message(err));
-    }
+    });
   };
 
   /** Throws away the keyboard's unsaved changes, and takes the editor back to match (one undo step). */
@@ -357,19 +387,17 @@ export function useStudioSession(config: ZmkConfig, dispatch: Dispatch<EditorAct
     if (!dev) return;
     const g = generation.current;
     setError(null);
-    try {
-      await syncing.current;
+    await exclusive(async () => {
       await dev.discard();
       const keymap = await dev.keymap();
       if (!current(g)) return;
       const result = keymapFromDevice(configRef.current.keymap, keymap, behaviors.current, { invent: configRef.current.studio !== undefined });
       mirror.current = keymap;
       uidToId.current = result.uidToId;
+      configRef.current = { ...configRef.current, keymap: result.keymap };
       setUnsaved(false);
       dispatch({ type: 'edit', keymap: result.keymap, notice: 'Discarded the changes on the keyboard.' });
-    } catch (err) {
-      setError(message(err));
-    }
+    });
   };
 
   return { status, deviceName, unsaved, needsBuild, deviceRefs, freeLayers, error, connect, disconnect, resolveMismatch, save, discard };

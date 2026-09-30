@@ -22,7 +22,7 @@ export function StudioMismatchDialog({ session, keymap }: { session: StudioSessi
           ? undefined
           : comparison.keyCountMatches
             ? `It differs from your config: ${comparison.summary}. Which one should both have?`
-            : 'Its keys don’t match your config, so it’s probably another keyboard. You can edit its own keymap instead; your config stays on GitHub.'
+            : 'Its keys don’t match the keymap in the editor, so it’s probably another keyboard. You can edit its own keymap instead: it replaces what’s in the editor, and changes not committed to GitHub are lost.'
       }
       onClose={() => void session.resolveMismatch('cancel')}
     >

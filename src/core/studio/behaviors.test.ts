@@ -64,3 +64,20 @@ describe('resolveBehaviors', () => {
     expect(map.unknown.map((b) => b.id)).toEqual([3, 5]);
   });
 });
+
+describe('older label names', () => {
+  it('match a behavior by its label property when it has no display-name', () => {
+    const withLabel = importKeymap(`/ {
+    behaviors {
+        hrm: homerow {
+            compatible = "zmk,behavior-hold-tap";
+            label = "HOMEROW";
+            #binding-cells = <2>;
+            bindings = <&kp>, <&kp>;
+        };
+    };
+};
+`).model;
+    expect(resolveBehaviors([behavior(1, 'HOMEROW')], withLabel).refById.get(1)).toBe('hrm');
+  });
+});
