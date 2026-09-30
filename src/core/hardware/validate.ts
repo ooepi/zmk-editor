@@ -1,7 +1,8 @@
 import { findKeyboard } from '../catalog/keyboards.ts';
 import { MODULES } from '../catalog/modules.ts';
 import { SCREEN_SHIELDS } from '../catalog/screens.ts';
-import { HARDWARE_CONTROLLERS, PRO_MICRO_PINS } from './controllers.ts';
+import { HARDWARE_CONTROLLERS } from './controllers.ts';
+import { PRO_MICRO } from './interconnects.ts';
 import type { HardwareBasics } from './grid.ts';
 import type { KeyboardHardware, Pin } from './types.ts';
 import { DISPLAYS, halfDisplay } from './displays.ts';
@@ -52,11 +53,11 @@ export function validateBasics(b: HardwareBasics): HardwareIssue[] {
   if (!Number.isInteger(b.cols) || b.cols < 1) error('Use at least 1 column.');
   if (issues.length > 0) return issues;
   const perHalf = b.split ? ' per half' : '';
-  if (b.wiring === 'matrix' && b.rows + b.cols > PRO_MICRO_PINS.length) {
-    error(`A ${b.rows} × ${b.cols} matrix needs ${b.rows + b.cols} pins${perHalf}, but the controller has ${PRO_MICRO_PINS.length}.`);
+  if (b.wiring === 'matrix' && b.rows + b.cols > PRO_MICRO.pins.length) {
+    error(`A ${b.rows} × ${b.cols} matrix needs ${b.rows + b.cols} pins${perHalf}, but the controller has ${PRO_MICRO.pins.length}.`);
   }
-  if (b.wiring === 'direct' && b.rows * b.cols > PRO_MICRO_PINS.length) {
-    error(`Direct wiring for ${b.rows * b.cols} keys needs ${b.rows * b.cols} pins${perHalf}, but the controller has ${PRO_MICRO_PINS.length}.`);
+  if (b.wiring === 'direct' && b.rows * b.cols > PRO_MICRO.pins.length) {
+    error(`Direct wiring for ${b.rows * b.cols} keys needs ${b.rows * b.cols} pins${perHalf}, but the controller has ${PRO_MICRO.pins.length}.`);
   }
   return issues;
 }
@@ -88,14 +89,14 @@ export function validateHardware(hw: KeyboardHardware): HardwareIssue[] {
         ]),
         ...(display ? DISPLAYS[display].pins.map(({ pin, use }) => ({ label: use, pin })) : []),
       ];
-      if (labelled.length > PRO_MICRO_PINS.length) {
-        add('error', 'wiring', `The wiring${where} needs ${labelled.length} pins, but the controller has ${PRO_MICRO_PINS.length}.`);
+      if (labelled.length > PRO_MICRO.pins.length) {
+        add('error', 'wiring', `The wiring${where} needs ${labelled.length} pins, but the controller has ${PRO_MICRO.pins.length}.`);
       }
       const seen = new Map<number, string>();
       for (const { label, pin } of labelled) {
         const other = pin === null ? undefined : seen.get(pin);
         if (pin === null) add('error', 'wiring', `${label}${where} has no pin.`);
-        else if (!PRO_MICRO_PINS.includes(pin)) add('error', 'wiring', `${label}${where} uses D${pin}, which isn’t a Pro Micro pin.`);
+        else if (!PRO_MICRO.pins.includes(pin)) add('error', 'wiring', `${label}${where} uses D${pin}, which isn’t a Pro Micro pin.`);
         else if (other !== undefined) add('error', 'wiring', `D${pin} is used for both ${other} and ${label}${where}.`);
         else seen.set(pin, label);
       }

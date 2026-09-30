@@ -2,7 +2,7 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PRO_MICRO_PINS } from '../core/hardware/controllers.ts';
+import { PRO_MICRO } from '../core/hardware/interconnects.ts';
 import { newHardwareConfig } from '../core/hardware/config.ts';
 import { DEFAULT_BASICS, gridHardware } from '../core/hardware/grid.ts';
 import { testPad, testSplit } from '../core/hardware/testFixtures.ts';
@@ -100,7 +100,7 @@ describe('Design your own keyboard', () => {
   it('doesn’t get stuck on Basics editing a direct-wired keyboard with a staggered key', async () => {
     const hw: KeyboardHardware = {
       ...gridHardware({ ...DEFAULT_BASICS, name: 'direct18', displayName: 'Direct18', split: false, wiring: 'direct', rows: 3, cols: 6 }),
-      wiring: { kind: 'direct', pins: [...PRO_MICRO_PINS] },
+      wiring: { kind: 'direct', pins: [...PRO_MICRO.pins] },
     };
     // One key nudged off its grid position: basicsOf must not guess a bogus rows/cols from this.
     const staggered: KeyboardHardware = { ...hw, keys: hw.keys.map((k, i) => (i === 0 ? { ...k, y: k.y + 25 } : k)) };

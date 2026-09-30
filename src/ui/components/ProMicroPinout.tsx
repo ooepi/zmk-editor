@@ -1,4 +1,4 @@
-import { isNiceNano, PRO_MICRO_HEADER, type HeaderPad } from '../../core/hardware/controllers.ts';
+import { PRO_MICRO, type HeaderPad } from '../../core/hardware/interconnects.ts';
 import type { KeyboardHardware, Side } from '../../core/hardware/types.ts';
 import { pinUses } from '../../core/hardware/wiring.ts';
 import { setPreferences, usePreferences } from '../state/preferences.ts';
@@ -22,7 +22,6 @@ export function ProMicroPinout({ hw, side, label, onPick }: Props) {
   const view = pinoutViews[viewKey] ?? 'top';
   const setView = (next: 'top' | 'bottom') => setPreferences({ pinoutViews: { ...pinoutViews, [viewKey]: next } });
   const uses = pinUses(hw, side);
-  const nice = isNiceNano(hw.controller);
   const column = (pads: HeaderPad[], edge: 'left' | 'right') => (
     <ul className={`pinout-column ${edge}`}>
       {pads.map((pad, i) => {
@@ -39,7 +38,7 @@ export function ProMicroPinout({ hw, side, label, onPick }: Props) {
           <li key={i}>
             <button type="button" className={`pinout-pad${use ? ' used' : ''}`} aria-label={use ? `${pad.label}: ${use}` : pad.label} onClick={() => onPick(pin)}>
               <span className="pinout-label">{pad.label}</span>
-              {nice && <span className="pinout-sub">{pad.niceNano}</span>}
+              {pad.mcu?.[hw.controller] && <span className="pinout-sub">{pad.mcu[hw.controller]}</span>}
               {use && <span className="pinout-use">{use}</span>}
             </button>
           </li>
@@ -62,9 +61,9 @@ export function ProMicroPinout({ hw, side, label, onPick }: Props) {
         ))}
       </div>
       <div className="pinout-board">
-        {column(view === 'top' ? PRO_MICRO_HEADER.left : PRO_MICRO_HEADER.right, 'left')}
+        {column(view === 'top' ? PRO_MICRO.header.left : PRO_MICRO.header.right, 'left')}
         <div className="pinout-usb" aria-hidden="true">USB</div>
-        {column(view === 'top' ? PRO_MICRO_HEADER.right : PRO_MICRO_HEADER.left, 'right')}
+        {column(view === 'top' ? PRO_MICRO.header.right : PRO_MICRO.header.left, 'right')}
       </div>
     </figure>
   );

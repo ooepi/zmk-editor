@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PRO_MICRO_PINS, pinLabel } from '../../core/hardware/controllers.ts';
+import { PRO_MICRO, pinLabel } from '../../core/hardware/interconnects.ts';
 import { DISPLAYS, DISPLAY_KINDS, halfDisplay, setDisplay } from '../../core/hardware/displays.ts';
 import type { DisplayKind, KeyboardHardware, Pin, Side } from '../../core/hardware/types.ts';
 import type { HardwareIssue } from '../../core/hardware/validate.ts';
@@ -259,7 +259,7 @@ function PinSelect({
         onChange={(e) => onChange(setPin(hw, side, list, index, e.target.value === '' ? null : Number(e.target.value)))}
       >
         <option value="">No pin</option>
-        {PRO_MICRO_PINS.map((p) => {
+        {PRO_MICRO.pins.map((p) => {
           const other = (uses.get(p) ?? []).filter((use) => use !== name);
           return (
             <option key={p} value={p}>
