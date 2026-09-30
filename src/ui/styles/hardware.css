@@ -539,6 +539,30 @@
   background: var(--accent-soft);
 }
 
+/* Pads coloured by what they're for: rows (and direct inputs), columns, encoders, displays, or a pin used twice. */
+.pinout-pad.used.use-row {
+  border-color: var(--wire-row);
+  background: var(--wire-row-soft);
+}
+
+.pinout-pad.used.use-col {
+  border-color: var(--wire-col);
+  background: var(--wire-col-soft);
+}
+
+.pinout-pad.used.use-encoder {
+  border-color: var(--kind-encoder);
+}
+
+.pinout-pad.used.use-display {
+  border-color: var(--kind-macro);
+}
+
+.pinout-pad.used.use-clash {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+}
+
 .pinout-sub,
 .pinout-use {
   font-size: 0.8em;

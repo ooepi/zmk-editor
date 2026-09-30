@@ -19,6 +19,7 @@ const COLOUR_GROUPS: { title: string; tokens: string[] }[] = [
   { title: 'Accent and status', tokens: ['--accent', '--accent-line', '--accent-soft', '--focus-ring', '--danger', '--success', '--warning', '--info'] },
   { title: 'Key kinds', tokens: ['--key-layer', '--key-hold', '--key-macro', '--key-dim'] },
   { title: 'Behavior kinds', tokens: ['--kind-holdtap', '--kind-modmorph', '--kind-tapdance', '--kind-encoder', '--kind-macro', '--kind-module'] },
+  { title: 'Matrix pins', tokens: ['--wire-row', '--wire-row-soft', '--wire-col', '--wire-col-soft'] },
 ];
 
 const FONT_SIZES = ['--fs-xs', '--fs-sm', '--fs-md', '--fs-lg', '--fs-xl', '--fs-2xl'];

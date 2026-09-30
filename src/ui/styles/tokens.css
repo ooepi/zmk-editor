@@ -48,6 +48,8 @@
   --pink-700: #c2386b;
   --cyan-300: #67d8ef;
   --cyan-700: #0f8aa3;
+  --coral-300: #ff9677;
+  --coral-700: #c24a2c;
   --red-200: #ff9494;
   --red-300: #ff6b6b;
   --red-600: #d43d3d;
@@ -130,6 +132,11 @@
   --kind-encoder: var(--blue-300);
   --kind-macro: var(--violet-300);
   --kind-module: var(--graphite-300);
+  /* The keyboard wizard's pinout: pads wired to rows (and direct inputs), and to columns. */
+  --wire-row: var(--cyan-300);
+  --wire-row-soft: color-mix(in srgb, var(--cyan-300) 14%, transparent);
+  --wire-col: var(--coral-300);
+  --wire-col-soft: color-mix(in srgb, var(--coral-300) 14%, transparent);
   --shadow-sm: 0 2px 5px rgb(0 0 0 / 35%);
   --shadow-md: 0 8px 24px rgb(0 0 0 / 25%);
   --shadow-inset: inset 0 2px 4px rgb(0 0 0 / 25%);
@@ -181,6 +188,10 @@
   --kind-encoder: var(--blue-600);
   --kind-macro: var(--violet-700);
   --kind-module: var(--paper-600);
+  --wire-row: var(--cyan-700);
+  --wire-row-soft: color-mix(in srgb, var(--cyan-700) 12%, transparent);
+  --wire-col: var(--coral-700);
+  --wire-col-soft: color-mix(in srgb, var(--coral-700) 12%, transparent);
   --shadow-sm: 0 2px 5px rgb(30 30 20 / 12%);
   --shadow-md: 0 8px 24px rgb(30 30 20 / 10%);
   --shadow-inset: inset 0 2px 4px rgb(30 30 20 / 10%);

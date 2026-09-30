@@ -3,6 +3,17 @@ import type { KeyboardHardware, Side } from '../../core/hardware/types.ts';
 import { pinUses } from '../../core/hardware/wiring.ts';
 import { setPreferences, usePreferences } from '../state/preferences.ts';
 
+/** A pad's colour class from its uses: row (or direct input), column, encoder, display, free, or a clash. */
+function useClass(uses: string[] | undefined): string {
+  const [first = '', second] = uses ?? [];
+  if (second !== undefined) return 'use-clash';
+  if (first.startsWith('Row') || first.startsWith('Input')) return 'use-row';
+  if (first.startsWith('Column')) return 'use-col';
+  if (first.startsWith('Encoder')) return 'use-encoder';
+  if (first.startsWith('Display')) return 'use-display';
+  return 'use-free';
+}
+
 interface Props {
   hw: KeyboardHardware;
   side?: Side;
@@ -38,7 +49,7 @@ export function ControllerPinout({ hw, side, label, onPick }: Props) {
         const use = uses.get(pin)?.join(', ');
         return (
           <li key={i}>
-            <button type="button" className={`pinout-pad${use ? ' used' : ''}`} aria-label={use ? `${pad.label}: ${use}` : pad.label} onClick={() => onPick(pin)}>
+            <button type="button" className={`pinout-pad ${useClass(uses.get(pin))}${use ? ' used' : ''}`} aria-label={use ? `${pad.label}: ${use}` : pad.label} onClick={() => onPick(pin)}>
               <span className="pinout-label">{pad.label}</span>
               {pad.mcu?.[hw.controller] && <span className="pinout-sub">{pad.mcu[hw.controller]}</span>}
               {use && <span className="pinout-use">{use}</span>}

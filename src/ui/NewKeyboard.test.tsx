@@ -628,3 +628,22 @@ describe('Display pins in the wizard', () => {
     expect([value('Right display SDA'), value('Right display SCL')]).toEqual(['4', '5']);
   });
 });
+
+describe('Pinout colours', () => {
+  it('marks each pad with what it is used for, and a pin used twice', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await openWizard(user);
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.selectOptions(screen.getByLabelText('Left row 0'), '4');
+    await user.selectOptions(screen.getByLabelText('Left column 0'), '6');
+    await user.click(screen.getByRole('button', { name: 'Add encoder' }));
+    await user.selectOptions(screen.getByLabelText('Left encoder 0 A'), '8');
+    expect(screen.getByRole('button', { name: 'D4: Row 0' }).className).toContain('use-row');
+    expect(screen.getByRole('button', { name: 'D6: Column 0' }).className).toContain('use-col');
+    expect(screen.getByRole('button', { name: 'D8: Encoder 0 A' }).className).toContain('use-encoder');
+    expect(screen.getByRole('button', { name: 'D9' }).className).toContain('use-free');
+    await user.selectOptions(screen.getByLabelText('Left column 1'), '4');
+    expect(screen.getByRole('button', { name: 'D4: Row 0, Column 1' }).className).toContain('use-clash');
+  });
+});
