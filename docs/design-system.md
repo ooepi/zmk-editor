@@ -24,7 +24,7 @@ See it live: run `npm run dev` and open **http://localhost:5173/#design**. That 
    - type `--fs-xs…--fs-2xl`
    - motion `--dur-fast`, `--ease-out`
    - small component tokens such as `--toggle-sun` and `--print-paper`
-3. **Semantic roles, one set per theme.** These say what a colour is *for*: `--bg`, `--surface`, `--surface-2`, `--surface-3`, `--border`, `--text`, `--text-muted`, `--accent`, `--accent-line`, `--accent-text`, `--accent-soft`, `--focus-ring`, `--danger`, `--success`, `--warning`, `--info`, the key colours `--key-*`, the behavior-kind colours `--kind-*`, and the shadows `--shadow-*`. The dark block is the default; the light block overrides it. The print sheet always uses the light one.
+3. **Semantic roles, one set per theme.** These say what a colour is *for*: `--bg`, `--surface`, `--surface-2`, `--surface-3`, `--border`, `--text`, `--text-muted`, `--accent`, `--accent-line`, `--accent-text`, `--accent-soft`, `--focus-ring`, `--danger`, `--success`, `--warning`, `--info`, the key colours `--key-*`, the behavior-kind colours `--kind-*`, the wizard's matrix pin colours `--wire-row`/`--wire-col` (and `-soft`), and the shadows `--shadow-*`. The dark block is the default; the light block overrides it. The print sheet always uses the light one.
 
 **Components use layers 2 and 3 only, never the palette.** That is what lets one edit to `tokens.css` restyle the whole app, and lets a theme swap every colour at once.
 

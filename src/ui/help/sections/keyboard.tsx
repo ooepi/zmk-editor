@@ -47,6 +47,8 @@ export const KEYBOARD: HelpSection[] = [
             </li>
             <li>
               <Ui>Layout</Ui>: where each key sits and which row and column it's wired to. Add or delete keys here.
+              <Ui>Number from positions</Ui> gives every key a row and column from where it sits; to fix a few, select
+              them together and set their row or column once.
             </li>
             <li>
               <Ui>Review</Ui>: problems to fix, and the files the editor will write.

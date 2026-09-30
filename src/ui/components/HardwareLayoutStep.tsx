@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { sensorOrder } from '../../core/hardware/encoders.ts';
-import { addKey, deleteKeys } from '../../core/hardware/keys.ts';
+import { addKey, deleteKeys, numberFromPositions } from '../../core/hardware/keys.ts';
+import { halfSize } from '../../core/hardware/wiring.ts';
 import { hardwareLayout, type HardwareKey, type KeyboardHardware, type Side } from '../../core/hardware/types.ts';
 import type { HardwareIssue } from '../../core/hardware/validate.ts';
 import { DesignerCanvas, KnobFields, LiveNumberField, RotationField, UnitField } from './DesignerCanvas.tsx';
@@ -38,6 +39,26 @@ export function HardwareLayoutStep({ draft, issues, onChange }: Props) {
   const setHw = (next: KeyboardHardware) => onChange({ ...draft, hw: next });
   const updateKey = (index: number, patch: Partial<HardwareKey>) =>
     setHw({ ...hw, keys: hw.keys.map((k, i) => (i === index ? { ...k, ...patch } : k)) });
+  /** " It needs a 4 × 6 matrix per half; change the size in Basics." when numbering outgrows the matrix, else "". */
+  const outgrows = (next: KeyboardHardware): string => {
+    if (next.wiring.kind !== 'matrix') return '';
+    const halves: (Side | undefined)[] = next.split ? ['left', 'right'] : [undefined];
+    const onHalf = (side: Side | undefined) => next.keys.filter((k) => !next.split || (k.side ?? 'left') === side);
+    const rows = Math.max(0, ...halves.flatMap((side) => onHalf(side).map((k) => k.row + 1)));
+    const cols = Math.max(0, ...halves.flatMap((side) => onHalf(side).map((k) => k.col + 1)));
+    const size = halfSize(next, next.split ? 'left' : undefined);
+    if (rows <= size.rows && cols <= size.cols) return '';
+    return ` It needs a ${Math.max(rows, size.rows)} × ${Math.max(cols, size.cols)} matrix${next.split ? ' per half' : ''} (it’s ${size.rows} × ${size.cols}); change the size in Basics.`;
+  };
+  const updateKeys = (indices: number[], patch: Partial<HardwareKey>) => {
+    const chosen = new Set(indices);
+    setHw({ ...hw, keys: hw.keys.map((k, i) => (chosen.has(i) ? { ...k, ...patch } : k)) });
+  };
+  /** What every selected key has in common, or undefined when they differ. */
+  const shared = <T,>(pick: (k: HardwareKey) => T): T | undefined => {
+    const values = selection.map((i) => hw.keys[i]).filter((k): k is HardwareKey => !!k).map(pick);
+    return values.length > 0 && values.every((v) => v === values[0]) ? values[0] : undefined;
+  };
   const add = (side?: Side) => {
     onChange({ ...draft, hw: addKey(hw, side), origins: [...draft.origins, undefined] });
     setSelection([hw.keys.length]);
@@ -93,6 +114,18 @@ export function HardwareLayoutStep({ draft, issues, onChange }: Props) {
           ) : (
             <button type="button" className="button" onClick={() => add()}>Add key</button>
           )}
+          <button
+            type="button"
+            className="button"
+            title={direct ? 'Inputs in reading order, per half' : 'Rows top to bottom, columns left to right, per half'}
+            onClick={() => {
+              const next = numberFromPositions(hw);
+              const what = direct ? 'input' : 'row and column';
+              if (window.confirm(`Number every key from where it sits? This replaces each key’s ${what}.${outgrows(next)}`)) setHw(next);
+            }}
+          >
+            Number from positions
+          </button>
         </div>
         {knob !== null && knobs[knob] ? (
           <KnobFields index={knob} spot={knobs[knob]} saved={!!hw.encoderSpots?.[knob]} onMove={(spot) => moveKnob(knob, spot)} />
@@ -133,7 +166,34 @@ export function HardwareLayoutStep({ draft, issues, onChange }: Props) {
           <div className="stack">
             <p className="muted small">
               {selection.length} keys selected. Drag them or use the arrow keys to move them together; Esc clears the selection.
+              {!direct && ' Set a row or column here to put them all on it.'}
             </p>
+            {(!direct || hw.split) && (
+              <div className="field-grid" key={selection.join(',')}>
+                {!direct && (
+                  <>
+                    <SharedNumberField label="Row" value={shared((k) => k.row)} onChange={(row) => updateKeys(selection, { row })} />
+                    <SharedNumberField label="Column" value={shared((k) => k.col)} onChange={(col) => updateKeys(selection, { col })} />
+                  </>
+                )}
+                {hw.split && (
+                  <label className="field">
+                    <span className="field-label">Half</span>
+                    <select
+                      className="input"
+                      value={shared((k) => k.side) ?? ''}
+                      onChange={(e) => updateKeys(selection, { side: e.target.value === 'right' ? 'right' : 'left' })}
+                    >
+                      <option value="" disabled hidden>
+                        Mixed
+                      </option>
+                      <option value="left">Left</option>
+                      <option value="right">Right</option>
+                    </select>
+                  </label>
+                )}
+              </div>
+            )}
             <button type="button" className="button danger" onClick={() => remove(selection)}>
               Delete {selection.length} keys
             </button>
@@ -143,5 +203,39 @@ export function HardwareLayoutStep({ draft, issues, onChange }: Props) {
         )}
       </aside>
     </div>
+  );
+}
+
+/**
+ * A whole-number field for several keys at once: their shared value, or blank
+ * when they differ. Every valid number applies to all of them as it's typed.
+ */
+function SharedNumberField({ label, value, onChange }: { label: string; value: number | undefined; onChange: (v: number) => void }) {
+  const [text, setText] = useState(value === undefined ? '' : String(value));
+  const [shown, setShown] = useState(value);
+  // Follow changes made elsewhere, unless the text already says the same.
+  if (value !== shown) {
+    setShown(value);
+    if (text.trim() === '' || Number(text) !== value) setText(value === undefined ? '' : String(value));
+  }
+  return (
+    <label className="field">
+      <span className="field-label">{label}</span>
+      <input
+        className="input"
+        type="number"
+        min={0}
+        step={1}
+        value={text}
+        placeholder={value === undefined ? 'Mixed' : undefined}
+        onChange={(e) => {
+          setText(e.target.value);
+          const v = Number(e.target.value);
+          if (e.target.value.trim() !== '' && Number.isInteger(v) && v >= 0) onChange(v);
+        }}
+        // A cleared or invalid entry goes back to what the keys have.
+        onBlur={() => setText(value === undefined ? '' : String(value))}
+      />
+    </label>
   );
 }
