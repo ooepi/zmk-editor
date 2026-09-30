@@ -563,7 +563,7 @@ describe('Seeed XIAO in the wizard', () => {
     expect(within(xiaoPinout()).getByRole('button', { name: 'D4: Display SDA' })).toBeTruthy();
   });
 
-  it('keeps pins and a nice!view the XIAO doesn’t have when switching to it, and flags them', async () => {
+  it('keeps pins the XIAO doesn’t have when switching to it, and flags them; a nice!view moves to the XIAO’s pins', async () => {
     const hw: KeyboardHardware = { ...testSplit, wiring: { kind: 'matrix', diodeDirection: 'col2row', rows: [21], cols: [6, 7] }, displays: { left: 'nice_view' } };
     localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config: newHardwareConfig(hw, 'v0.3') }));
     const user = userEvent.setup();
@@ -577,9 +577,7 @@ describe('Seeed XIAO in the wizard', () => {
     expect(screen.getByLabelText('Left column 1')).toHaveProperty('value', '7');
     expect(screen.getByText('Row 0 on the left half uses D21, which isn’t a Seeed XIAO pin.')).toBeTruthy();
     expect(screen.getByLabelText('Left display')).toHaveProperty('value', 'nice_view');
-    expect(
-      screen.getByText('The nice!view on the left half needs ZMK’s nice!view adapter, which only fits a Pro Micro; on a Seeed XIAO use an OLED for now.'),
-    ).toBeTruthy();
+    expect(within(xiaoPinout()).getByRole('button', { name: 'D9: Display CS' })).toBeTruthy();
     // Nothing flagged can be saved.
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await user.click(screen.getByRole('button', { name: 'Next' }));

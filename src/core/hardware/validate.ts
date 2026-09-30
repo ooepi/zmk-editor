@@ -83,8 +83,13 @@ export function validateHardware(hw: KeyboardHardware): HardwareIssue[] {
 
     // A mirrored right half uses the left's pins, so they're checked once.
     const display = halfDisplay(hw, side);
-    if (display === 'nice_view' && !ic.niceViewAdapter) {
-      add('error', 'wiring', `The nice!view${where} needs ZMK’s nice!view adapter, which only fits a Pro Micro; on a ${ic.name} use an OLED for now.`);
+    // Display pins become nRF pins from the board's default revision; Mikoto 6.1+ moved D6.
+    if (hw.controller === 'mikoto') {
+      for (const { pin, use } of halfDisplayPins(hw, side)) {
+        if (pin === 6) {
+          add('warning', 'wiring', `${use}${where} uses D6, which is a different pin on Mikoto v6 and later; the build assumes Mikoto 5.20.`);
+        }
+      }
     }
     if (side !== 'right' || hw.wiring.right || hw.rightEncoders || display) {
       const labelled: { label: string; pin: Pin }[] = [
