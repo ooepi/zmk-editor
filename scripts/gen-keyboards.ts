@@ -14,6 +14,8 @@ import { importKeymap } from '../src/core/keymap/importer.ts';
 
 const [zmkRoot = '/tmp/zmk', ref = 'v0.3'] = process.argv.slice(2);
 const app = join(zmkRoot, 'app');
+/** A path inside the ZMK checkout with forward slashes, whatever the OS. */
+const posixRelative = (path: string) => relative(zmkRoot, path).split(/[\\/]/).join('/');
 
 type Attrs = [number, number, number, number, number, number, number];
 
@@ -115,6 +117,15 @@ for (const { path, meta } of metas) {
     if (keys?.length) layouts.push({ name: 'Grid (from wiring)', keys });
   }
 
+  // Which half each encoder is on, from the sensors node's labels (left_encoder, right_encoder…).
+  const sensorsNode = /compatible\s*=\s*"zmk,keymap-sensors"[^{}]*?sensors\s*=\s*<([^>]*)>/.exec(text)?.[1];
+  const encoders = sensorsNode
+    ? [...sensorsNode.matchAll(/&(\w+)/g)].map((m) => {
+        const label = (m[1] ?? '').toLowerCase();
+        return label.includes('left') ? 'left' : label.includes('right') ? 'right' : null;
+      })
+    : [];
+
   keyboards.push({
     id: meta.id,
     name: meta.name,
@@ -124,9 +135,10 @@ for (const { path, meta } of metas) {
     siblings: meta.siblings ?? [],
     features: meta.features ?? [],
     keyCount,
-    keymapPath: keymap ? relative(zmkRoot, keymapPath) : '',
-    confPath: existsSync(confPath) ? relative(zmkRoot, confPath) : '',
+    keymapPath: keymap ? posixRelative(keymapPath) : '',
+    confPath: existsSync(confPath) ? posixRelative(confPath) : '',
     layouts,
+    ...(encoders.length > 0 ? { encoders } : {}),
   });
 }
 keyboards.sort((a, b) => a.name.localeCompare(b.name));
@@ -151,6 +163,8 @@ export interface KeyboardData {
   keymapPath: string;
   confPath: string;
   layouts: { name: string; keys: [number, number, number, number, number, number, number][] }[];
+  /** Which half each encoder (sensor) is on, where the shield's labels say. */
+  encoders?: ('left' | 'right' | null)[];
 }
 
 export interface ControllerData {
