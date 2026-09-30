@@ -3,7 +3,7 @@ import { describeBinding, displayContext } from '../../core/keymap/display.ts';
 import type { KeymapModel } from '../../core/keymap/model.ts';
 import { layoutExtent, type PhysicalLayout } from '../../core/layouts/index.ts';
 import { keysInBox, type Box } from '../../core/layouts/selection.ts';
-import { Keycap, type KeyDropHandlers } from './Keycap.tsx';
+import { Keycap, NEEDS_BUILD_NOTE, type KeyDropHandlers } from './Keycap.tsx';
 
 interface KeyboardCanvasProps {
   keymap: KeymapModel;
@@ -18,6 +18,8 @@ interface KeyboardCanvasProps {
   highlighted?: ReadonlySet<number>;
   /** Enables dragging keys and dropping palette tiles on them. */
   drop?: KeyDropHandlers | undefined;
+  /** Keys whose change waits for the next build (a ZMK Studio keyboard can't take it). */
+  flagged?: ReadonlySet<number> | undefined;
 }
 
 /** Margin around the keys (in layout units) so rotated thumb keys aren't clipped. */
@@ -34,6 +36,7 @@ export function KeyboardCanvas({
   onSelectBox,
   highlighted,
   drop,
+  flagged,
 }: KeyboardCanvasProps) {
   const [marquee, setMarquee] = useState<{ box: Box; additive: boolean } | null>(null);
   const labels = useMemo(() => {
@@ -91,6 +94,11 @@ export function KeyboardCanvas({
 
   return (
     <div className="keyboard" style={style} role="group" aria-label="Keyboard layout" {...boxHandlers}>
+      {flagged && flagged.size > 0 && (
+        <span id={NEEDS_BUILD_NOTE} hidden>
+          Needs a build: the keyboard can’t take this change live.
+        </span>
+      )}
       {layout.keys.map((key, index) => {
         const label = labels[index];
         if (!label) return null;
@@ -111,6 +119,7 @@ export function KeyboardCanvas({
             label={label}
             selected={selected.has(index)}
             highlighted={highlighted?.has(index) ?? false}
+            flagged={flagged?.has(index) ?? false}
             style={keyStyle}
             onSelect={onSelectKey}
             drop={drop}

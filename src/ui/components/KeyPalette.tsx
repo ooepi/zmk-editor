@@ -34,6 +34,8 @@ interface KeyPaletteProps {
   startAt?: string | null;
   /** The palette has jumped to `startAt`. */
   onStarted?: () => void;
+  /** Only these behaviors can be offered (a ZMK Studio keyboard's, for a keymap read from it). */
+  available?: ReadonlySet<string> | undefined;
 }
 
 const TRANSPARENT: PaletteItem = { kind: 'binding', binding: { behavior: 'trans', params: [] } };
@@ -69,7 +71,7 @@ const MEDIA_TILES: Record<string, { icon: IconName; name?: string }> = {
 const JUMP_SETTLE_MS = 800;
 
 /** Keys and behaviors laid out as tiles in one list: drag one onto a key, or click it and then keys. */
-export function KeyPalette({ keymap, armed, selection, onPick, onDisarm, startAt, onStarted }: KeyPaletteProps) {
+export function KeyPalette({ keymap, armed, selection, onPick, onDisarm, startAt, onStarted, available }: KeyPaletteProps) {
   const [query, setQuery] = useState('');
   /** Which half of the palette is browsed; a search shows both. */
   const [half, setHalf] = useState<'keys' | 'behaviors'>(startAt?.startsWith('behaviors') ? 'behaviors' : 'keys');
@@ -83,8 +85,11 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm, startAt
   const searching = query.trim() !== '';
 
   const tiles = useMemo(
-    () => behaviorTiles(keymap).filter((t) => t.binding.behavior !== 'trans' && t.binding.behavior !== 'none'),
-    [keymap],
+    () =>
+      behaviorTiles(keymap).filter(
+        (t) => t.binding.behavior !== 'trans' && t.binding.behavior !== 'none' && (!available || available.has(t.binding.behavior)),
+      ),
+    [keymap, available],
   );
   const sections = useMemo(() => paletteSections(query, tiles), [query, tiles]);
   const recentTiles = useMemo(() => {

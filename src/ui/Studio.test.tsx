@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { App } from './App.tsx';
 import { demoConfig } from './state/demo.ts';
 import { reloadPreferences } from './state/preferences.ts';
-import { fakeDeviceFor, type FakeDevice } from './studio/fakeDevice.ts';
+import { createFakeDevice, fakeDeviceFor, type FakeDevice } from './studio/fakeDevice.ts';
 
 beforeEach(() => {
   localStorage.clear();
@@ -145,5 +145,77 @@ describe('the mismatch dialog', () => {
     expect(dialog.queryByRole('button', { name: 'Send my config to the keyboard' })).toBeNull();
     await user.click(dialog.getByRole('button', { name: 'Edit the keyboard’s own keymap' }));
     await waitFor(() => expect(topbar().getByRole('button', { name: 'Change keyboard: Other Board' })).toBeTruthy());
+  });
+});
+
+/** A Studio-only session on a keyboard with the demo's keymap, minus some behaviors and spare layers. */
+async function studioOnly(user: ReturnType<typeof userEvent.setup>, { without = [] as string[], spare = 2 } = {}) {
+  const full = fakeDeviceFor({ ...demoConfig().config, studio: { device: 'Studio Board' } }, { locked: false });
+  const device = createFakeDevice({
+    name: 'Studio Board',
+    locked: false,
+    behaviors: (await full.behaviors()).filter((b) => !without.includes(b.name)),
+    layers: (await full.keymap()).layers,
+    spare,
+    layout: (await full.layouts()).layouts[0] ?? { name: '', keys: [] },
+  });
+  renderWith(device);
+  await user.click(topbar().getByRole('button', { name: 'Connect keyboard' }));
+  await waitFor(() => expect(topbar().getByRole('button', { name: 'Change keyboard: Studio Board' })).toBeTruthy());
+  return device;
+}
+
+const views = () => within(screen.getByRole('navigation', { name: 'Views' }));
+const palette = () => within(screen.getByRole('region', { name: 'Key palette' }));
+
+describe('a Studio-only keymap', () => {
+  it('explains that combos and settings need a config from GitHub', async () => {
+    const user = userEvent.setup();
+    await studioOnly(user);
+    await user.click(views().getByRole('button', { name: /^Combos/ }));
+    expect(screen.getByRole('region', { name: 'Needs your config' }).textContent).toContain('ZMK Studio');
+    await user.click(views().getByRole('button', { name: /^Settings/ }));
+    await user.click(screen.getByRole('button', { name: 'Open your config from GitHub' }));
+    expect(screen.getByText(/came from your keyboard/)).toBeTruthy();
+  });
+
+  it('offers only the behaviors the keyboard has', async () => {
+    const user = userEvent.setup();
+    await studioOnly(user, { without: ['Caps Word'] });
+    await user.click(palette().getByRole('button', { name: 'Behaviors' }));
+    expect(palette().queryByRole('button', { name: 'Place CapsWd' })).toBeNull();
+    expect(palette().getByRole('button', { name: /^Place Repeat/ })).toBeTruthy();
+  });
+
+  it('can’t add a layer when the keyboard has no spare one', async () => {
+    const user = userEvent.setup();
+    await studioOnly(user, { spare: 0 });
+    const add = screen.getByRole('button', { name: 'Add layer' }) as HTMLButtonElement;
+    expect(add.disabled).toBe(true);
+    expect(add.title).toContain('no spare layers');
+  });
+});
+
+describe('keys the keyboard can’t take', () => {
+  it('are marked as needing a build', async () => {
+    const user = userEvent.setup();
+    const full = fakeDeviceFor(ownConfig(), { locked: false });
+    const device = createFakeDevice({
+      name: 'Fake Keyboard',
+      locked: false,
+      behaviors: (await full.behaviors()).filter((b) => b.name !== 'Caps Word'),
+      layers: (await full.keymap()).layers,
+      spare: 2,
+      layout: (await full.layouts()).layouts[0] ?? { name: '', keys: [] },
+    });
+    renderWith(device);
+    await user.click(topbar().getByRole('button', { name: 'Connect keyboard' }));
+    await waitFor(() => expect(topbar().getByRole('status').textContent).toContain('Live'));
+    await user.click(screen.getByRole('button', { name: /^Key 1:/ }));
+    await user.click(palette().getByRole('button', { name: 'Behaviors' }));
+    await user.click(palette().getByRole('button', { name: 'Place CapsWd' }));
+    await waitFor(() => expect(topbar().getByRole('status').textContent).toContain('1 needs a build'));
+    const key = screen.getByRole('button', { name: /^Key 1:/ });
+    expect(document.getElementById(key.getAttribute('aria-describedby') ?? '')?.textContent).toContain('Needs a build');
   });
 });

@@ -33,6 +33,7 @@ import { ScreensView } from './components/ScreensView.tsx';
 import { SettingsView } from './components/SettingsView.tsx';
 import { StudioConnect } from './components/StudioConnect.tsx';
 import { StudioMismatchDialog } from './components/StudioMismatchDialog.tsx';
+import { StudioOnlyNote } from './components/StudioOnlyNote.tsx';
 import { StudioSaveBar } from './components/StudioSaveBar.tsx';
 import { Toolbar } from './components/Toolbar.tsx';
 import { VersionSelect } from './components/VersionSelect.tsx';
@@ -152,6 +153,17 @@ function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => 
   const studio = useStudioSession(config, dispatch, { open: studioOpen ?? openKeyboard, loadFromKeyboard: config.studio !== undefined || onDemo });
   const studioSupported = studioOpen !== undefined || fakeStudioRequested() || serialSupported();
   const studioMessage = studio.status.phase === 'idle' ? studio.status.message : undefined;
+  const studioLive = studio.status.phase === 'connected' || studio.status.phase === 'locked';
+  /** The shown layer's keys the keyboard can't take until the next build. */
+  const layerUid = keymap.layers[layer]?.uid;
+  const needsBuild = useMemo(() => {
+    const keys = new Set<number>();
+    for (const cell of studio.needsBuild) {
+      const [uid, index] = cell.split(':').map(Number);
+      if (uid === layerUid && index !== undefined) keys.add(index);
+    }
+    return keys;
+  }, [studio.needsBuild, layerUid]);
   useEffect(() => {
     if (studioMessage) dispatch({ type: 'notify', notice: studioMessage });
   }, [studioMessage, dispatch]);
@@ -378,7 +390,11 @@ function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => 
             </button>
           </div>
         )}
-        {view === 'keyboard' ? (
+        {config.studio && view in STUDIO_ONLY_AREAS ? (
+          <main className="workspace single">
+            <StudioOnlyNote area={STUDIO_ONLY_AREAS[view] ?? ''} device={config.studio.device} onOpenGitHub={() => setView('build')} />
+          </main>
+        ) : view === 'keyboard' ? (
           <main className="workspace single">
             <KeyboardView
               config={config}
@@ -449,7 +465,14 @@ function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => 
                 <ComboBanner keys={selectedCombo.keyPositions.length} blocked={comboBlocked} onDone={finishCombo} />
               )}
               <div className="canvas-row">
-                {view === 'keymap' && <LayerRail layers={keymap.layers} active={layer} dispatch={dispatch} />}
+                {view === 'keymap' && (
+                  <LayerRail
+                    layers={keymap.layers}
+                    active={layer}
+                    dispatch={dispatch}
+                    addDisabled={config.studio && studioLive && studio.freeLayers === 0 ? 'The keyboard has no spare layers left.' : undefined}
+                  />
+                )}
                 {/* In the combos view a click beside the keyboard (not in a gap between keys) finishes the combo. */}
                 <div
                   className="canvas"
@@ -468,6 +491,7 @@ function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => 
                     highlighted={view === 'combos' && selectedCombo ? new Set(selectedCombo.keyPositions.map(Number)) : undefined}
                     onSelectKey={onKeyClick}
                     drop={view === 'keymap' ? keyDrop : undefined}
+                    flagged={view === 'keymap' && studioLive ? needsBuild : undefined}
                   />
                   {view === 'keymap' && (
                     <EncoderStrip
@@ -486,6 +510,7 @@ function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => 
               {view === 'keymap' && (
                 <KeyPalette
                   keymap={keymap}
+                  available={config.studio && studio.deviceRefs ? studio.deviceRefs : undefined}
                   armed={armed}
                   selection={selection}
                   onPick={onPaletteClick}
@@ -551,6 +576,16 @@ function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => 
     </HelpContext.Provider>
   );
 }
+
+/** Views ZMK Studio can't change: a Studio-only keymap shows a note there instead. */
+const STUDIO_ONLY_AREAS: Partial<Record<View, string>> = {
+  combos: 'Combos',
+  behaviors: 'Behaviors',
+  macros: 'Macros',
+  modules: 'Modules',
+  screens: 'Screens',
+  settings: 'Settings',
+};
 
 type TabStatus = { kind: 'pending'; count: number } | { kind: 'building' } | { kind: 'ready' } | { kind: 'failed' };
 
