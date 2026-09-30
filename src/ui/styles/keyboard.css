@@ -298,7 +298,7 @@
 .keyboard {
   position: relative;
   /* As wide as fits, but never so wide that its height overflows the canvas. */
-  width: min(100%, calc((100cqh - var(--encoder-space, 0px)) * var(--ratio, 3)));
+  width: min(100%, calc(100cqh * var(--ratio, 3)));
   max-width: 1100px;
   container-type: inline-size;
 }

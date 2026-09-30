@@ -7,8 +7,7 @@ import { physicalLayoutFor, type PhysicalKey, type PhysicalLayout } from '../../
 import { gridTemplate, splitTemplate } from '../../core/layouts/templates.ts';
 import { placeEncoders, setEncoderSpot } from '../../core/layouts/encoders.ts';
 import type { EncoderSpot } from '../../core/layouts/types.ts';
-import { encoderSides } from '../../core/encoderSides.ts';
-import { sensorCount } from '../../core/keymap/sensorEdit.ts';
+import { encoderCount, encoderSides } from '../../core/encoderSides.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
 import { usePreferences } from '../state/preferences.ts';
 import { DesignerCanvas, KnobFields, RotationField, UnitField } from './DesignerCanvas.tsx';
@@ -50,8 +49,8 @@ export function LayoutDesigner({ config, dispatch, onClose }: LayoutDesignerProp
     setKnob(index);
     if (index !== null) setSelectionState([]);
   };
-  const encoderCount = sensorCount(config.keymap);
-  const knobs = placeEncoders(draft, encoderSides(config), encoderCount);
+  const knobCount = encoderCount(config);
+  const knobs = placeEncoders(draft, encoderSides(config), knobCount);
   const selected = selection.length === 1 ? (selection[0] ?? null) : null;
   const [dirty, setDirty] = useState(false);
   const labels = useMemo(() => {
@@ -66,7 +65,7 @@ export function LayoutDesigner({ config, dispatch, onClose }: LayoutDesignerProp
   /** Moves one knob (null: back to its default spot); the other knobs keep theirs. */
   const moveKnob = (index: number, spot: EncoderSpot | null) => {
     const { encoders: _, ...rest } = draft;
-    const encoders = setEncoderSpot(draft.encoders, index, spot, encoderCount);
+    const encoders = setEncoderSpot(draft.encoders, index, spot, knobCount);
     update(encoders ? { ...rest, encoders } : rest);
   };
   const updateKey = (index: number, patch: Partial<PhysicalKey>) =>

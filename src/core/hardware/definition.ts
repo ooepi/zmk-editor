@@ -115,8 +115,9 @@ export function parseHardware(text: string): KeyboardHardware {
   }
   if (data.encoderSpots !== undefined) {
     if (!Array.isArray(data.encoderSpots)) throw new Error('encoderSpots must be a list');
-    hardware.encoderSpots = data.encoderSpots.map((s: unknown, i: number) =>
-      s === null ? null : isRecord(s) ? { x: num(s.x, `encoderSpots ${i} x`), y: num(s.y, `encoderSpots ${i} y`) } : null,
+    // Only where knobs are drawn: a bad entry falls back to the default spot rather than failing the keyboard.
+    hardware.encoderSpots = data.encoderSpots.map((s: unknown) =>
+      isRecord(s) && typeof s.x === 'number' && Number.isFinite(s.x) && typeof s.y === 'number' && Number.isFinite(s.y) ? { x: s.x, y: s.y } : null,
     );
   }
   return hardware;

@@ -5,9 +5,7 @@ import { behaviorKind } from '../core/keymap/model.ts';
 import { applyToEncoder, pushRecent, type EncoderDirection, type PaletteItem } from '../core/keymap/palette.ts';
 import { findKeyboard } from '../core/catalog/keyboards.ts';
 import { physicalLayoutFor } from '../core/layouts/index.ts';
-import { placeEncoders } from '../core/layouts/encoders.ts';
-import { encoderSides } from '../core/encoderSides.ts';
-import { sensorCount } from '../core/keymap/sensorEdit.ts';
+import { knobSpots } from '../core/encoderSides.ts';
 import { BehaviorsView } from './components/BehaviorsView.tsx';
 import { BindingPanel } from './components/BindingPanel.tsx';
 import { BuildView } from './components/BuildView.tsx';
@@ -152,8 +150,7 @@ function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => 
   const showWelcome = welcome && (newcomer || welcomePending) && !welcomed && onDemo;
   const layout = physicalLayoutFor(config.keyboard, keyCount, layouts[config.keyboard], customLayout(config));
   /** Where each encoder's knob goes on the keyboard: saved spots, else under its own half. */
-  const encoderCount = sensorCount(keymap);
-  const knobs = useMemo(() => placeEncoders(layout, encoderSides(config), encoderCount), [layout, config, encoderCount]);
+  const knobs = knobSpots(config, layout);
 
   /** The ZMK Studio connection: key and layer edits go to the keyboard while it's live. */
   const studio = useStudioSession(config, dispatch, { open: studioOpen ?? openKeyboard, loadFromKeyboard: config.studio !== undefined });

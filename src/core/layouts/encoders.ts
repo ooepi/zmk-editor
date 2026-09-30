@@ -50,6 +50,7 @@ export function placeEncoders(layout: PhysicalLayout, sides: (Side | undefined)[
     const group = groupOf(i);
     const members = Array.from({ length: count }, (_, j) => j).filter((j) => groupOf(j) === group);
     const bounds = keysFor(group).map((k) => keyBounds(layout.keys[k] as PhysicalKey));
+    if (bounds.length === 0) bounds.push({ left: 0, top: 0, right: 0, bottom: 0 });
     const left = Math.min(...bounds.map((b) => b.left));
     const right = Math.max(...bounds.map((b) => b.right));
     const bottom = Math.max(...bounds.map((b) => b.bottom));
@@ -79,6 +80,6 @@ export function setEncoderSpot(
   spot: EncoderSpot | null,
   count: number,
 ): (EncoderSpot | null)[] | undefined {
-  const next = Array.from({ length: Math.max(count, index + 1) }, (_, i) => (i === index ? spot : (saved?.[i] ?? null)));
+  const next = Array.from({ length: Math.max(count, index + 1, saved?.length ?? 0) }, (_, i) => (i === index ? spot : (saved?.[i] ?? null)));
   return next.some(Boolean) ? next : undefined;
 }

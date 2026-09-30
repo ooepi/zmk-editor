@@ -57,3 +57,10 @@ describe('encoder knob positions in the definition', () => {
     expect(serializeHardware({ ...hw, encoderSpots: [null] })).not.toContain('encoderSpots');
   });
 });
+
+describe('a bad knob position in the definition', () => {
+  it('is dropped rather than losing the whole keyboard', () => {
+    const text = serializeHardware({ ...hw, encoders: [{ a: 2, b: 3 }], encoderSpots: [{ x: 150, y: 250 }] }).replace('"x": 150', '"x": "150"');
+    expect(parseHardware(text).encoderSpots).toEqual([null]);
+  });
+});

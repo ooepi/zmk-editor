@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { placeEncoders, splitHalves } from './encoders.ts';
+import { placeEncoders, setEncoderSpot, splitHalves } from './encoders.ts';
 import { layoutExtent, type PhysicalKey, type PhysicalLayout } from './types.ts';
 
 const key = (x: number, y: number, extra: Partial<PhysicalKey & { side: 'left' | 'right' }> = {}) => ({ x, y, w: 100, h: 100, r: 0, rx: 0, ry: 0, ...extra });
@@ -50,5 +50,20 @@ describe('placeEncoders', () => {
 describe('layoutExtent with encoders', () => {
   it('makes room for knobs outside the keys', () => {
     expect(layoutExtent({ ...split, encoders: [{ x: 100, y: 275 }] }).height).toBe(325);
+  });
+});
+
+describe('setEncoderSpot', () => {
+  it('keeps saved spots of encoders past the count', () => {
+    expect(setEncoderSpot([null, { x: 1, y: 2 }], 0, { x: 5, y: 5 }, 1)).toEqual([{ x: 5, y: 5 }, { x: 1, y: 2 }]);
+    expect(setEncoderSpot([{ x: 5, y: 5 }], 0, null, 1)).toBeUndefined();
+  });
+});
+
+describe('placeEncoders without keys', () => {
+  it('still gives real numbers', () => {
+    const [spot] = placeEncoders({ name: 'none', keys: [] }, [], 1);
+    expect(Number.isFinite(spot?.x)).toBe(true);
+    expect(Number.isFinite(spot?.y)).toBe(true);
   });
 });

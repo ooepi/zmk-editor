@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ZmkConfig } from './config.ts';
-import { encoderSides } from './encoderSides.ts';
+import { encoderCount, encoderSides } from './encoderSides.ts';
 import { testPad, testSplit } from './hardware/testFixtures.ts';
 import { emptyKeymap } from './keymap/model.ts';
 
@@ -27,5 +27,12 @@ describe('encoderSides', () => {
 
   it('knows nothing about other keyboards', () => {
     expect(encoderSides(config({ keyboard: 'no_such_board' }))).toEqual([]);
+  });
+});
+
+describe('encoderCount', () => {
+  it('counts the encoders the keyboard has, even ones whose bindings all fall through', () => {
+    expect(encoderCount(config({ keyboard: 'sofle' }))).toBe(2);
+    expect(encoderCount(config({ keyboard: 'no_such_board' }))).toBe(0);
   });
 });
