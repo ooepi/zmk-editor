@@ -473,6 +473,59 @@
   align-self: flex-start;
 }
 
+/* Layer usage: what turns each layer on, and layer mistakes. */
+
+.layer-warnings {
+  margin: 0 0 var(--s-3);
+  padding: 0;
+  list-style: none;
+}
+
+.layer-warnings .notice {
+  margin: 0 0 var(--s-2);
+  line-height: 1.6;
+}
+
+.layer-usage {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.layer-usage > li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-2) 0;
+  border-top: 1px solid var(--border);
+}
+
+.layer-usage-name {
+  font-weight: 600;
+}
+
+.chip.layer-ref {
+  gap: 6px;
+  min-height: 24px;
+  padding: 0 var(--s-2);
+  font-weight: 500;
+}
+
+.chip.layer-ref.static,
+.chip.layer-ref.static:hover {
+  border-color: var(--border);
+  background: transparent;
+  cursor: default;
+}
+
+.layer-ref-behavior {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
 /* The first-visit welcome: three choices as cards in the dialog. */
 .welcome-choices {
   display: grid;

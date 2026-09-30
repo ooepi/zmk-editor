@@ -15,6 +15,7 @@ import { pendingChanges } from '../core/github/changes.ts';
 import { ComboBanner } from './components/ComboBanner.tsx';
 import { CombosPanel } from './components/CombosPanel.tsx';
 import { ConditionalLayersPanel } from './components/ConditionalLayersPanel.tsx';
+import { LayerUsagePanel } from './components/LayerUsagePanel.tsx';
 import { EncoderPanel } from './components/EncoderPanel.tsx';
 import { HardwareWizard } from './components/HardwareWizard.tsx';
 import { KeyboardCanvas } from './components/KeyboardCanvas.tsx';
@@ -553,6 +554,14 @@ function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => 
               ) : (
                 <>
                   <Overview warnings={state.warnings} />
+                  <LayerUsagePanel
+                    keymap={keymap}
+                    dispatch={dispatch}
+                    onOpenCombo={(name) => {
+                      setView('combos');
+                      openCombo(name);
+                    }}
+                  />
                   <ConditionalLayersPanel keymap={keymap} dispatch={dispatch} />
                 </>
               )}
