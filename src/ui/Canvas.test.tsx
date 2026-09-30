@@ -56,3 +56,50 @@ describe('resizing the palette', () => {
     expect(screen.queryByRole('separator', { name: 'Resize palette' })).toBeNull();
   });
 });
+
+const view = () => screen.getByRole('group', { name: 'Keymap view' });
+const stage = () => document.querySelector<HTMLElement>('.camera-stage');
+const zoomLabel = () => screen.getByRole('button', { name: /^Fit the keyboard/ }).textContent;
+
+describe('the keymap camera', () => {
+  it('zooms with the buttons and fits again', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    expect(zoomLabel()).toBe('100%');
+    await user.click(screen.getByRole('button', { name: 'Zoom in' }));
+    expect(zoomLabel()).toBe('125%');
+    expect(stage()?.style.transform).toContain('scale(1.25)');
+    await user.click(screen.getByRole('button', { name: 'Zoom out' }));
+    await user.click(screen.getByRole('button', { name: 'Zoom out' }));
+    expect(zoomLabel()).toBe('80%');
+    await user.click(screen.getByRole('button', { name: /^Fit the keyboard/ }));
+    expect(zoomLabel()).toBe('100%');
+    expect(stage()?.style.transform).toBe('');
+  });
+
+  it('zooms with the wheel and pans with the middle button', () => {
+    render(<App />);
+    const canvas = document.querySelector<HTMLElement>('.canvas');
+    if (!canvas) throw new Error('no canvas');
+    fireEvent.wheel(canvas, { deltaY: -200, clientX: 0, clientY: 0 });
+    expect(Number(zoomLabel()?.replace('%', ''))).toBeGreaterThan(100);
+    fireEvent.pointerDown(canvas, { button: 1, clientX: 100, clientY: 100, pointerId: 2 });
+    fireEvent.pointerMove(canvas, { clientX: 150, clientY: 130, pointerId: 2 });
+    fireEvent.pointerUp(canvas, { clientX: 150, clientY: 130, pointerId: 2 });
+    expect(stage()?.style.transform).toMatch(/translate\(50px, 30px\)/);
+  });
+
+  it('has a dot grid you can turn on, remembered', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const toggle = screen.getByRole('button', { name: 'Dot grid' });
+    expect(toggle.getAttribute('aria-pressed')).toBe('false');
+    await user.click(toggle);
+    expect(document.querySelector('.canvas')?.classList.contains('dot-grid')).toBe(true);
+    cleanup();
+    reloadPreferences();
+    render(<App />);
+    expect(screen.getByRole('button', { name: 'Dot grid' }).getAttribute('aria-pressed')).toBe('true');
+    expect(view()).toBeTruthy();
+  });
+});

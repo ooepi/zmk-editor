@@ -221,13 +221,78 @@
 }
 
 .canvas {
+  position: relative;
   flex: 1;
   display: grid;
   place-items: center;
   padding: var(--s-4) var(--s-6) var(--s-8);
-  overflow: auto;
+  /* The camera moves the keyboard past the edges; the canvas clips it rather than scrolling. */
+  overflow: hidden;
   /* The keyboard sizes itself to this area's height too (see .keyboard). */
   container-type: size;
+}
+
+/* What the camera scales and moves: the keyboard and its encoders, from the top-left corner. */
+.camera-stage {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 16px;
+  width: 100%;
+  transform-origin: 0 0;
+}
+
+.canvas.dot-grid {
+  background-image: radial-gradient(circle, var(--border-strong) 1px, transparent 1.5px);
+  background-size: 24px 24px;
+}
+
+.canvas.panning,
+.canvas.panning * {
+  cursor: grabbing;
+}
+
+/* Zoom out, the zoom level (click to fit), zoom in, and the dot grid. */
+.camera-controls {
+  position: absolute;
+  right: var(--s-3);
+  bottom: var(--s-3);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
+}
+
+.camera-controls .icon-button[aria-pressed='true'] {
+  color: var(--accent-text);
+}
+
+.camera-zoom {
+  min-width: 52px;
+  height: 32px;
+  padding: 0 var(--s-2);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--text);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.camera-zoom:hover {
+  background: var(--surface-2);
+}
+
+.camera-divider {
+  width: 1px;
+  height: 20px;
+  margin: 0 2px;
+  background: var(--border);
 }
 
 /* Room for the encoder strip under the keyboard. */
