@@ -3,6 +3,7 @@ import { findKeyboard } from '../../core/catalog/keyboards.ts';
 import type { ZmkConfig } from '../../core/config.ts';
 import { centralTarget, disableStudio, enableStudio, hasUnlockKey, spareLayers, studioEnabled } from '../../core/studio/enable.ts';
 import type { EditorAction } from '../state/editorReducer.ts';
+import { HelpLink } from '../help/HelpLink.tsx';
 import { Icon } from './Icon.tsx';
 import { NumberInput } from './ui/NumberInput.tsx';
 import { Switch } from './ui/Switch.tsx';
@@ -21,7 +22,7 @@ export function StudioSettings({ config, dispatch, onPlaceUnlock }: { config: Zm
   const edit = (next: ZmkConfig, notice: string) => dispatch({ type: 'editConfig', config: next, notice });
 
   return (
-    <div className="settings-group studio-settings">
+    <section className="settings-group studio-settings" aria-label="ZMK Studio">
       <header className="settings-group-head">
         <span className="settings-group-icon">
           <Icon name="usb" size={20} />
@@ -29,7 +30,8 @@ export function StudioSettings({ config, dispatch, onPlaceUnlock }: { config: Zm
         <div>
           <h3>ZMK Studio</h3>
           <p className="muted small">
-            Change keys and layers live over USB, without building new firmware. Combos, behaviors and settings still need a build.
+            Change keys and layers live over USB, without building new firmware. Combos, behaviors and settings still need a build.{' '}
+            <HelpLink to="studio" />
           </p>
         </div>
       </header>
@@ -115,6 +117,6 @@ export function StudioSettings({ config, dispatch, onPlaceUnlock }: { config: Zm
           ZMK doesn’t list {catalog.name} as ready for Studio yet: it may lack the physical layout Studio needs. The build can still work.
         </p>
       )}
-    </div>
+    </section>
   );
 }

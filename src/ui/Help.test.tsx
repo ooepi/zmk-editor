@@ -96,4 +96,16 @@ describe('help', () => {
     await user.click(screen.getByRole('button', { name: 'Learn more' }));
     await waitFor(() => expect(lastScrolledId()).toBe('help-settings'));
   });
+
+  it('explains ZMK Studio, linked from its Settings pane', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(within(screen.getByRole('navigation', { name: 'Views' })).getByRole('button', { name: 'Settings' }));
+    await user.click(within(screen.getByRole('navigation', { name: 'Setting groups' })).getByRole('button', { name: /ZMK Studio/ }));
+    await user.click(within(screen.getByRole('region', { name: 'ZMK Studio' })).getByRole('button', { name: 'Learn more' }));
+    await waitFor(() => expect(lastScrolledId()).toBe('help-studio'));
+    const text = help().getByRole('heading', { level: 2, name: 'ZMK Studio (live changes)' }).closest('section')?.textContent ?? '';
+    expect(text).toMatch(/Restore/);
+    expect(text).toMatch(/Chrome or Edge/);
+  });
 });
