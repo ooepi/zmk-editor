@@ -223,6 +223,21 @@ describe('Build tab with a designed keyboard', () => {
   });
 });
 
+describe('Build tab with a setting that clashes', () => {
+  it('won’t commit the WPM widget with the stock nice!view screen', async () => {
+    const { config } = demoConfig();
+    const wpm = findSetting('ZMK_WIDGET_WPM_STATUS');
+    if (!wpm) throw new Error('no WPM setting');
+    localStorage.setItem('zmk-editor.config.v1', JSON.stringify({ config: { ...config, kconfig: writeSetting(config.kconfig, wpm, true) } }));
+    const user = userEvent.setup();
+    render(<App />);
+    await connect(user);
+    const problems = await screen.findByRole('list', { name: 'Unsupported settings' });
+    expect(problems.textContent).toContain('won’t build');
+    expect(screen.getByRole('button', { name: 'Commit & build' })).toHaveProperty('disabled', true);
+  });
+});
+
 describe('Build tab after removing a display', () => {
   it('deletes the display’s shield .conf the editor generated earlier', async () => {
     const withOled = newHardwareConfig(setDisplay(testPad, 'left', 'oled_128x32'), 'v0.3');

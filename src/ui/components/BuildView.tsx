@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type Dispatch } from 'react';
-import { unsupportedHardwareSettings } from '../../core/catalog/settings.ts';
+import { conflictingSettings, unsupportedHardwareSettings } from '../../core/catalog/settings.ts';
 import { sensorGaps } from '../../core/keymap/sensorEdit.ts';
 import { configPaths, generateConfig, importConfig, type ZmkConfig } from '../../core/config.ts';
 import type { FailedJob, WorkflowRun } from '../../core/github/builds.ts';
@@ -58,7 +58,7 @@ export function BuildView({ config, dispatch, session }: BuildViewProps) {
     [connection, config.keyboard, changes],
   );
   const hardwareErrors = useMemo(() => (config.hardware ? validateHardware(config.hardware).filter((i) => i.level === 'error') : []), [config.hardware]);
-  const unsupported = useMemo(() => unsupportedHardwareSettings(config), [config]);
+  const unsupported = useMemo(() => [...unsupportedHardwareSettings(config), ...conflictingSettings(config)], [config]);
   const encoderGaps = useMemo(() => sensorGaps(config.keymap), [config.keymap]);
   const handEditKey = connection
     ? `${connectionSeq}:${connection.ref.owner}/${connection.ref.repo}@${connection.headSha ?? 'empty'}:${handEdited.join('|')}`
