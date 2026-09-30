@@ -36,7 +36,7 @@
 2. **Switching a customised Pro Micro nice!view back to the default pins** must restore the adapter in build.yaml and keep a Screens replacement (e.g. `nice_view_gem`). Tested in Task 4.
 3. **A mirrored right half with its own display** (split, right half not wired differently): its display pins must be checked against the mirrored matrix pins. Tested in Task 5.
 4. **A definition whose `displayPins` has an unknown signal or a non-number pin** must be rejected with a clear message, not crash. Tested in Task 1.
-5. **Switching a XIAO nice!view design back to a Pro Micro:** the overrides are kept; the effective pins stay D9/D10/D8, not the adapter's; and the build uses no adapter. Tested in Task 4.
+5. **Switching a XIAO nice!view design back to a Pro Micro:** a XIAO nice!view on its defaults has no overrides, so it moves to the Pro Micro defaults (D1/D2/D3) and the build uses the adapter again; overrides, where there are any, are kept. Tested in Task 4.
 
 ---
 

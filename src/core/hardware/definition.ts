@@ -133,9 +133,10 @@ export function parseHardware(text: string): KeyboardHardware {
         if (!(DISPLAY_SIGNALS as string[]).includes(signal)) throw new Error(`displayPins.${side}.${signal} isn’t a display signal`);
         overrides[signal as DisplaySignal] = pin === null ? null : num(pin, `displayPins.${side}.${signal}`);
       }
-      displayPins[side] = overrides;
+      if (Object.keys(overrides).length > 0) displayPins[side] = overrides;
     }
-    hardware.displayPins = displayPins;
+    // Empty ones would only turn the file into version 2.
+    if (displayPins.left || displayPins.right) hardware.displayPins = displayPins;
   }
   if (data.encoderSpots !== undefined) {
     if (!Array.isArray(data.encoderSpots)) throw new Error('encoderSpots must be a list');

@@ -133,7 +133,7 @@ describe('configs with a designed keyboard', () => {
       { board: 'seeeduino_xiao_ble', shield: 'test_split_left rgbled_adapter' },
       { board: 'seeeduino_xiao_ble', shield: 'test_split_right rgbled_adapter' },
     ]);
-    expect(notes).toContain('Removed the nice!view from the build: ZMK’s nice!view adapter only fits a Pro Micro controller.');
+    expect(notes).toContain('Removed the nice!view from the build: on this controller it needs to be turned on under Displays, which sets up its pins.');
     expect(applyHardware(start, xiao, testSplit.keys.map((_, i) => i)).notes).toEqual([]);
     expect(newHardwareConfig(xiao, 'v0.3').build.include.map((t) => t.board)).toEqual(['seeeduino_xiao_ble', 'seeeduino_xiao_ble']);
   });
@@ -158,6 +158,19 @@ describe('configs with a designed keyboard', () => {
     const back = applyHardware(moved, viewLeft, keys);
     expect(back.config.build.include[0]?.shield).toBe('test_split_left nice_view_adapter nice_view_gem');
     expect(back.notes).toEqual([]);
+  });
+
+  it('removes an adapter added by hand next to a nice!view with its own SPI bus', () => {
+    const keys = testSplit.keys.map((_, i) => i);
+    const moved = setDisplayPin(setDisplay(testSplit, 'left', 'nice_view'), 'left', 'cs', 5);
+    const start = newHardwareConfig(moved, 'v0.3');
+    const handEdited = { ...start, build: { include: start.build.include.map((t, i) => (i === 0 ? { ...t, shield: 'test_split_left nice_view_adapter nice_view' } : t)) } };
+    expect(applyHardware(handEdited, moved, keys).config.build.include[0]?.shield).toBe('test_split_left nice_view');
+    const xiao = setDisplay({ ...testSplit, controller: 'seeeduino_xiao_ble' }, 'left', 'nice_view');
+    const onXiao = { ...handEdited, hardware: xiao };
+    const result = applyHardware(onXiao, xiao, keys);
+    expect(result.config.build.include[0]?.shield).toBe('test_split_left nice_view');
+    expect(result.notes).toEqual([]);
   });
 
   it('keeps a XIAO’s nice!view in the build and moves a Pro Micro’s back onto the adapter', () => {

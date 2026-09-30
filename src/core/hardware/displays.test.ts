@@ -39,6 +39,12 @@ describe('displays', () => {
     expect(setDisplayPin(moved, 'left', 'data', null).displayPins).toEqual({ left: { cs: 5, data: null } });
   });
 
+  it('ignores pins for signals the half’s display doesn’t have', () => {
+    const oled = setDisplay(testSplit, 'left', 'oled_128x32');
+    expect(setDisplayPin(oled, 'left', 'cs', 5)).toBe(oled);
+    expect(setDisplayPin(testSplit, 'left', 'sda', 5)).toBe(testSplit);
+  });
+
   it('drops a half’s pins when its display changes', () => {
     const moved = setDisplayPin(setDisplay(testSplit, 'left', 'nice_view'), 'left', 'cs', 5);
     expect(setDisplay(moved, 'left', 'oled_128x32')).not.toHaveProperty('displayPins');

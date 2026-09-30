@@ -74,9 +74,11 @@ function withOverrides(hw: KeyboardHardware, side: Side | undefined, overrides: 
 /** Sets one display pin; the default pin removes the override. */
 export function setDisplayPin(hw: KeyboardHardware, side: Side | undefined, signal: DisplaySignal, pin: Pin): KeyboardHardware {
   const kind = halfDisplay(hw, side);
-  const fallback = kind ? defaultDisplayPins(kind, interconnectOf(hw.controller)).find((p) => p.signal === signal)?.pin : undefined;
+  // A signal the half's display doesn't have (e.g. a field armed before the display changed) is ignored.
+  const fallback = kind ? defaultDisplayPins(kind, interconnectOf(hw.controller)).find((p) => p.signal === signal) : undefined;
+  if (!fallback) return hw;
   const others = Object.entries(hw.displayPins?.[sideKey(side)] ?? {}).filter(([s]) => s !== signal);
-  const overrides: DisplayPinOverrides = Object.fromEntries(pin === fallback ? others : [...others, [signal, pin]]);
+  const overrides: DisplayPinOverrides = Object.fromEntries(pin === fallback.pin ? others : [...others, [signal, pin]]);
   return withOverrides(hw, side, overrides);
 }
 

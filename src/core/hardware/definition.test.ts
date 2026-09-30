@@ -62,6 +62,13 @@ describe('display pins in the definition', () => {
     expect(serializeHardware(withView)).toContain('"version": 1,');
   });
 
+  it('drops empty display pins, so the file stays version 1', () => {
+    const text = serializeHardware(withView).replace('"displays": {', '"displayPins": { "left": {} },\n  "displays": {');
+    const parsed = parseHardware(text);
+    expect(parsed).not.toHaveProperty('displayPins');
+    expect(serializeHardware(parsed)).toContain('"version": 1,');
+  });
+
   it('rejects unknown signals and pins that aren’t numbers', () => {
     const text = serializeHardware({ ...withView, displayPins: { left: { cs: 5 } } });
     expect(() => parseHardware(text.replace('"cs"', '"foo"'))).toThrow('displayPins.left.foo isn’t a display signal');

@@ -70,7 +70,8 @@ Approved in chat on 2026-09-30:
 - `displayPins(kind, ic, overrides)` returns the effective `{ signal, pin, use }[]`: the defaults with the overrides applied. `pinUses` and validation use it.
 - `setDisplayPin(hw, side, signal, pin)`: setting a pin equal to the default removes the override, and an empty half or map is removed too.
   - `setDisplay` (changing a half's display kind) removes that half's overrides.
-  - Changing the controller keeps the overrides (keep and flag).
+  - Changing the controller keeps the overrides (keep and flag); signals without an override take the new controller's defaults, so a XIAO nice!view on its defaults moves to D1/D2/D3 (through the adapter) on a Pro Micro.
+  - `setDisplayPin` ignores signals the half's display doesn't have. Empty overrides are dropped when a definition is read.
 - **Whether a half uses the adapter**, `usesNiceViewAdapter(hw, side)`: a nice!view where `ic.niceViewAdapter` is true and the effective pins equal the adapter's.
 - **Definitions** (`definition.ts`): `displayPins` is written as `{ "left": { "cs": 5 } }` when present, and the file is then written as version 2. Without it the file stays version 1, byte for byte. Parsing accepts versions 1 and 2, and validates signal names and pins.
 
@@ -130,7 +131,7 @@ Approved in chat on 2026-09-30:
 
 - **Each display signal needs a pin:** "Display CS on the left half has no pin."
 - **Pins outside the footprint** and **clashes** are checked as today, because `labelled` uses the effective pins.
-- **The nice!view-on-XIAO error is removed.** `availableDisplays` returns every kind on every footprint and is kept for later.
+- **The nice!view-on-XIAO error is removed.** Every display is offered on every footprint (`availableDisplays` was dropped).
 - **Warning** when a Mikoto display uses D6: "Display clock on the left half uses D6, which is a different pin on Mikoto v6 and later; the build assumes Mikoto 5.20."
 
 ## Wizard UI

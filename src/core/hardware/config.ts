@@ -58,7 +58,9 @@ export function newHardwareConfig(hw: KeyboardHardware, zmkVersion: string): Zmk
  * (undefined for added keys), and `sensorNewToOld` the same for encoders
  * in sensor order; the keymap, combos and sensor bindings follow. The
  * keyboard's build targets move to the new controller, keeping their
- * extra shields, except nice!view ones on a controller ZMK's adapter doesn't fit.
+ * extra shields. A half with a nice!view on its own SPI bus loses a hand-added
+ * `nice_view_adapter` (both would define `nice_view_spi`); on a controller the
+ * adapter doesn't fit, a hand-added nice!view the model doesn't know goes too.
  */
 export function applyHardware(
   config: ZmkConfig,
@@ -83,9 +85,9 @@ export function applyHardware(
     const hadNiceView = config.hardware ? halfDisplay(config.hardware, side) === 'nice_view' : false;
     const hadAdapter = config.hardware ? usesNiceViewAdapter(config.hardware, side) : false;
     let shield = niceView === hadNiceView && adapter === hadAdapter ? t.shield : withDisplayShields(t.shield ?? base, niceView, adapter);
-    // The adapter would break the build on a controller it doesn't fit; a nice!view the
-    // model doesn't know about (added by hand) has no SPI bus there, so it goes too.
-    if (!adapterFits && shield !== undefined) {
+    // A nice!view on its own SPI bus can't also have the adapter; on a controller the adapter
+    // doesn't fit, a nice!view the model doesn't know about (added by hand) has no SPI bus, so it goes too.
+    if ((!adapterFits || (niceView && !adapter)) && shield !== undefined) {
       const fixed = withDisplayShields(shield, niceView, false);
       if (fixed !== shield) {
         shield = fixed;
@@ -95,7 +97,7 @@ export function applyHardware(
     return { ...t, board: hw.controller, shield };
   });
   const notes = droppedView
-    ? [...remapped.notes, 'Removed the nice!view from the build: ZMK’s nice!view adapter only fits a Pro Micro controller.']
+    ? [...remapped.notes, 'Removed the nice!view from the build: on this controller it needs to be turned on under Displays, which sets up its pins.']
     : remapped.notes;
   return { config: { ...config, keymap: model, hardware: hw, build: { include } }, notes };
 }

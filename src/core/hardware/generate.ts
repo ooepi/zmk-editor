@@ -97,7 +97,7 @@ function niceViewBus(hw: KeyboardHardware, pins: DisplayPin[]): string {
     `    cs-gpios = <&${ic.gpio} ${cs ?? '?'} GPIO_ACTIVE_HIGH>;`,
     '};',
     '',
-    // As the adapter does: on some boards SPI0 and I2C0 are the same hardware.
+    // As the adapter does: on some Pro Micro boards the SPI bus is SPI0, which shares its hardware with I2C0.
     `&${ic.i2c} {`,
     '    status = "disabled";',
     '};',

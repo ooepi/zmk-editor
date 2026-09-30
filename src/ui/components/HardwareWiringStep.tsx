@@ -128,7 +128,11 @@ export function HardwareWiringStep({ hw, issues, onChange, onAddEncoder, onRemov
                     className="input"
                     aria-describedby="hw-display-help"
                     value={halfDisplay(hw, side) ?? ''}
-                    onChange={(e) => onChange(setDisplay(hw, side, e.target.value === '' ? undefined : (e.target.value as DisplayKind)))}
+                    onChange={(e) => {
+                      onChange(setDisplay(hw, side, e.target.value === '' ? undefined : (e.target.value as DisplayKind)));
+                      // An armed display pin field may belong to the display that just went away.
+                      if (active?.list.startsWith('display.') && active.side === side) setActive(null);
+                    }}
                   >
                     <option value="">None</option>
                     {DISPLAY_KINDS.map((kind) => (
