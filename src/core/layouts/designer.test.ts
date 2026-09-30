@@ -33,6 +33,14 @@ describe('info.json (QMK format)', () => {
     expect(parseInfoJson(generateInfoJson(layout))).toEqual(layout);
   });
 
+  it('keeps encoder knob positions in its own section, only when there are some', () => {
+    const withKnobs: PhysicalLayout = { ...layout, encoders: [null, { x: 350, y: 225 }] };
+    const text = generateInfoJson(withKnobs);
+    expect(JSON.parse(text).zmk_editor).toEqual({ encoders: [null, { x: 3.5, y: 2.25 }] });
+    expect(parseInfoJson(text)).toEqual(withKnobs);
+    expect(generateInfoJson({ ...layout, encoders: [null] })).not.toContain('zmk_editor');
+  });
+
   it('reads the first layout of QMK-style files and rejects junk', () => {
     const qmk = JSON.stringify({ keyboard_name: 'x', layouts: { LAYOUT_split: { layout: [{ label: 'Q', x: 1, y: 2 }] } } });
     expect(parseInfoJson(qmk)?.keys).toEqual([{ x: 100, y: 200, w: 100, h: 100, r: 0, rx: 0, ry: 0 }]);
