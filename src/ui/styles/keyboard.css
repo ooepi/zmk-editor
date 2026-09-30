@@ -496,3 +496,9 @@
   padding: 6px 8px;
 }
 
+
+.layer-name {
+  max-width: 12ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

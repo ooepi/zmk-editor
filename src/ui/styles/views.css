@@ -8,6 +8,8 @@
   background: var(--bg);
   /* On a phone the tabs scroll sideways instead of widening the page. */
   overflow-x: auto;
+  /* A tab scrolled into view stops short of the sticky Build & flash at the right. */
+  scroll-padding-inline-end: 180px;
 }
 
 /* The views sit together in one pill; the active one is filled. */
@@ -69,6 +71,9 @@
 
 /* Build & flash: the last step, pushed to the far end and filled so it can't be missed. */
 .viewtab.build-tab {
+  /* When the tabs scroll sideways, Build & flash stays in view at the right edge. */
+  position: sticky;
+  right: 0;
   margin-left: auto;
   min-height: 40px;
   padding: 0 var(--s-5);

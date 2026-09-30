@@ -227,7 +227,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
   align-content: start;
-  gap: 4px;
+  gap: var(--s-1);
   padding-bottom: 2px;
 }
 
@@ -270,7 +270,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--fs-sm);
 }
 
 .palette-tile-sub {
@@ -308,4 +308,14 @@
 .palette-tile.kind-none .palette-tile-main {
   color: var(--key-dim);
   font-weight: 400;
+}
+
+/* A rail jump focuses the section's title: a quiet underline instead of the ring. */
+.palette-group-title:focus {
+  outline: none;
+}
+
+.palette-group-title:focus-visible {
+  text-decoration: underline 2px var(--accent-line);
+  text-underline-offset: 4px;
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type Dispatch, type DragEvent, type Keyboa
 import type { Layer } from '../../core/keymap/model.ts';
 import { dragKind } from '../dnd.ts';
 import { useReorder } from '../reorder.ts';
+import { useMediaQuery } from '../useMediaQuery.ts';
 import { Icon } from './Icon.tsx';
 import { IconButton } from './ui/IconButton.tsx';
 import type { EditorAction } from '../state/editorReducer.ts';
@@ -22,6 +23,8 @@ export const HOVER_SWITCH_MS = 500;
  * row reveals its drag grip, rename and delete; Alt+↑/↓ moves the focused layer.
  */
 export function LayerRail({ layers, active, dispatch }: LayerRailProps) {
+  // On narrow screens the rail runs across the top (panels.css), so its tabs are a row.
+  const across = useMediaQuery('(max-width: 900px)');
   const [renaming, setRenaming] = useState<number | null>(null);
   const [draft, setDraft] = useState('');
   const [hovered, setHovered] = useState<number | null>(null);
@@ -92,8 +95,11 @@ export function LayerRail({ layers, active, dispatch }: LayerRailProps) {
   };
 
   const onTabKey = (event: KeyboardEvent<HTMLButtonElement>, index: number, layer: Layer) => {
-    if (!event.altKey || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')) return;
-    const to = event.key === 'ArrowUp' ? index - 1 : index + 1;
+    // Along the rail: up/down when it stands, left/right too when it runs across the top.
+    const back = event.key === 'ArrowUp' || (across && event.key === 'ArrowLeft');
+    const forward = event.key === 'ArrowDown' || (across && event.key === 'ArrowRight');
+    if (!event.altKey || (!back && !forward)) return;
+    const to = back ? index - 1 : index + 1;
     if (to < 0 || to >= layers.length) return;
     event.preventDefault();
     refocus.current = layer.name;
@@ -105,7 +111,7 @@ export function LayerRail({ layers, active, dispatch }: LayerRailProps) {
     // row's buttons can stick out to the right without being clipped by the scrolling.
     <div className="layer-rail-scroll">
       <nav className="layer-rail" aria-label="Layers">
-        <div ref={list} className="layer-rail-list" role="tablist" aria-label="Layers" aria-orientation="vertical">
+        <div ref={list} className="layer-rail-list" role="tablist" aria-label="Layers" aria-orientation={across ? 'horizontal' : 'vertical'}>
           {layers.map((layer, index) => {
             const name = layerName(layer);
             const target = reorder.target(index, 'y');
@@ -154,11 +160,12 @@ export function LayerRail({ layers, active, dispatch }: LayerRailProps) {
                       onClick={() => dispatch({ type: 'selectLayer', index })}
                       onDoubleClick={() => startRename(index)}
                       onKeyDown={(event) => onTabKey(event, index, layer)}
-                      title="Double-click to rename · drag or Alt+↑/↓ to reorder"
+                      title={`${name} · double-click to rename · drag or Alt+↑/↓ to reorder`}
                       {...reorder.handle(index)}
                     >
                       <span className="layer-index">{index}</span>
-                      {name}
+                      {/* Long names are cut short, so one layer can't widen the rail; the title has it whole. */}
+                      <span className="layer-name">{name}</span>
                     </button>
                   )}
                   {renaming === index ? (

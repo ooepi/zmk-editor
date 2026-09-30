@@ -12,8 +12,6 @@ interface CombosPanelProps {
   keymap: KeymapModel;
   /** The open combo, if any. */
   selected: string | null;
-  /** Done was refused: the open combo needs at least two keys. */
-  blocked: boolean;
   onSelect: (name: string | null) => void;
   /** Close the open combo (the same as Done over the keyboard, or Esc). */
   onDone: () => void;
@@ -21,7 +19,7 @@ interface CombosPanelProps {
 }
 
 /** Keys as little keycaps joined by +, then what the combo sends. */
-function ComboFormula({ keys, sends }: { keys: string[]; sends: string }) {
+function ComboFormula({ keys, sends, sendsTag }: { keys: string[]; sends: string; sendsTag?: string | undefined }) {
   return (
     <span className="combo-formula">
       {keys.length === 0 ? (
@@ -35,7 +33,11 @@ function ComboFormula({ keys, sends }: { keys: string[]; sends: string }) {
         ))
       )}
       <span className="combo-formula-op">→</span>
-      <kbd className="mini-key sends">{sends}</kbd>
+      <kbd className="mini-key sends">
+        {sends}
+        {/* How a layer key works: mo (while held), tog, lt… */}
+        {sendsTag && <span className="mini-key-tag">{sendsTag}</span>}
+      </kbd>
     </span>
   );
 }
@@ -47,7 +49,7 @@ function layerNames(combo: Combo, keymap: KeymapModel): string[] {
   });
 }
 
-export function CombosPanel({ keymap, selected, blocked, onSelect, onDone, dispatch }: CombosPanelProps) {
+export function CombosPanel({ keymap, selected, onSelect, onDone, dispatch }: CombosPanelProps) {
   const combo = keymap.combos.find((c) => c.name === selected);
   const edit = (next: KeymapModel) => dispatch({ type: 'edit', keymap: next });
   const update = (next: Combo) => combo && edit(replaceCombo(keymap, combo.name, next));
@@ -56,6 +58,8 @@ export function CombosPanel({ keymap, selected, blocked, onSelect, onDone, dispa
     const created = createCombo(keymap, []);
     edit({ ...keymap, combos: [...keymap.combos, created] });
     onSelect(created.name);
+    // The next step is clicking keys: take focus to the banner that asks for them.
+    window.setTimeout(() => document.querySelector<HTMLElement>('.combo-banner')?.focus());
   };
 
   if (combo) {
@@ -86,15 +90,12 @@ export function CombosPanel({ keymap, selected, blocked, onSelect, onDone, dispa
             <span className="step-no">1</span> Keys
           </h3>
           {parts.keys.length > 0 ? (
-            <ComboFormula keys={parts.keys} sends={parts.sends} />
+            <ComboFormula keys={parts.keys} sends={parts.sends} sendsTag={parts.sendsTag} />
           ) : (
             <p className="muted small">Click keys on the keyboard to add them. Click one again to remove it.</p>
           )}
-          {combo.keyPositions.length < 2 && (
-            <span className={blocked ? 'field-error' : 'field-help'}>
-              {blocked ? 'Pick at least two keys, or delete this combo.' : 'A combo needs at least two keys.'}
-            </span>
-          )}
+          {/* When Done is refused, the banner over the keyboard says so; this stays a hint. */}
+          {combo.keyPositions.length < 2 && <span className="field-help">A combo needs at least two keys.</span>}
         </section>
 
         <section className="combo-step" aria-label="Sends">
@@ -172,13 +173,13 @@ export function CombosPanel({ keymap, selected, blocked, onSelect, onDone, dispa
           const layers = layerNames(c, keymap);
           return (
             <li key={c.name}>
-              <button type="button" className="item combo-item" aria-pressed={false} onClick={() => onSelect(c.name)}>
+              <button type="button" className="item combo-item" data-combo={c.name} onClick={() => onSelect(c.name)}>
                 <span className="combo-item-head">
                   <span className="mono small">{c.name}</span>
                   {c.keyPositions.length < 2 && <span className="badge warn">Needs 2 keys</span>}
                   {layers.length > 0 && <span className="badge">{layers.join(', ')}</span>}
                 </span>
-                <ComboFormula keys={parts.keys} sends={parts.sends} />
+                <ComboFormula keys={parts.keys} sends={parts.sends} sendsTag={parts.sendsTag} />
               </button>
             </li>
           );

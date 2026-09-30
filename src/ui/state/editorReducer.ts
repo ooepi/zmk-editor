@@ -26,6 +26,8 @@ export interface EditorState {
   notice: string | null;
   /** The notice is a short confirmation that clears itself after a few seconds. */
   noticeTransient: boolean;
+  /** Counts notify actions, so the same short confirmation twice in a row restarts its timer. */
+  noticeSeq: number;
 }
 
 export type EditorAction =
@@ -66,7 +68,20 @@ export type EditorAction =
   | { type: 'dismissNotice' };
 
 export function initialState(config: ZmkConfig, warnings: string[] = []): EditorState {
-  return { config, warnings, layer: 0, key: null, selection: [], clipboard: null, sensor: null, past: [], future: [], notice: null, noticeTransient: false };
+  return {
+    config,
+    warnings,
+    layer: 0,
+    key: null,
+    selection: [],
+    clipboard: null,
+    sensor: null,
+    past: [],
+    future: [],
+    notice: null,
+    noticeTransient: false,
+    noticeSeq: 0,
+  };
 }
 
 /** The state fields for a new key selection; `key` follows it. */
@@ -111,7 +126,9 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       : next.notice === state.notice
         ? state.noticeTransient
         : false;
-  return next.noticeTransient === noticeTransient || next === state ? next : { ...next, noticeTransient };
+  const noticeSeq = action.type === 'notify' ? state.noticeSeq + 1 : state.noticeSeq;
+  if (next === state && noticeSeq === state.noticeSeq) return next;
+  return next.noticeTransient === noticeTransient && next.noticeSeq === noticeSeq ? next : { ...next, noticeTransient, noticeSeq };
 }
 
 function reduce(state: EditorState, action: EditorAction): EditorState {

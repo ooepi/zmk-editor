@@ -18,6 +18,7 @@ import { HelpLink } from '../help/HelpLink.tsx';
 import { Icon, type IconName } from './Icon.tsx';
 import { IconButton } from './ui/IconButton.tsx';
 import { Switch } from './ui/Switch.tsx';
+import { NumberInput } from './ui/NumberInput.tsx';
 
 interface SettingsViewProps {
   config: ZmkConfig;
@@ -66,6 +67,8 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 /** Kconfig settings (`config/<keyboard>.conf`): pick a group on the left, change it on the right. */
 export function SettingsView({ config, dispatch }: SettingsViewProps) {
   const [pane, setPane] = useState<Pane>('power');
+  /** Groups whose advanced settings are shown. */
+  const [advancedOpen, setAdvancedOpen] = useState<Set<SettingGroup>>(() => new Set());
   /** The group to go back to when Changed only is turned off. */
   const [lastGroup, setLastGroup] = useState<SettingGroup>('power');
   const openGroup = (group: SettingGroup) => {
@@ -208,7 +211,21 @@ export function SettingsView({ config, dispatch }: SettingsViewProps) {
             // Keyed by keyboard: another keyboard's .conf starts a fresh list.
             <ChangedOnly key={config.keyboard} changed={changed} row={row} onShowGroup={openGroup} />
           ) : (
-            <GroupView key={`${pane}-${config.keyboard}`} group={pane} changed={changed} row={row} />
+            <GroupView
+              key={`${pane}-${config.keyboard}`}
+              group={pane}
+              changed={changed}
+              row={row}
+              showAdvanced={advancedOpen.has(pane)}
+              onShowAdvanced={(show) =>
+                setAdvancedOpen((open) => {
+                  const next = new Set(open);
+                  if (show) next.add(pane);
+                  else next.delete(pane);
+                  return next;
+                })
+              }
+            />
           )}
         </div>
       </div>
@@ -242,8 +259,20 @@ function useKept(names: string[]): Set<string> {
 }
 
 /** One group: its everyday settings, then the advanced ones behind a toggle (changed ones always show). */
-function GroupView({ group, changed, row }: { group: SettingGroup; changed: SettingDef[]; row: (def: SettingDef) => ReactNode }) {
-  const [showAdvanced, setShowAdvanced] = useState(false);
+function GroupView({
+  group,
+  changed,
+  row,
+  showAdvanced,
+  onShowAdvanced,
+}: {
+  group: SettingGroup;
+  changed: SettingDef[];
+  row: (def: SettingDef) => ReactNode;
+  /** Kept by the page, so each group remembers it while you switch between groups. */
+  showAdvanced: boolean;
+  onShowAdvanced: (show: boolean) => void;
+}) {
   const advancedId = useId();
   const defs = SETTINGS.filter((s) => s.group === group);
   const basic = defs.filter((s) => !s.advanced);
@@ -268,7 +297,7 @@ function GroupView({ group, changed, row }: { group: SettingGroup; changed: Sett
               className="link-button settings-advanced-toggle"
               aria-controls={shownAdvanced.length > 0 ? advancedId : undefined}
               aria-expanded={showAdvanced}
-              onClick={() => setShowAdvanced(!showAdvanced)}
+              onClick={() => onShowAdvanced(!showAdvanced)}
             >
               <Icon name={showAdvanced ? 'chevronUp' : 'chevronDown'} size={14} />
               {showAdvanced ? 'Hide advanced settings' : `Show ${plural(hidden, 'advanced setting')}`}
@@ -373,16 +402,15 @@ function SettingRow({
   } else if (type.kind === 'int') {
     control = (
       <span className="setting-number">
-        <input
+        <NumberInput
           {...common}
           className="input"
-          type="number"
           aria-label={`${def.label}${unit ? ` (${unit})` : ''}`}
           min={type.min}
           max={type.max}
           placeholder={def.default === undefined ? '' : String(def.default)}
-          value={typeof value === 'number' ? value : ''}
-          onChange={(e) => onChange(e.target.value === '' ? undefined : Number(e.target.value))}
+          value={typeof value === 'number' ? value : undefined}
+          onCommit={onChange}
         />
         {unit && <span className="setting-unit">{unit}</span>}
       </span>

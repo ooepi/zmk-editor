@@ -77,6 +77,29 @@ describe('App', () => {
     expect(tabs()).toHaveLength(6);
   });
 
+  it('never has the GitHub popover and the More menu open together', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Open from GitHub' }));
+    expect(screen.getByRole('dialog', { name: 'Open from GitHub' })).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'More actions' }));
+    expect(screen.queryByRole('dialog', { name: 'Open from GitHub' })).toBeNull();
+    expect(screen.getByRole('menu')).toBeTruthy();
+  });
+
+  it('closes the GitHub popover when focus leaves it by keyboard', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole('button', { name: 'Open from GitHub' }));
+    const popover = screen.getByRole('dialog', { name: 'Open from GitHub' });
+    const controls = within(popover).getAllByRole('button');
+    (controls.at(-1) as HTMLElement).focus();
+    // Tab past the popover's last control, onto the next toolbar button.
+    await user.tab();
+    expect(popover.contains(document.activeElement)).toBe(false);
+    expect(screen.queryByRole('dialog', { name: 'Open from GitHub' })).toBeNull();
+  });
+
   it('keeps everyday actions in the top bar and the rest in the More menu', async () => {
     const user = userEvent.setup();
     render(<App />);

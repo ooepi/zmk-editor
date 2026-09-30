@@ -190,7 +190,8 @@ function Editor({ welcome }: { welcome: boolean }) {
     if (!state.notice || !state.noticeTransient) return;
     const timer = window.setTimeout(() => dispatch({ type: 'dismissNotice' }), TRANSIENT_NOTICE_MS);
     return () => window.clearTimeout(timer);
-  }, [state.notice, state.noticeTransient, dispatch]);
+    // noticeSeq: the same confirmation again starts a fresh few seconds.
+  }, [state.notice, state.noticeTransient, state.noticeSeq, dispatch]);
 
   // After an undo the open combo may be gone; then nothing is open, and a redo won't reopen it.
   const selectedCombo = keymap.combos.find((c) => c.name === combo);
@@ -211,8 +212,11 @@ function Editor({ welcome }: { welcome: boolean }) {
       setComboBlocked(true);
       return;
     }
+    const name = selectedCombo.name;
     openCombo(null);
     dispatch({ type: 'notify', notice: 'Combo saved.', transient: true });
+    // Done removes the editor that had focus: keep keyboard users on the combo they finished.
+    window.setTimeout(() => document.querySelector<HTMLElement>(`[data-combo="${CSS.escape(name)}"]`)?.focus());
   };
   const macroCount = keymap.behaviors.filter((b) => behaviorKind(b) === 'macro').length;
   // Help isn't a tab: the ? button in the top bar and the Learn more links open it.
@@ -470,7 +474,6 @@ function Editor({ welcome }: { welcome: boolean }) {
                 <CombosPanel
                   keymap={keymap}
                   selected={selectedCombo?.name ?? null}
-                  blocked={comboBlocked}
                   onSelect={openCombo}
                   onDone={finishCombo}
                   dispatch={dispatch}

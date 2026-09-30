@@ -107,12 +107,16 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm, startAt
     ...shown.map((s) => ({ id: s.id, title: s.title, kind: s.kind === 'keys' ? ('Keys' as const) : ('Behaviors' as const) })),
   ];
 
-  const jump = (id: string) => {
+  /** `focus`: a jump from the rail, where keyboard users should land in the section. */
+  const jump = (id: string, focus = false) => {
     const target = { id, settling: true };
     jumped.current = target;
     // scrollend isn't everywhere yet; stop waiting for it after a while.
     window.setTimeout(() => (target.settling = false), JUMP_SETTLE_MS);
-    scroller.current?.querySelector(`[data-section="${id}"]`)?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+    const section = scroller.current?.querySelector<HTMLElement>(`[data-section="${id}"]`);
+    section?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+    // Keyboard users land where they jumped, so Tab continues with that section's tiles.
+    if (focus) section?.querySelector<HTMLElement>('.palette-group-title')?.focus({ preventScroll: true });
     setCurrent(id);
   };
 
@@ -230,7 +234,7 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm, startAt
   return (
     <section className={`palette${collapsed ? ' collapsed' : ''}`} aria-label="Key palette">
       <div className="palette-head">
-        <PaletteStatus armed={armedName ? { name: armedName } : null} selection={selection} hasEncoders={hasEncoders} onStop={onDisarm} />
+        <PaletteStatus armed={armedName ? { name: armedName } : null} selection={selection} hasEncoders={hasEncoders} collapsed={collapsed} onStop={onDisarm} />
         <IconButton
           icon={collapsed ? 'chevronUp' : 'chevronDown'}
           label={collapsed ? 'Show palette' : 'Hide palette'}
@@ -254,7 +258,7 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm, startAt
                 </button>
               ))}
             </div>
-            <CategoryRail entries={railEntries} current={current} onJump={jump} headings={searching} />
+            <CategoryRail entries={railEntries} current={current} onJump={(id) => jump(id, true)} headings={searching} />
           </div>
           <div className="palette-main">
             <div className="palette-tools">
@@ -265,6 +269,12 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm, startAt
                 aria-label="Search the palette"
                 value={query}
                 onChange={(e) => search(e.target.value)}
+                onKeyDown={(e) => {
+                  // The app's Esc skips text fields: here it clears the search first, then stops placing.
+                  if (e.key !== 'Escape') return;
+                  if (query) search('');
+                  else if (armed) onDisarm();
+                }}
               />
               <ModifierBar mods={mods} onToggle={toggleMod} onClear={() => setMods([])} />
             </div>
@@ -277,7 +287,9 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm, startAt
               {showRecent && (
                 <div className="palette-group" id="palette-recent" data-section="recent">
                   <div className="palette-group-head">
-                    <h3 className="palette-group-title">Recent</h3>
+                    <h3 className="palette-group-title" tabIndex={-1}>
+                      Recent
+                    </h3>
                     <button type="button" className="link-button small" aria-label="Clear recently used" onClick={() => setPreferences({ recent: [] })}>
                       Clear
                     </button>
@@ -289,7 +301,9 @@ export function KeyPalette({ keymap, armed, selection, onPick, onDisarm, startAt
               )}
               {shown.map((section) => (
                 <div key={section.id} className="palette-group" id={`palette-${section.id}`} data-section={section.id}>
-                  <h3 className="palette-group-title">{section.title}</h3>
+                  <h3 className="palette-group-title" tabIndex={-1}>
+                    {section.title}
+                  </h3>
                   <div className="palette-tiles" role="group" aria-label={section.title}>
                     {section.kind === 'keys'
                       ? section.keycodes.map(keyTile)
