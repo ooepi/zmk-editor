@@ -37,6 +37,8 @@ export interface Combo {
 
 export interface Layer {
   name: string;
+  /** Editor-only identity that survives renames and moves (never written to the keymap). */
+  uid?: number;
   label?: string;
   displayName?: string;
   bindings: Binding[];
