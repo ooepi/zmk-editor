@@ -1,4 +1,4 @@
-import { PRO_MICRO, type HeaderPad } from '../../core/hardware/interconnects.ts';
+import { interconnectOf, type HeaderPad } from '../../core/hardware/interconnects.ts';
 import type { KeyboardHardware, Side } from '../../core/hardware/types.ts';
 import { pinUses } from '../../core/hardware/wiring.ts';
 import { setPreferences, usePreferences } from '../state/preferences.ts';
@@ -12,16 +12,18 @@ interface Props {
 }
 
 /**
- * The Pro Micro seen from above or below; each pin shows what it's used for.
+ * The controller seen from above or below; each pin shows what it's used for.
+ * Its footprint (Pro Micro, Seeed XIAO) comes from the controller.
  * Clicking one fills the selected field. From below the pin columns swap
  * sides (USB stays at the top), matching wiring plans drawn from underneath.
  */
-export function ProMicroPinout({ hw, side, label, onPick }: Props) {
+export function ControllerPinout({ hw, side, label, onPick }: Props) {
   const { pinoutViews } = usePreferences();
   const viewKey = side ?? 'one';
   const view = pinoutViews[viewKey] ?? 'top';
   const setView = (next: 'top' | 'bottom') => setPreferences({ pinoutViews: { ...pinoutViews, [viewKey]: next } });
   const uses = pinUses(hw, side);
+  const ic = interconnectOf(hw.controller);
   const column = (pads: HeaderPad[], edge: 'left' | 'right') => (
     <ul className={`pinout-column ${edge}`}>
       {pads.map((pad, i) => {
@@ -47,7 +49,7 @@ export function ProMicroPinout({ hw, side, label, onPick }: Props) {
     </ul>
   );
   return (
-    <figure className="pinout" aria-label={`Pro Micro pinout${side ? ` (${side} half)` : ''}`}>
+    <figure className="pinout" aria-label={`${ic.name} pinout${side ? ` (${side} half)` : ''}`}>
       <figcaption className="muted small">
         Pins seen from {view === 'top' ? 'above' : 'below'}, USB at the top{side ? ` (${side} half)` : ''}.{' '}
         {label ? `Picking a pin for ${label}.` : 'Click a pin field, then a pin.'}
@@ -61,9 +63,9 @@ export function ProMicroPinout({ hw, side, label, onPick }: Props) {
         ))}
       </div>
       <div className="pinout-board">
-        {column(view === 'top' ? PRO_MICRO.header.left : PRO_MICRO.header.right, 'left')}
+        {column(view === 'top' ? ic.header.left : ic.header.right, 'left')}
         <div className="pinout-usb" aria-hidden="true">USB</div>
-        {column(view === 'top' ? PRO_MICRO.header.right : PRO_MICRO.header.left, 'right')}
+        {column(view === 'top' ? ic.header.right : ic.header.left, 'right')}
       </div>
     </figure>
   );
