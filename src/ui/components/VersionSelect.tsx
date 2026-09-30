@@ -25,8 +25,8 @@ export function VersionSelect({ config, dispatch }: VersionSelectProps) {
     });
   };
   return (
-    <label className="top-field" title="ZMK version for the firmware, its modules and the build">
-      <span className="top-field-label" aria-hidden="true">
+    <label className="version-pill" title="ZMK version for the firmware, its modules and the build">
+      <span className="version-pill-label" aria-hidden="true">
         ZMK
       </span>
       <select className="top-select" value={version} onChange={(e) => change(e.target.value)} aria-label="ZMK version">

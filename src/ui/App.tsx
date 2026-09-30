@@ -323,8 +323,8 @@ function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => 
               active={['keyboard', 'designer', 'newKeyboard', 'editHardware'].includes(view)}
               onClick={() => setView('keyboard')}
             />
-            <VersionSelect config={config} dispatch={dispatch} />
             <StudioConnect session={studio} supported={studioSupported} />
+            <VersionSelect config={config} dispatch={dispatch} />
           </div>
           <div className="topbar-actions">
             <Toolbar
