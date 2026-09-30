@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { PRO_MICRO, pinLabel } from '../../core/hardware/interconnects.ts';
-import { DISPLAYS, DISPLAY_KINDS, halfDisplay, setDisplay } from '../../core/hardware/displays.ts';
+import { DISPLAYS, DISPLAY_KINDS, displayPins, halfDisplay, setDisplay } from '../../core/hardware/displays.ts';
 import type { DisplayKind, KeyboardHardware, Pin, Side } from '../../core/hardware/types.ts';
 import type { HardwareIssue } from '../../core/hardware/validate.ts';
 import {
@@ -120,7 +120,7 @@ export function HardwareWiringStep({ hw, issues, onChange, onAddEncoder, onRemov
                   <option value="">None</option>
                   {DISPLAY_KINDS.map((kind) => (
                     <option key={kind} value={kind}>
-                      {DISPLAYS[kind].label} ({DISPLAYS[kind].pins.map((p) => `D${p.pin}`).join(', ')})
+                      {DISPLAYS[kind].label} ({displayPins(kind, PRO_MICRO).map((p) => `D${p.pin}`).join(', ')})
                     </option>
                   ))}
                 </select>

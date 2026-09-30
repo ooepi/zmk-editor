@@ -5,7 +5,7 @@ import { HARDWARE_CONTROLLERS } from './controllers.ts';
 import { PRO_MICRO } from './interconnects.ts';
 import type { HardwareBasics } from './grid.ts';
 import type { KeyboardHardware, Pin } from './types.ts';
-import { DISPLAYS, halfDisplay } from './displays.ts';
+import { displayPins, halfDisplay } from './displays.ts';
 import { directPins, halfEncoders, halfSize, halves, matrixPins } from './wiring.ts';
 
 /** Ids ZMK reserves itself, in addition to catalog keyboards and every module shield id. */
@@ -87,7 +87,7 @@ export function validateHardware(hw: KeyboardHardware): HardwareIssue[] {
           { label: `Encoder ${i} A`, pin: e.a },
           { label: `Encoder ${i} B`, pin: e.b },
         ]),
-        ...(display ? DISPLAYS[display].pins.map(({ pin, use }) => ({ label: use, pin })) : []),
+        ...(display ? displayPins(display, PRO_MICRO).map(({ pin, use }) => ({ label: use, pin })) : []),
       ];
       if (labelled.length > PRO_MICRO.pins.length) {
         add('error', 'wiring', `The wiring${where} needs ${labelled.length} pins, but the controller has ${PRO_MICRO.pins.length}.`);

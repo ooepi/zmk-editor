@@ -1,4 +1,5 @@
-import { DISPLAYS, halfDisplay } from './displays.ts';
+import { displayPins, halfDisplay } from './displays.ts';
+import { interconnectOf } from './interconnects.ts';
 import type { DirectWiring, Encoder, HardwareKey, KeyboardHardware, MatrixPins, MatrixWiring, Pin, Side } from './types.ts';
 
 export type PinList = 'rows' | 'cols' | 'pins' | 'encoderA' | 'encoderB';
@@ -139,6 +140,6 @@ export function pinUses(hw: KeyboardHardware, side?: Side): Map<number, string[]
     add(e.b, `Encoder ${i} B`);
   });
   const display = halfDisplay(hw, side);
-  if (display) for (const { pin, use } of DISPLAYS[display].pins) add(pin, use);
+  if (display) for (const { pin, use } of displayPins(display, interconnectOf(hw.controller))) add(pin, use);
   return uses;
 }
