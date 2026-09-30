@@ -450,6 +450,11 @@
   align-self: flex-start;
 }
 
+/* Labels that wrap ("Left display clock") keep the selects in line. */
+.display-half .pin-grid {
+  align-items: end;
+}
+
 .encoder-pins {
   display: grid;
   grid-template-columns: repeat(2, minmax(104px, 1fr)) auto;
