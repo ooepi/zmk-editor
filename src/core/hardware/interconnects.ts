@@ -17,6 +17,8 @@ export interface Interconnect {
   gpio: string;
   /** The I2C bus node label. */
   i2c: string;
+  /** The SPI bus node label. */
+  spi: string;
   /** Seen from above with USB at the top: each side's pads, top to bottom. */
   header: { left: HeaderPad[]; right: HeaderPad[] };
   /** Every GPIO pad's D-number, sorted. */
@@ -67,6 +69,7 @@ export const PRO_MICRO: Interconnect = interconnect({
   name: 'Pro Micro',
   gpio: 'pro_micro',
   i2c: 'pro_micro_i2c',
+  spi: 'pro_micro_spi',
   header: {
     left: [
       proMicroPad(1),
@@ -110,6 +113,7 @@ export const SEEED_XIAO: Interconnect = interconnect({
   name: 'Seeed XIAO',
   gpio: 'xiao_d',
   i2c: 'xiao_i2c',
+  spi: 'xiao_spi',
   header: {
     left: [
       xiaoPad(0, 'P0.02'),
