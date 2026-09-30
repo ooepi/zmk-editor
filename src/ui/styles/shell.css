@@ -264,7 +264,8 @@
   gap: 2px;
   padding: 3px;
   border-radius: var(--r-pill);
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  backdrop-filter: blur(10px);
   box-shadow: var(--shadow-float);
 }
 
@@ -311,11 +312,6 @@
   height: 20px;
   margin: 0 2px;
   background: var(--border);
-}
-
-/* Room for the encoder strip under the keyboard. */
-.canvas:has(.encoders) {
-  --encoder-space: 72px;
 }
 
 .panel {

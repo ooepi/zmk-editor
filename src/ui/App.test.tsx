@@ -11,7 +11,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const keys = () => within(screen.getByRole('group', { name: 'Keyboard layout' })).getAllByRole('button');
+const keys = () => within(screen.getByRole('group', { name: 'Keyboard layout' })).getAllByRole('button', { name: /^Key \d+:/ });
 const tabs = () => screen.getAllByRole('tab');
 
 describe('App', () => {

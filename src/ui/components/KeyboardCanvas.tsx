@@ -4,6 +4,9 @@ import type { KeymapModel } from '../../core/keymap/model.ts';
 import { layoutExtent, type PhysicalLayout } from '../../core/layouts/index.ts';
 import { keysInBox, type Box } from '../../core/layouts/selection.ts';
 import { Keycap, NEEDS_BUILD_NOTE, type KeyDropHandlers } from './Keycap.tsx';
+import { EncoderKnobs, type EncoderControls } from './EncoderKnobs.tsx';
+import { knobBox } from '../../core/layouts/encoders.ts';
+import type { EncoderSpot } from '../../core/layouts/types.ts';
 
 interface KeyboardCanvasProps {
   keymap: KeymapModel;
@@ -20,6 +23,10 @@ interface KeyboardCanvasProps {
   drop?: KeyDropHandlers | undefined;
   /** Keys whose change waits for the next build (a ZMK Studio keyboard can't take it). */
   flagged?: ReadonlySet<number> | undefined;
+  /** Where the encoder knobs go; the keyboard makes room for them even when they aren't shown. */
+  knobs?: EncoderSpot[] | undefined;
+  /** Shows the knobs and makes them editable. */
+  encoders?: EncoderControls | undefined;
 }
 
 /** Margin around the keys (in layout units) so rotated thumb keys aren't clipped. */
@@ -37,6 +44,8 @@ export function KeyboardCanvas({
   highlighted,
   drop,
   flagged,
+  knobs = [],
+  encoders,
 }: KeyboardCanvasProps) {
   const [marquee, setMarquee] = useState<{ box: Box; additive: boolean } | null>(null);
   const labels = useMemo(() => {
@@ -46,7 +55,7 @@ export function KeyboardCanvas({
   const selected = new Set(selection);
 
   // Keys can sit left of or above 0 (rotated thumb keys, moved keys): draw from the real extent.
-  const extent = layoutExtent(layout);
+  const extent = layoutExtent({ ...layout, encoders: knobs });
   const width = extent.width + 2 * MARGIN;
   const height = extent.height + 2 * MARGIN;
   /** Where layout x/y = 0 is on the canvas, in layout units. */
@@ -151,6 +160,7 @@ export function KeyboardCanvas({
           />
         );
       })}
+      {encoders && <EncoderKnobs keymap={keymap} layer={layer} spots={knobs} place={(spot) => knobBox(spot, width, height, originX, originY)} {...encoders} />}
       {marquee && (
         <div
           className="select-box"

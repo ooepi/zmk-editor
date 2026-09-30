@@ -3,7 +3,9 @@ import { sensorOrder } from '../../core/hardware/encoders.ts';
 import { addKey, deleteKeys } from '../../core/hardware/keys.ts';
 import { hardwareLayout, type HardwareKey, type KeyboardHardware, type Side } from '../../core/hardware/types.ts';
 import type { HardwareIssue } from '../../core/hardware/validate.ts';
-import { DesignerCanvas, LiveNumberField, RotationField, UnitField } from './DesignerCanvas.tsx';
+import { DesignerCanvas, KnobFields, LiveNumberField, RotationField, UnitField } from './DesignerCanvas.tsx';
+import { placeEncoders, setEncoderSpot } from '../../core/layouts/encoders.ts';
+import type { EncoderSpot } from '../../core/layouts/types.ts';
 import type { HardwareDraft } from './HardwareWizard.tsx';
 import { HardwareIssueList } from './HardwareIssueList.tsx';
 
@@ -15,8 +17,21 @@ interface Props {
 
 export function HardwareLayoutStep({ draft, issues, onChange }: Props) {
   const { hw } = draft;
-  const [selection, setSelection] = useState<number[]>([]);
+  const [selection, setSelectionState] = useState<number[]>([]);
+  /** The selected encoder knob; selecting keys clears it, and the other way round. */
+  const [knob, setKnob] = useState<number | null>(null);
+  const setSelection = (indices: number[]) => {
+    setSelectionState(indices);
+    if (indices.length > 0) setKnob(null);
+  };
+  const selectKnob = (index: number | null) => {
+    setKnob(index);
+    if (index !== null) setSelectionState([]);
+  };
   const selected = selection.length === 1 ? (selection[0] ?? null) : null;
+  const sensors = sensorOrder(hw);
+  // Keys carry their half, so each knob's default spot is under the right keys.
+  const knobs = placeEncoders({ name: hw.displayName, keys: hw.keys, ...(hw.encoderSpots ? { encoders: hw.encoderSpots } : {}) }, sensors.map((s) => s.side), sensors.length);
   const direct = hw.wiring.kind === 'direct';
   const labels = hw.keys.map((k) => (direct ? `in ${k.col}` : `${k.row},${k.col}`));
   const flagged = new Set(issues.filter((i) => i.level === 'error').flatMap((i) => i.keys ?? []));
@@ -33,6 +48,12 @@ export function HardwareLayoutStep({ draft, issues, onChange }: Props) {
     setSelection([]);
   };
   const key = selected === null ? undefined : hw.keys[selected];
+  /** Moves one knob (null: back to its default spot); the others keep theirs. */
+  const moveKnob = (index: number, spot: EncoderSpot | null) => {
+    const { encoderSpots: _, ...rest } = hw;
+    const encoderSpots = setEncoderSpot(hw.encoderSpots, index, spot, sensors.length);
+    setHw(encoderSpots ? { ...rest, encoderSpots } : rest);
+  };
 
   return (
     <div className="designer">
@@ -55,6 +76,10 @@ export function HardwareLayoutStep({ draft, issues, onChange }: Props) {
           onSelectionChange={setSelection}
           onDelete={remove}
           onChange={(layout) => setHw({ ...hw, keys: hw.keys.map((k, i) => ({ ...k, ...layout.keys[i] })) })}
+          knobs={knobs}
+          selectedKnob={knob}
+          onSelectKnob={selectKnob}
+          onMoveKnob={moveKnob}
         />
         <HardwareIssueList issues={issues} />
       </div>
@@ -69,7 +94,9 @@ export function HardwareLayoutStep({ draft, issues, onChange }: Props) {
             <button type="button" className="button" onClick={() => add()}>Add key</button>
           )}
         </div>
-        {key && selected !== null ? (
+        {knob !== null && knobs[knob] ? (
+          <KnobFields index={knob} spot={knobs[knob]} saved={!!hw.encoderSpots?.[knob]} onMove={(spot) => moveKnob(knob, spot)} />
+        ) : key && selected !== null ? (
           <fieldset className="fieldset">
             <legend>Key {selected}</legend>
             <div className="field-grid">

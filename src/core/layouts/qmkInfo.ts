@@ -1,4 +1,4 @@
-import type { PhysicalKey, PhysicalLayout } from './types.ts';
+import type { EncoderSpot, PhysicalKey, PhysicalLayout } from './types.ts';
 
 /**
  * `config/info.json` in QMK's format (key units), as used by
@@ -20,7 +20,17 @@ export function parseInfoJson(text: string): PhysicalLayout | null {
     const u = (value: unknown, fallback: number) => Math.round(num(value, fallback) * 100);
     return { x: u(k.x, 0), y: u(k.y, 0), w: u(k.w, 1), h: u(k.h, 1), r: num(k.r, 0), rx: u(k.rx, 0), ry: u(k.ry, 0) };
   });
-  return { name: 'custom', keys };
+  const layout: PhysicalLayout = { name: 'custom', keys };
+  // Encoder knob positions: the editor's own section, which QMK tools ignore.
+  const saved = (doc as { zmk_editor?: { encoders?: unknown } }).zmk_editor?.encoders;
+  if (Array.isArray(saved)) {
+    const encoders = saved.map((raw: unknown): EncoderSpot | null => {
+      const s = raw as Record<string, unknown> | null;
+      return s && typeof s.x === 'number' && typeof s.y === 'number' ? { x: Math.round(s.x * 100), y: Math.round(s.y * 100) } : null;
+    });
+    if (encoders.some(Boolean)) layout.encoders = encoders;
+  }
+  return layout;
 }
 
 const unit = (value: number) => Math.round(value) / 100;
@@ -38,5 +48,8 @@ export function generateInfoJson(layout: PhysicalLayout): string {
     return key;
   });
   const lines = keys.map((k) => `        ${JSON.stringify(k)}`);
-  return `{\n  "layouts": {\n    "LAYOUT": {\n      "layout": [\n${lines.join(',\n')}\n      ]\n    }\n  }\n}\n`;
+  const layouts = `  "layouts": {\n    "LAYOUT": {\n      "layout": [\n${lines.join(',\n')}\n      ]\n    }\n  }`;
+  const encoders = layout.encoders?.some(Boolean) ? layout.encoders.map((s) => (s ? { x: unit(s.x), y: unit(s.y) } : null)) : null;
+  const editor = encoders ? `,\n  "zmk_editor": {\n    "encoders": ${JSON.stringify(encoders)}\n  }` : '';
+  return `{\n${layouts}${editor}\n}\n`;
 }

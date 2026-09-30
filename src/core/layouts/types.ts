@@ -26,10 +26,21 @@ export interface PhysicalKey {
   ry: number;
 }
 
+/** Where an encoder knob is drawn: its centre, in 1/100 key units. ZMK itself has no such position. */
+export interface EncoderSpot {
+  x: number;
+  y: number;
+}
+
 export interface PhysicalLayout {
   name: string;
   keys: PhysicalKey[];
+  /** Saved knob positions per sensor (the `sensor-bindings` order); null or missing means the default. */
+  encoders?: (EncoderSpot | null)[];
 }
+
+/** A knob is drawn about one key unit across. */
+export const KNOB_SIZE = 100;
 
 /** Width and height covering every key (ignoring rotation). */
 export function layoutBounds(layout: PhysicalLayout): { width: number; height: number } {
@@ -63,7 +74,10 @@ export function keyBounds(k: PhysicalKey): { left: number; top: number; right: n
  * or above 0. Drawing from this keeps every key on the canvas (and the page).
  */
 export function layoutExtent(layout: PhysicalLayout): { left: number; top: number; width: number; height: number } {
-  const bounds = layout.keys.map(keyBounds);
+  const knobs = (layout.encoders ?? []).flatMap((s) =>
+    s ? [{ left: s.x - KNOB_SIZE / 2, top: s.y - KNOB_SIZE / 2, right: s.x + KNOB_SIZE / 2, bottom: s.y + KNOB_SIZE / 2 }] : [],
+  );
+  const bounds = [...layout.keys.map(keyBounds), ...knobs];
   const left = Math.min(0, ...bounds.map((b) => b.left));
   const top = Math.min(0, ...bounds.map((b) => b.top));
   const right = Math.max(...bounds.map((b) => b.right));

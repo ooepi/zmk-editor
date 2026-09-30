@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { addEncoder, carryEncoderOrigins, removeEncoder, sensorLabel, sensorOrder } from './encoders.ts';
 import { testPad, testSplit } from './testFixtures.ts';
-import type { KeyboardHardware } from './types.ts';
+import { hardwareLayout, type KeyboardHardware } from './types.ts';
+import { knobSpots } from '../encoderSides.ts';
+import { emptyKeymap } from '../keymap/model.ts';
 import { halfEncoders, pinUses, setEncoderPin, setPin, setRightWiredDifferently } from './wiring.ts';
 
 const split: KeyboardHardware = { ...testSplit, encoders: [{ a: 8, b: 9 }] };
@@ -80,3 +82,31 @@ describe('a right half with its own pins but no encoder list (made before encode
   });
 });
 
+describe('encoder knob positions', () => {
+  it('move with their encoders when encoders are added or removed', () => {
+    const spot = { x: 700, y: 300 };
+    // Mirrored split: sensors left 0, right 0. The right knob has a spot.
+    const withSpot = { ...split, encoderSpots: [null, spot] };
+    const added = addEncoder({ hw: withSpot, origins: [0, 1] }, 'left');
+    // Sensors now: left 0, left 1, right 0, right 1.
+    expect(added.hw.encoderSpots).toEqual([null, null, spot, null]);
+    const removed = removeEncoder(added, 'left', 0);
+    // left 0 (was left 1), right 0 (was right 1): the spot went with the removed right 0, so none are left.
+    expect(removed.hw.encoderSpots).toBeUndefined();
+  });
+
+  it('are part of the keyboard’s layout', () => {
+    expect(hardwareLayout({ ...split, encoderSpots: [{ x: 1, y: 2 }, null] }).encoders).toEqual([{ x: 1, y: 2 }, null]);
+    expect(hardwareLayout(split).encoders).toBeUndefined();
+  });
+});
+
+describe('default knob spots of a designed keyboard', () => {
+  it('follow each key’s wired half, even when the halves sit close together', () => {
+    // Left keys at x 0–599, right keys at 700–999: no 1.5u gap, so only the keys’ sides tell the halves apart.
+    const keys = [0, 100, 200, 300, 400, 500, 700, 800, 900].map((x, i) => ({ x, y: 0, w: 100, h: 100, r: 0, rx: 0, ry: 0, row: 0, col: i, side: i < 6 ? ('left' as const) : ('right' as const) }));
+    const hw: KeyboardHardware = { ...split, keys };
+    const config = { keyboard: hw.name, hardware: hw, keymap: emptyKeymap() };
+    expect(knobSpots(config, hardwareLayout(hw)).map((s) => s.x)).toEqual([300, 850]);
+  });
+});

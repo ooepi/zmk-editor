@@ -28,6 +28,7 @@ export function serializeHardware(hw: KeyboardHardware): string {
         ? { rightEncoders: hw.rightEncoders.map(({ a, b }) => ({ a, b })) }
         : {}),
       ...(hw.displays ? { displays: { ...(hw.displays.left ? { left: hw.displays.left } : {}), ...(hw.displays.right ? { right: hw.displays.right } : {}) } } : {}),
+      ...(hw.encoderSpots?.some(Boolean) ? { encoderSpots: hw.encoderSpots.map((s) => (s ? { x: s.x, y: s.y } : null)) } : {}),
       keys: [],
     },
     null,
@@ -111,6 +112,13 @@ export function parseHardware(text: string): KeyboardHardware {
     if (data.displays.left !== undefined) displays.left = kind(data.displays.left, 'displays.left');
     if (data.displays.right !== undefined) displays.right = kind(data.displays.right, 'displays.right');
     hardware.displays = displays;
+  }
+  if (data.encoderSpots !== undefined) {
+    if (!Array.isArray(data.encoderSpots)) throw new Error('encoderSpots must be a list');
+    // Only where knobs are drawn: a bad entry falls back to the default spot rather than failing the keyboard.
+    hardware.encoderSpots = data.encoderSpots.map((s: unknown) =>
+      isRecord(s) && typeof s.x === 'number' && Number.isFinite(s.x) && typeof s.y === 'number' && Number.isFinite(s.y) ? { x: s.x, y: s.y } : null,
+    );
   }
   return hardware;
 }
