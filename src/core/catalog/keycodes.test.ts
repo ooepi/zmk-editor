@@ -83,3 +83,12 @@ describe('key expressions', () => {
     expect(keyExpressionLabel('UNKNOWN_THING')).toBe('UNKNOWN_THING');
   });
 });
+
+describe('HID usages', () => {
+  it('match ZMK: (page << 16) | id, with LS() for shifted keys', () => {
+    expect(findKeycode('A')?.usage).toBe(0x070004);
+    expect(findKeycode('EXCL')?.usage).toBe((0x02 << 24) | 0x07001e);
+    expect(findKeycode('C_VOL_UP')?.usage).toBe(0x0c00e9);
+    expect(findKeycode('SYS_PWR')?.usage).toBe(0x010081);
+  });
+});
