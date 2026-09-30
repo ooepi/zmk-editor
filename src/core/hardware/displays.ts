@@ -75,9 +75,8 @@ function withOverrides(hw: KeyboardHardware, side: Side | undefined, overrides: 
 export function setDisplayPin(hw: KeyboardHardware, side: Side | undefined, signal: DisplaySignal, pin: Pin): KeyboardHardware {
   const kind = halfDisplay(hw, side);
   const fallback = kind ? defaultDisplayPins(kind, interconnectOf(hw.controller)).find((p) => p.signal === signal)?.pin : undefined;
-  const overrides: DisplayPinOverrides = { ...hw.displayPins?.[sideKey(side)] };
-  if (pin === fallback) delete overrides[signal];
-  else overrides[signal] = pin;
+  const others = Object.entries(hw.displayPins?.[sideKey(side)] ?? {}).filter(([s]) => s !== signal);
+  const overrides: DisplayPinOverrides = Object.fromEntries(pin === fallback ? others : [...others, [signal, pin]]);
   return withOverrides(hw, side, overrides);
 }
 
