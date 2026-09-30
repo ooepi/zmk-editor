@@ -31,6 +31,7 @@ import { Section } from './components/ui/Section.tsx';
 import { ModulesView } from './components/ModulesView.tsx';
 import { ScreensView } from './components/ScreensView.tsx';
 import { SettingsView } from './components/SettingsView.tsx';
+import { StudioConnect } from './components/StudioConnect.tsx';
 import { Toolbar } from './components/Toolbar.tsx';
 import { VersionSelect } from './components/VersionSelect.tsx';
 import type { KeyRef } from './dnd.ts';
@@ -44,6 +45,9 @@ import { demoConfig } from './state/demo.ts';
 import { isLoginCallback } from './state/githubLogin.ts';
 import { setPreferences, usePreferences } from './state/preferences.ts';
 import { useTheme } from './useTheme.ts';
+import { useStudioSession } from './state/studioSession.ts';
+import type { StudioDevice } from './studio/device.ts';
+import { fakeStudioRequested, openKeyboard, serialSupported } from './studio/support.ts';
 
 type View =
   | 'keymap'
@@ -74,8 +78,11 @@ function useHash(): string {
   return hash;
 }
 
-/** `welcome`: greet a first visit with the welcome dialog (the app turns it on; tests opt in). */
-export function App({ welcome = false }: { welcome?: boolean } = {}) {
+/**
+ * `welcome`: greet a first visit with the welcome dialog (the app turns it on; tests opt in).
+ * `studioOpen`: how to open a ZMK Studio keyboard, for tests; the app uses Web Serial.
+ */
+export function App({ welcome = false, studioOpen }: { welcome?: boolean; studioOpen?: () => Promise<StudioDevice> } = {}) {
   const hash = useHash();
   if (hash === '#design') {
     return (
@@ -84,7 +91,7 @@ export function App({ welcome = false }: { welcome?: boolean } = {}) {
       </Suspense>
     );
   }
-  return <Editor welcome={welcome} />;
+  return <Editor welcome={welcome} studioOpen={studioOpen} />;
 }
 
 /** How long a short confirmation stays on screen. */
@@ -94,7 +101,7 @@ function isTyping(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|SELECT|TEXTAREA)$/.test(target.tagName));
 }
 
-function Editor({ welcome }: { welcome: boolean }) {
+function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => Promise<StudioDevice>) | undefined }) {
   const [theme, toggleTheme] = useTheme();
   const [state, dispatch] = useEditor();
   const [view, setView] = useState<View>(() => (isLoginCallback() ? 'build' : 'keymap'));
@@ -138,6 +145,14 @@ function Editor({ welcome }: { welcome: boolean }) {
   const onDemo = config.keyboard === DEMO_KEYBOARD && !buildSession.connection;
   const showWelcome = welcome && (newcomer || welcomePending) && !welcomed && onDemo;
   const layout = physicalLayoutFor(config.keyboard, keyCount, layouts[config.keyboard], customLayout(config));
+
+  /** The ZMK Studio connection: key and layer edits go to the keyboard while it's live. */
+  const studio = useStudioSession(config, dispatch, { open: studioOpen ?? openKeyboard, loadFromKeyboard: config.studio !== undefined || onDemo });
+  const studioSupported = studioOpen !== undefined || fakeStudioRequested() || serialSupported();
+  const studioMessage = studio.status.phase === 'idle' ? studio.status.message : undefined;
+  useEffect(() => {
+    if (studioMessage) dispatch({ type: 'notify', notice: studioMessage });
+  }, [studioMessage, dispatch]);
 
   /** Remembers a palette item placed from the palette for its Recent row. */
   const remember = (item: PaletteItem) => setPreferences({ recent: pushRecent(recent, item) });
@@ -288,6 +303,7 @@ function Editor({ welcome }: { welcome: boolean }) {
               onClick={() => setView('keyboard')}
             />
             <VersionSelect config={config} dispatch={dispatch} />
+            <StudioConnect session={studio} supported={studioSupported} />
           </div>
           <div className="topbar-actions">
             <Toolbar
@@ -511,6 +527,14 @@ function Editor({ welcome }: { welcome: boolean }) {
           setPreferences({ welcomed: true });
           setView('build');
         }}
+        onStudio={
+          studioSupported
+            ? () => {
+                setPreferences({ welcomed: true });
+                void studio.connect();
+              }
+            : undefined
+        }
         onClose={() => setPreferences({ welcomed: true })}
       />
     </HelpContext.Provider>
@@ -553,7 +577,7 @@ function BuildTabStatus({ status }: { status: TabStatus }) {
 /** The keyboard being edited, the one button that opens the Keyboard page to change it. */
 function KeyboardButton({ config, active, onClick }: { config: ZmkConfig; active: boolean; onClick: () => void }) {
   const catalog = findKeyboard(config.keyboard);
-  const name = config.hardware?.displayName ?? catalog?.name ?? config.keyboard;
+  const name = config.studio?.device ?? config.hardware?.displayName ?? catalog?.name ?? config.keyboard;
   const keys = config.keymap.layers[0]?.bindings.length ?? 0;
   const split = config.hardware?.split ?? catalog?.split ?? false;
   return (
@@ -602,7 +626,20 @@ function ShortcutKeys({ keys }: { keys: string }) {
 const DEMO_KEYBOARD = demoConfig().config.keyboard;
 
 /** A first visit's welcome: what this is, and where to go from the demo. Closing it means "try the demo". */
-function WelcomeDialog({ open, onKeyboard, onConfig, onClose }: { open: boolean; onKeyboard: () => void; onConfig: () => void; onClose: () => void }) {
+function WelcomeDialog({
+  open,
+  onKeyboard,
+  onConfig,
+  onStudio,
+  onClose,
+}: {
+  open: boolean;
+  onKeyboard: () => void;
+  onConfig: () => void;
+  /** Absent where the browser can't talk to a keyboard. */
+  onStudio: (() => void) | undefined;
+  onClose: () => void;
+}) {
   return (
     <Dialog
       open={open}
@@ -638,6 +675,15 @@ function WelcomeDialog({ open, onKeyboard, onConfig, onClose }: { open: boolean;
           <strong>Open your config from GitHub</strong>
           <span id="welcome-config">Already have a zmk-config repository? Connect it and edit it here.</span>
         </button>
+        {onStudio && (
+          <button type="button" className="welcome-choice" aria-label="Connect a Studio keyboard" aria-describedby="welcome-studio" onClick={onStudio}>
+            <span className="welcome-choice-icon">
+              <Icon name="usb" size={22} />
+            </span>
+            <strong>Connect a Studio keyboard</strong>
+            <span id="welcome-studio">Your keyboard runs ZMK Studio? Plug it in over USB and change its keys live.</span>
+          </button>
+        )}
         <button type="button" className="welcome-choice" aria-label="Try the demo" aria-describedby="welcome-demo" onClick={onClose}>
           <span className="welcome-choice-icon">
             <Icon name="pointer" size={22} />

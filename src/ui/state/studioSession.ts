@@ -22,8 +22,8 @@ export type StudioStatus =
   | { phase: 'error'; message: string };
 
 export interface StudioSessionOptions {
-  /** Opens the keyboard: asks for the serial port, or a fake keyboard in tests and `?studio=fake`. */
-  open: () => Promise<StudioDevice>;
+  /** Opens the keyboard (given the config in the editor): the serial port, or a fake keyboard in tests and `?studio=fake`. */
+  open: (config: ZmkConfig) => Promise<StudioDevice>;
   /** The config in the editor is the demo or a Studio-only one: take the keyboard's keymap without asking. */
   loadFromKeyboard: boolean;
 }
@@ -248,7 +248,7 @@ export function useStudioSession(config: ZmkConfig, dispatch: Dispatch<EditorAct
     setStatus({ phase: 'connecting' });
     let dev: StudioDevice;
     try {
-      dev = await optionsRef.current.open();
+      dev = await optionsRef.current.open(configRef.current);
     } catch (err) {
       // Closing the port picker without choosing is not an error.
       if (current(g)) setStatus(err instanceof DOMException && err.name === 'NotFoundError' ? { phase: 'idle' } : { phase: 'error', message: message(err) });

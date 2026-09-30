@@ -8,9 +8,6 @@ import { cellKinds, type DeviceBehavior, type ParamValueDescription } from '../.
 import type { DeviceKeymap } from '../../core/studio/reconcile.ts';
 import { DisconnectedError, LockedError, RejectedError, type DeviceNotification, type StudioDevice } from './device.ts';
 
-/** Web Serial is in Chromium browsers on desktop only. */
-export const serialSupported = () => typeof navigator !== 'undefined' && 'serial' in navigator;
-
 const BINDING_ERRORS: Record<number, string> = {
   [SetLayerBindingResponse.SET_LAYER_BINDING_RESP_INVALID_LOCATION]: 'The keyboard has no such key or layer.',
   [SetLayerBindingResponse.SET_LAYER_BINDING_RESP_INVALID_BEHAVIOR]: 'The keyboard doesn’t have that behavior.',
