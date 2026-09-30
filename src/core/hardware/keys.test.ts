@@ -4,7 +4,8 @@ import { createCombo } from '../keymap/comboEdit.ts';
 import { generateKeymap } from '../keymap/generator.ts';
 import { importKeymap } from '../keymap/importer.ts';
 import { DEFAULT_BASICS, gridHardware } from './grid.ts';
-import { addKey, deleteKey, deleteKeys, remapKeyPositions, remapSensors } from './keys.ts';
+import { addKey, deleteKey, deleteKeys, numberFromPositions, remapKeyPositions, remapSensors } from './keys.ts';
+import type { HardwareKey, KeyboardHardware } from './types.ts';
 import { starterKeymap } from './starter.ts';
 
 const pad = { ...gridHardware({ ...DEFAULT_BASICS, name: 'test_pad', displayName: 'Test Pad', split: false, rows: 1, cols: 3 }) };
@@ -75,5 +76,46 @@ describe('remapSensors', () => {
 
   it('removes sensor bindings when there are no encoders left', () => {
     expect(remapSensors(model, []).layers[0]).not.toHaveProperty('sensorBindings');
+  });
+});
+
+describe('numberFromPositions', () => {
+  const coords = (hw: KeyboardHardware) => hw.keys.map((k) => `${k.row},${k.col}`);
+  const key = (x: number, y: number, extra: Partial<HardwareKey> = {}): HardwareKey => ({ x, y, w: 100, h: 100, r: 0, rx: 0, ry: 0, row: 0, col: 0, ...extra });
+
+  it('numbers a grid back the way the wizard made it, per half', () => {
+    const grid = gridHardware({ ...DEFAULT_BASICS, rows: 3, cols: 6 });
+    const scrambled = { ...grid, keys: grid.keys.map((k) => ({ ...k, row: 0, col: 0 })) };
+    expect(coords(numberFromPositions(scrambled))).toEqual(coords(grid));
+  });
+
+  it('follows column stagger, and puts thumb keys on a row of their own', () => {
+    const stagger = [0, -25, -40, -25, 0];
+    const keys = [
+      ...[0, 1, 2].flatMap((row) => stagger.map((dy, col) => key(col * 100, row * 100 + dy))),
+      key(150, 330),
+      key(250, 340),
+      key(350, 330),
+    ];
+    const hw: KeyboardHardware = { ...gridHardware({ ...DEFAULT_BASICS, split: false, rows: 4, cols: 5 }), keys };
+    expect(coords(numberFromPositions(hw))).toEqual([
+      '0,0', '0,1', '0,2', '0,3', '0,4',
+      '1,0', '1,1', '1,2', '1,3', '1,4',
+      '2,0', '2,1', '2,2', '2,3', '2,4',
+      '3,0', '3,1', '3,2',
+    ]);
+  });
+
+  it('uses where a rotated key really is', () => {
+    const keys = [key(0, 0), key(100, 0), key(0, 300, { r: 90, rx: 0, ry: 300 })];
+    // Turned 90° about its top-left corner, the last key sits left of x = 0, still below the others.
+    const hw: KeyboardHardware = { ...gridHardware({ ...DEFAULT_BASICS, split: false, rows: 2, cols: 2 }), keys };
+    expect(coords(numberFromPositions(hw))).toEqual(['0,0', '0,1', '1,0']);
+  });
+
+  it('gives direct-wired keys inputs in reading order, mirrored on a mirrored right half', () => {
+    const direct = gridHardware({ ...DEFAULT_BASICS, wiring: 'direct', rows: 2, cols: 2 });
+    const scrambled = { ...direct, keys: direct.keys.map((k) => ({ ...k, row: 0, col: 0 })) };
+    expect(coords(numberFromPositions(scrambled))).toEqual(coords(direct));
   });
 });

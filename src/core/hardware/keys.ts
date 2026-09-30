@@ -94,3 +94,53 @@ export function remapSensors(model: KeymapModel, newToOld: (number | undefined)[
   });
   return { ...model, layers };
 }
+
+/** A key's centre with its rotation applied (SVG: clockwise, y down). */
+function keyCentre(key: HardwareKey): { x: number; y: number } {
+  const cx = key.x + key.w / 2;
+  const cy = key.y + key.h / 2;
+  if (!key.r) return { x: cx, y: cy };
+  const a = (key.r * Math.PI) / 180;
+  const dx = cx - key.rx;
+  const dy = cy - key.ry;
+  return { x: key.rx + dx * Math.cos(a) - dy * Math.sin(a), y: key.ry + dx * Math.sin(a) + dy * Math.cos(a) };
+}
+
+/** How far apart (in key units × 100) two keys' centres can be vertically and still be on one row. */
+const ROW_GAP = 50;
+
+/**
+ * Gives every key a row and column (or direct input) from where it sits, per
+ * half. Rows go top to bottom: keys sorted by height start a new row where
+ * the next one is more than half a key lower, so column stagger stays on its
+ * row and thumb keys get their own. Columns go left to right within a row,
+ * which is also how the wizard numbers a mirrored right half. Direct inputs
+ * follow reading order, right to left on a mirrored right half as the wizard
+ * numbers them.
+ */
+export function numberFromPositions(hw: KeyboardHardware): KeyboardHardware {
+  const keys = [...hw.keys];
+  const sides: (Side | undefined)[] = hw.split ? ['left', 'right'] : [undefined];
+  for (const side of sides) {
+    const onHalf = hw.keys
+      .map((key, index) => ({ key, index, at: keyCentre(key) }))
+      .filter(({ key }) => !hw.split || key.side === side)
+      .sort((a, b) => a.at.y - b.at.y || a.at.x - b.at.x);
+    const rows: (typeof onHalf)[] = [];
+    let last: number | undefined;
+    for (const k of onHalf) {
+      if (last === undefined || k.at.y - last > ROW_GAP) rows.push([]);
+      rows[rows.length - 1]?.push(k);
+      last = k.at.y;
+    }
+    const mirrored = side === 'right' && hw.wiring.kind === 'direct' && !hw.wiring.right;
+    let input = 0;
+    rows.forEach((row, r) => {
+      row.sort((a, b) => (mirrored ? b.at.x - a.at.x : a.at.x - b.at.x) || a.index - b.index);
+      row.forEach((k, c) => {
+        keys[k.index] = hw.wiring.kind === 'direct' ? { ...k.key, row: 0, col: input++ } : { ...k.key, row: r, col: c };
+      });
+    });
+  }
+  return { ...hw, keys };
+}
