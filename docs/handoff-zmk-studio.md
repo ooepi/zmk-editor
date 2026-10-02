@@ -4,7 +4,7 @@ Written 2026-09-30 at the end of a long session. It's for the Claude session tha
 
 ## Where the project is
 
-- **The app.** ZMK Editor is a browser app (React 19 + TypeScript, Vite 8, vitest + testing-library/jsdom). It edits a ZMK keyboard config (keymap, combos, behaviors, macros, modules, nice!view screens, Kconfig settings), then commits it to the user's GitHub zmk-config repo and follows the GitHub Actions build. Deployed at https://ooepi.github.io/zmk-editor/. The repo is `ooepi/zmk-editor`.
+- **The app.** ZMK Editor is a browser app (React 19 + TypeScript, Vite 8, vitest + testing-library/jsdom). It edits a ZMK keyboard config (keymap, combos, behaviors, macros, modules, nice!view screens, Kconfig settings), then commits it to the user's GitHub zmk-config repo and follows the GitHub Actions build. Deployed at https://zmkeditor.app/. The repo is `ooepi/zmk-editor`.
 - **Recent work.** A full UI overhaul (graphite + lime design system) and a polish round are done: PRs #31 to #41. #41 (loose ends) may still be open; check `gh pr view 41`.
 - **Build & flash**:
   - It remembers and reopens the repo on its own (`src/ui/state/buildSession.ts`, held in `App`).

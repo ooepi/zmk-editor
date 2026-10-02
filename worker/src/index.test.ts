@@ -4,9 +4,9 @@ import { handle, type Env } from './index.ts';
 const env: Env = {
   GITHUB_CLIENT_ID: 'Iv1.client',
   GITHUB_CLIENT_SECRET: 'shh',
-  ALLOWED_ORIGINS: 'https://ooepi.github.io, http://localhost:5173',
+  ALLOWED_ORIGINS: 'https://zmkeditor.app, http://localhost:5173',
 };
-const ORIGIN = 'https://ooepi.github.io';
+const ORIGIN = 'https://zmkeditor.app';
 const VERIFIER = 'v'.repeat(43);
 
 function post(path: string, body: unknown, origin = ORIGIN) {
@@ -40,7 +40,7 @@ describe('auth worker', () => {
       token_type: 'bearer',
       scope: '',
     });
-    const response = await handle(post('/token', { code: 'abc123', code_verifier: VERIFIER, redirect_uri: 'https://ooepi.github.io/zmk-editor/' }), env, fetchGitHub);
+    const response = await handle(post('/token', { code: 'abc123', code_verifier: VERIFIER, redirect_uri: 'https://zmkeditor.app/' }), env, fetchGitHub);
     expect(response.status).toBe(200);
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe(ORIGIN);
     expect(response.headers.get('Cache-Control')).toBe('no-store');
@@ -57,7 +57,7 @@ describe('auth worker', () => {
       client_secret: 'shh',
       code: 'abc123',
       code_verifier: VERIFIER,
-      redirect_uri: 'https://ooepi.github.io/zmk-editor/',
+      redirect_uri: 'https://zmkeditor.app/',
     });
   });
 

@@ -2,7 +2,7 @@
 
 A visual editor for [ZMK](https://zmk.dev) keyboard configs, in the browser. Edit your keymap by dragging keys around, set up combos, macros, hold-taps and modules, or describe a keyboard you built yourself, then commit to your `zmk-config` repository and let GitHub Actions build the firmware.
 
-**[Open the editor →](https://ooepi.github.io/zmk-editor/)**
+**[Open the editor →](https://zmkeditor.app/)**
 
 Nothing to install. Your work stays in your browser until you commit it.
 
@@ -31,7 +31,7 @@ Nothing to install. Your work stays in your browser until you commit it.
 
 ## Quick start
 
-1. [Open the editor](https://ooepi.github.io/zmk-editor/). It starts with a Lily58 demo you can try things on.
+1. [Open the editor](https://zmkeditor.app/). It starts with a Lily58 demo you can try things on.
 2. Bring in your keyboard:
    - On the **Build & flash** tab, connect your `zmk-config` repository and choose **Load config from repo**.
    - Or use **Open files** to pick your `.keymap` (and `.conf`, `west.yml`…).

@@ -15,12 +15,12 @@ On GitHub: **Settings → Developer settings → GitHub Apps → New GitHub App*
 | Field | Value |
 | --- | --- |
 | GitHub App name | anything unique, e.g. `ZMK Editor (ooepi)` |
-| Homepage URL | `https://ooepi.github.io/zmk-editor/` |
-| Callback URL | `https://ooepi.github.io/zmk-editor/` (optional second one for development: `http://localhost:5173/`) |
+| Homepage URL | `https://zmkeditor.app/` |
+| Callback URL | `https://zmkeditor.app/` (optional second one for development: `http://localhost:5173/`) |
 | Expire user authorization tokens | ✅ checked (logins last 8 hours and renew themselves) |
 | Request user authorization (OAuth) during installation | ☐ unchecked |
 | Enable Device Flow | ☐ unchecked |
-| Setup URL | `https://ooepi.github.io/zmk-editor/`, with **Redirect on update** ✅ |
+| Setup URL | `https://zmkeditor.app/`, with **Redirect on update** ✅ |
 | Webhook → Active | ☐ unchecked (no webhook needed) |
 
 Under **Repository permissions**, set:
@@ -80,7 +80,7 @@ The first time, GitHub asks you to authorize the app. After that the editor list
 
 **Deploying the helper by hand instead:** `cd worker && npx wrangler deploy`, then `npx wrangler secret put GITHUB_CLIENT_ID` and `npx wrangler secret put GITHUB_CLIENT_SECRET`.
 
-**Other addresses:** if you host the editor somewhere other than `ooepi.github.io`, add that origin to `ALLOWED_ORIGINS` in [`worker/wrangler.toml`](../worker/wrangler.toml).
+**Other addresses:** if you host the editor somewhere other than `zmkeditor.app` (for example a fork on GitHub Pages), add that origin to `ALLOWED_ORIGINS` in [`worker/wrangler.toml`](../worker/wrangler.toml).
 
 ## How it works and why it is safe
 

@@ -27,11 +27,11 @@ describe('login', () => {
   });
 
   it('builds the GitHub authorize URL', () => {
-    const url = new URL(authorizeUrl(config, { redirectUri: 'https://ooepi.github.io/zmk-editor/', state: 's1', challenge: 'c1' }));
+    const url = new URL(authorizeUrl(config, { redirectUri: 'https://zmkeditor.app/', state: 's1', challenge: 'c1' }));
     expect(url.origin + url.pathname).toBe('https://github.com/login/oauth/authorize');
     expect(Object.fromEntries(url.searchParams)).toEqual({
       client_id: 'Iv1.client',
-      redirect_uri: 'https://ooepi.github.io/zmk-editor/',
+      redirect_uri: 'https://zmkeditor.app/',
       state: 's1',
       code_challenge: 'c1',
       code_challenge_method: 'S256',
