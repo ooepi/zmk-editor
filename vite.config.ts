@@ -31,7 +31,8 @@ function contentSecurityPolicy(helperUrl: string | undefined): Plugin {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   return {
-    // Relative base so the build works under https://<user>.github.io/zmk-editor/.
+    // Relative base so the build works both at https://zmkeditor.app/ and under
+    // a project path like https://<user>.github.io/zmk-editor/ (forks).
     base: './',
     plugins: [react(), contentSecurityPolicy(env.VITE_AUTH_HELPER_URL)],
     build: {
