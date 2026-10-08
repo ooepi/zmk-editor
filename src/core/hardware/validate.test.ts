@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_BASICS, gridHardware } from './grid.ts';
-import type { KeyboardHardware } from './types.ts';
+import { setShiftOwnBus } from './shiftRegisters.ts';
+import { testShiftPad } from './testFixtures.ts';
+import type { KeyboardHardware, MatrixWiring } from './types.ts';
 import { setDisplay, setDisplayPin } from './displays.ts';
 import { hasErrors, validateBasics, validateHardware } from './validate.ts';
+import { setPin } from './wiring.ts';
 
 const basics = { ...DEFAULT_BASICS, name: 'test_split', displayName: 'Test Split', rows: 2, cols: 3 };
 
@@ -186,5 +189,57 @@ describe('validateHardware with display pins', () => {
 
   it('still rejects controllers it doesn’t know', () => {
     expect(messages({ ...wired(), controller: 'nope' })).toEqual(['nope isn’t a supported controller.']);
+  });
+});
+
+describe('shift register checks', () => {
+  const errors = (hw: KeyboardHardware) => validateHardware(hw).filter((i) => i.level === 'error').map((i) => i.message);
+
+  it('accepts a correct keyboard', () => {
+    expect(errors(testShiftPad)).toEqual([]);
+  });
+
+  it('flags an output on an input line, e.g. after switching the diode direction', () => {
+    const hw: KeyboardHardware = { ...testShiftPad, wiring: { kind: 'matrix', diodeDirection: 'row2col', rows: [4, 5], cols: (testShiftPad.wiring as MatrixWiring).cols } };
+    expect(errors(hw)).toContain('Column 0 uses a shift register output, but shift registers can only drive rows on this matrix (row2col). Use a pin, or switch the diode direction.');
+  });
+
+  it('flags an output beyond the chain, and outputs without shift registers', () => {
+    expect(errors(setPin(testShiftPad, undefined, 'cols', 3, { sr: 20 }))).toContain('Column 3 uses output 20, but 1 shift register has 8 outputs (0–7).');
+    const none: KeyboardHardware = { ...testShiftPad };
+    delete none.shiftRegisters;
+    expect(errors(none)).toContain('Column 0 uses output 0, but there are no shift registers.');
+  });
+
+  it('flags an output used twice', () => {
+    expect(errors(setPin(testShiftPad, undefined, 'cols', 5, { sr: 4 }))).toContain('Output 4 is used for both Column 4 and Column 5.');
+  });
+
+  it('checks the latch, data and clock pins like other pins', () => {
+    expect(errors({ ...testShiftPad, shiftRegisters: { count: 1, latch: null } })).toContain('Shift register latch has no pin.');
+    expect(errors({ ...testShiftPad, shiftRegisters: { count: 1, latch: 4 } })).toContain('D4 is used for both Row 0 and Shift register latch.');
+  });
+
+  it('doesn’t report the pins shared with a nice!view, but does report a clash on an own bus', () => {
+    // The nice!view's CS is D1, data D2, clock D3; the latch is D8.
+    expect(errors(setDisplay(testShiftPad, undefined, 'nice_view'))).toEqual([]);
+    expect(errors(setShiftOwnBus(setDisplay(testShiftPad, undefined, 'nice_view'), true))).toContain('D2 is used for both Display data and Shift register data.');
+  });
+
+  it('flags a bad count, a split and direct wiring', () => {
+    expect(errors({ ...testShiftPad, shiftRegisters: { count: 5, latch: 8 } })).toContain('Use 1 to 4 shift registers.');
+    const split = { ...gridHardware({ ...DEFAULT_BASICS, rows: 1, cols: 2 }), shiftRegisters: { count: 1, latch: 8 } };
+    expect(errors(split)).toContain('Shift registers only work on one-piece keyboards with a matrix.');
+  });
+});
+
+describe('basics pin count with shift registers', () => {
+  it('counts the bus pins and the lines left on pins', () => {
+    const b = { ...DEFAULT_BASICS, split: false, rows: 6, cols: 18 };
+    expect(validateBasics(b).map((i) => i.message)).toContain('A 6 × 18 matrix needs 24 pins, but a Pro Micro has 18.');
+    expect(validateBasics({ ...b, shiftRegisters: 2 })).toEqual([]);
+    expect(validateBasics({ ...b, rows: 16, cols: 18, shiftRegisters: 1 }).map((i) => i.message)).toContain(
+      'A 16 × 18 matrix with 1 shift register needs 29 pins, but a Pro Micro has 18.',
+    );
   });
 });
