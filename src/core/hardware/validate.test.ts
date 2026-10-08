@@ -226,6 +226,14 @@ describe('shift register checks', () => {
     expect(errors(setShiftOwnBus(setDisplay(testShiftPad, undefined, 'nice_view'), true))).toContain('D2 is used for both Display data and Shift register data.');
   });
 
+  it('on a Seeed XIAO, keeps shift registers on the nice!view’s bus, which is the only SPI2', () => {
+    const xiao = setShiftOwnBus(setDisplay({ ...testShiftPad, controller: 'seeeduino_xiao_ble' }, undefined, 'nice_view'), true);
+    const message = 'On a Seeed XIAO, shift registers can’t have their own pins next to a nice!view; untick “Shift registers on their own pins” to share its bus.';
+    expect(errors(xiao)).toContain(message);
+    expect(errors(setShiftOwnBus(xiao, false))).not.toContain(message);
+    expect(errors({ ...xiao, displays: { left: 'oled_128x32' } })).not.toContain(message);
+  });
+
   it('flags a bad count, a split and direct wiring', () => {
     expect(errors({ ...testShiftPad, shiftRegisters: { count: 5, latch: 8 } })).toContain('Use 1 to 4 shift registers.');
     const split = { ...gridHardware({ ...DEFAULT_BASICS, rows: 1, cols: 2 }), shiftRegisters: { count: 1, latch: 8 } };

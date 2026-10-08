@@ -185,6 +185,10 @@ function shiftRegisterIssues(hw: KeyboardHardware): string[] {
   if (!sr && !anyOutput) return messages;
   if (hw.split || hw.wiring.kind !== 'matrix') return ['Shift registers only work on one-piece keyboards with a matrix.'];
   if (sr && (!Number.isInteger(sr.count) || sr.count < 1 || sr.count > MAX_SHIFT_REGISTERS)) messages.push('Use 1 to 4 shift registers.');
+  // Their own bus is SPI2, which on a XIAO is already the nice!view's (xiao_spi).
+  if (sr?.ownBus && halfDisplay(hw, undefined) === 'nice_view' && interconnectOf(hw.controller).spi === 'xiao_spi') {
+    messages.push('On a Seeed XIAO, shift registers can’t have their own pins next to a nice!view; untick “Shift registers on their own pins” to share its bus.');
+  }
   const driven = drivenList(hw);
   const outputs = outputCount(hw);
   const seen = new Map<number, string>();
