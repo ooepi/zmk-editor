@@ -1,8 +1,9 @@
 import { halfDisplayPins, setDisplayPin } from './displays.ts';
-import type { DirectWiring, DisplaySignal, Encoder, HardwareKey, KeyboardHardware, MatrixPins, MatrixWiring, Pin, Side } from './types.ts';
+import { controllerPin, SHIFT_USES, setShiftPin, shiftPins, type ShiftSignal } from './shiftRegisters.ts';
+import type { DirectWiring, DisplaySignal, Encoder, HardwareKey, KeyboardHardware, LinePin, MatrixPins, MatrixWiring, Pin, Side } from './types.ts';
 
-/** A list of pin fields; `display.cs` and the like are a half's display pins. */
-export type PinList = 'rows' | 'cols' | 'pins' | 'encoderA' | 'encoderB' | `display.${DisplaySignal}`;
+/** A list of pin fields; `display.cs` and the like are a half's display pins, `shift.latch` and the like the shift registers'. */
+export type PinList = 'rows' | 'cols' | 'pins' | 'encoderA' | 'encoderB' | `display.${DisplaySignal}` | `shift.${ShiftSignal}`;
 
 /** The halves to generate: both on a split, one unnamed half otherwise. */
 export function halves(hw: KeyboardHardware): (Side | undefined)[] {
@@ -58,15 +59,18 @@ export function setEncoderPin(hw: KeyboardHardware, side: Side | undefined, inde
 }
 
 /** Sets one pin. Setting a pin on a mirrored right half gives it its own pins first. */
-export function setPin(hw: KeyboardHardware, side: Side | undefined, list: PinList, index: number, pin: Pin): KeyboardHardware {
-  if (list === 'encoderA' || list === 'encoderB') return setEncoderPin(hw, side, index, list === 'encoderA' ? 'a' : 'b', pin);
-  if (list.startsWith('display.')) return setDisplayPin(hw, side, list.slice('display.'.length) as DisplaySignal, pin);
-  const put = (pins: Pin[]) => pins.map((p, i) => (i === index ? pin : p));
+export function setPin(hw: KeyboardHardware, side: Side | undefined, list: PinList, index: number, pin: LinePin): KeyboardHardware {
+  const plain = controllerPin(pin);
+  if (list === 'encoderA' || list === 'encoderB') return setEncoderPin(hw, side, index, list === 'encoderA' ? 'a' : 'b', plain);
+  if (list.startsWith('display.')) return setDisplayPin(hw, side, list.slice('display.'.length) as DisplaySignal, plain);
+  if (list.startsWith('shift.')) return setShiftPin(hw, list.slice('shift.'.length) as ShiftSignal, plain);
   const wiring = hw.wiring;
   if (wiring.kind === 'direct') {
+    const put = (pins: Pin[]) => pins.map((p, i) => (i === index ? plain : p));
     if (side === 'right') return { ...hw, wiring: { ...wiring, right: put(directPins(wiring, 'right')) } };
     return { ...hw, wiring: { ...wiring, pins: put(wiring.pins) } };
   }
+  const put = (pins: LinePin[]) => pins.map((p, i) => (i === index ? pin : p));
   const which = list === 'rows' ? 'rows' : 'cols';
   if (side === 'right') {
     const right = matrixPins(wiring, 'right');
@@ -94,7 +98,7 @@ export function setRightWiredDifferently(hw: KeyboardHardware, on: boolean): Key
 export function resizeMatrix(hw: KeyboardHardware, rows: number, cols: number): KeyboardHardware {
   const wiring = hw.wiring;
   if (wiring.kind !== 'matrix') return hw;
-  const fit = (pins: Pin[], n: number): Pin[] => Array.from({ length: n }, (_, i) => pins[i] ?? null);
+  const fit = (pins: LinePin[], n: number): LinePin[] => Array.from({ length: n }, (_, i) => pins[i] ?? null);
   const next: MatrixWiring = { ...wiring, rows: fit(wiring.rows, rows), cols: fit(wiring.cols, cols) };
   if (wiring.right) next.right = { rows: fit(wiring.right.rows, rows), cols: fit(wiring.right.cols, cols) };
   // A mirrored right half lists its columns in reverse, so its keys shift to keep their pins.
@@ -133,13 +137,19 @@ export function pinUses(hw: KeyboardHardware, side?: Side): Map<number, string[]
     directPins(hw.wiring, side).forEach((pin, i) => add(pin, `Input ${i}`));
   } else {
     const pins = matrixPins(hw.wiring, side);
-    pins.rows.forEach((pin, i) => add(pin, `Row ${i}`));
-    pins.cols.forEach((pin, i) => add(pin, `Column ${i}`));
+    pins.rows.forEach((pin, i) => add(controllerPin(pin), `Row ${i}`));
+    pins.cols.forEach((pin, i) => add(controllerPin(pin), `Column ${i}`));
   }
   halfEncoders(hw, side).forEach((e, i) => {
     add(e.a, `Encoder ${i} A`);
     add(e.b, `Encoder ${i} B`);
   });
   for (const { pin, use } of halfDisplayPins(hw, side)) add(pin, use);
+  const shift = side === undefined ? shiftPins(hw) : undefined;
+  if (shift) {
+    add(shift.latch, SHIFT_USES.latch);
+    add(shift.data, SHIFT_USES.data);
+    add(shift.clock, SHIFT_USES.clock);
+  }
   return uses;
 }

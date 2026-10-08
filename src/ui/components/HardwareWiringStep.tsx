@@ -9,7 +9,8 @@ import {
   halfDisplayPins,
   setDisplay,
 } from '../../core/hardware/displays.ts';
-import type { DisplayKind, KeyboardHardware, Pin, Side } from '../../core/hardware/types.ts';
+import { controllerPin } from '../../core/hardware/shiftRegisters.ts';
+import type { DisplayKind, KeyboardHardware, LinePin, Pin, Side } from '../../core/hardware/types.ts';
 import type { HardwareIssue } from '../../core/hardware/validate.ts';
 import {
   directInputUsed,
@@ -203,7 +204,7 @@ interface PinTablesProps {
 
 function PinTables({ hw, side, active, onChange, onActivate, onAddEncoder, onRemoveEncoder }: PinTablesProps) {
   const prefix = side === 'left' ? 'Left ' : side === 'right' ? 'Right ' : '';
-  const lists: { list: PinList; title: string; item: string; pins: Pin[] }[] =
+  const lists: { list: PinList; title: string; item: string; pins: LinePin[] }[] =
     hw.wiring.kind === 'direct'
       ? [{ list: 'pins', title: 'Inputs (one per key)', item: 'Input', pins: directPins(hw.wiring, side) }]
       : [
@@ -235,7 +236,7 @@ function PinTables({ hw, side, active, onChange, onActivate, onAddEncoder, onRem
           <div className="pin-grid">
             {pins.map((pin, index) => (
               <div key={index} className="field">
-                {field(list, index, `${item} ${index}`, pin)}
+                {field(list, index, `${item} ${index}`, controllerPin(pin))}
                 {list === 'pins' && !directInputUsed(hw, side, index) && (
                   <button type="button" className="link-button" onClick={() => onChange(removeDirectPin(hw, side, index))}>
                     Remove unused input

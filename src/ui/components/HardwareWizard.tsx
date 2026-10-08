@@ -3,6 +3,7 @@ import type { ZmkConfig } from '../../core/config.ts';
 import { applyHardware, newHardwareConfig } from '../../core/hardware/config.ts';
 import { addEncoder, carryEncoderOrigins, removeEncoder, sensorOrder } from '../../core/hardware/encoders.ts';
 import { basicsOf, DEFAULT_BASICS, gridHardware, type HardwareBasics } from '../../core/hardware/grid.ts';
+import { isShiftOutput } from '../../core/hardware/shiftRegisters.ts';
 import type { KeyboardHardware } from '../../core/hardware/types.ts';
 import { hasErrors, validateBasics, validateHardware } from '../../core/hardware/validate.ts';
 import { halfEncoders, resizeMatrix } from '../../core/hardware/wiring.ts';
@@ -31,7 +32,7 @@ function anyPin(hw: KeyboardHardware): boolean {
   const pins = w.kind === 'direct' ? [...w.pins, ...(w.right ?? [])] : [...w.rows, ...w.cols, ...(w.right ? [...w.right.rows, ...w.right.cols] : [])];
   const encoderPins = [...halfEncoders(hw, 'left'), ...halfEncoders(hw, 'right')].flatMap((e) => [e.a, e.b]);
   if (encoderPins.some((p) => p !== null)) return true;
-  return pins.some((p) => p !== null);
+  return pins.some((p) => p !== null && !isShiftOutput(p));
 }
 
 function freshDraft(basics: HardwareBasics): HardwareDraft {

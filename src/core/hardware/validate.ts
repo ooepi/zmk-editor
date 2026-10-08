@@ -6,6 +6,7 @@ import { interconnectOf, PRO_MICRO, type Interconnect } from './interconnects.ts
 import type { HardwareBasics } from './grid.ts';
 import type { KeyboardHardware, Pin } from './types.ts';
 import { halfDisplay, halfDisplayPins } from './displays.ts';
+import { isShiftOutput } from './shiftRegisters.ts';
 import { directPins, halfEncoders, halfSize, halves, matrixPins } from './wiring.ts';
 
 /** Ids ZMK reserves itself, in addition to catalog keyboards and every module shield id. */
@@ -96,8 +97,8 @@ export function validateHardware(hw: KeyboardHardware): HardwareIssue[] {
         ...(hw.wiring.kind === 'direct'
           ? directPins(hw.wiring, side).map((pin, i) => ({ label: `Input ${i}`, pin }))
           : [
-              ...matrixPins(hw.wiring, side).rows.map((pin, i) => ({ label: `Row ${i}`, pin })),
-              ...matrixPins(hw.wiring, side).cols.map((pin, i) => ({ label: `Column ${i}`, pin })),
+              ...matrixPins(hw.wiring, side).rows.flatMap((pin, i) => (isShiftOutput(pin) ? [] : [{ label: `Row ${i}`, pin }])),
+              ...matrixPins(hw.wiring, side).cols.flatMap((pin, i) => (isShiftOutput(pin) ? [] : [{ label: `Column ${i}`, pin }])),
             ]),
         ...halfEncoders(hw, side).flatMap((e, i) => [
           { label: `Encoder ${i} A`, pin: e.a },
