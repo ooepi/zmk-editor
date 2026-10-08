@@ -3,6 +3,7 @@ import { shiftPins } from '../../core/hardware/shiftRegisters.ts';
 import type { KeyboardHardware, Side } from '../../core/hardware/types.ts';
 import { pinUses } from '../../core/hardware/wiring.ts';
 import { setPreferences, usePreferences } from '../state/preferences.ts';
+import { ChipPinout, type ChipPad } from './ChipPinout.tsx';
 import { padClass } from './padClass.ts';
 
 interface Props {
@@ -27,30 +28,13 @@ export function ControllerPinout({ hw, side, label, onPick }: Props) {
   const uses = pinUses(hw, side);
   const sharedBus = side === undefined && Boolean(shiftPins(hw)?.shared);
   const ic = interconnectOf(hw.controller);
-  const column = (pads: HeaderPad[], edge: 'left' | 'right') => (
-    <ul className={`pinout-column ${edge}`}>
-      {pads.map((pad, i) => {
-        const pin = pad.pin;
-        if (pin === null) {
-          return (
-            <li key={i}>
-              <span className="pinout-pad power">{pad.label}</span>
-            </li>
-          );
-        }
-        const use = uses.get(pin)?.join(', ');
-        return (
-          <li key={i}>
-            <button type="button" className={`pinout-pad ${padClass(uses.get(pin), sharedBus)}${use ? ' used' : ''}`} aria-label={use ? `${pad.label}: ${use}` : pad.label} onClick={() => onPick(pin)}>
-              <span className="pinout-label">{pad.label}</span>
-              {pad.mcu?.[hw.controller] && <span className="pinout-sub">{pad.mcu[hw.controller]}</span>}
-              {use && <span className="pinout-use">{use}</span>}
-            </button>
-          </li>
-        );
-      })}
-    </ul>
-  );
+  const pads = (header: HeaderPad[]): ChipPad[] =>
+    header.map((pad): ChipPad => {
+      const pin = pad.pin;
+      if (pin === null) return { label: pad.label, kind: 'reserved' };
+      const use = uses.get(pin)?.join(', ');
+      return { label: pad.label, inner: pad.mcu?.[hw.controller], use, kind: 'pin', tone: padClass(uses.get(pin), sharedBus), onClick: () => onPick(pin) };
+    });
   return (
     <figure className="pinout" aria-label={`${ic.name} pinout${side ? ` (${side} half)` : ''}`}>
       <figcaption className="muted small">
@@ -65,11 +49,12 @@ export function ControllerPinout({ hw, side, label, onPick }: Props) {
           </button>
         ))}
       </div>
-      <div className="pinout-board">
-        {column(view === 'top' ? ic.header.left : ic.header.right, 'left')}
-        <div className="pinout-usb" aria-hidden="true">USB</div>
-        {column(view === 'top' ? ic.header.right : ic.header.left, 'right')}
-      </div>
+      <ChipPinout
+        shape="board"
+        title={ic.name}
+        left={pads(view === 'top' ? ic.header.left : ic.header.right)}
+        right={pads(view === 'top' ? ic.header.right : ic.header.left)}
+      />
     </figure>
   );
 }

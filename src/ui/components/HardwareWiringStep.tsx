@@ -35,6 +35,7 @@ import {
 } from '../../core/hardware/wiring.ts';
 import { HardwareIssueList } from './HardwareIssueList.tsx';
 import { ControllerPinout } from './ControllerPinout.tsx';
+import { ShiftRegisterPinout } from './ShiftRegisterPinout.tsx';
 
 interface Slot {
   side?: Side;
@@ -104,18 +105,31 @@ export function HardwareWiringStep({ hw, issues, onChange, onAddEncoder, onRemov
                   onRemoveEncoder={onRemoveEncoder}
                 />
               </div>
-              <ControllerPinout
-                hw={hw}
-                side={side}
-                label={active && active.side === side ? active.label : undefined}
-                onPick={(pin) => {
-                  // Each pinout fills fields of its own half only.
-                  if (!active || active.side !== side) return;
-                  // Stale after "wired differently" was just unticked: don't quietly bring the right half's own pins back.
-                  if (active.side === 'right' && hw.wiring.right === undefined) return;
-                  onChange(setPin(hw, active.side, active.list, active.index, pin));
-                }}
-              />
+              <div className="wiring-pinouts">
+                <ControllerPinout
+                  hw={hw}
+                  side={side}
+                  label={active && active.side === side ? active.label : undefined}
+                  onPick={(pin) => {
+                    // Each pinout fills fields of its own half only.
+                    if (!active || active.side !== side) return;
+                    // Stale after "wired differently" was just unticked: don't quietly bring the right half's own pins back.
+                    if (active.side === 'right' && hw.wiring.right === undefined) return;
+                    onChange(setPin(hw, active.side, active.list, active.index, pin));
+                  }}
+                />
+                {side === undefined && (
+                  <ShiftRegisterPinout
+                    hw={hw}
+                    label={active && active.side === undefined && active.list === drivenList(hw) ? active.label : undefined}
+                    onPick={(output) => {
+                      // Outputs only go on the lines shift registers drive.
+                      if (!active || active.side !== undefined || active.list !== drivenList(hw)) return;
+                      onChange(setPin(hw, undefined, active.list, active.index, { sr: output }));
+                    }}
+                  />
+                )}
+              </div>
             </div>
           </section>
         ))}

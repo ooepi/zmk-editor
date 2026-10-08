@@ -520,7 +520,8 @@ describe('Displays in the wizard', () => {
 describe('Seeed XIAO in the wizard', () => {
   const xiaoPinout = () => screen.getByRole('figure', { name: /^Seeed XIAO pinout/ });
   const padOrder = (figure: HTMLElement) =>
-    within(figure).getAllByText(/^(D\d+|GND|5V|3V3)$/).map((el) => el.textContent);
+    // The left column top to bottom, then the right (the pinout is laid out row by row).
+    (['left', 'right'] as const).flatMap((edge) => [...figure.querySelectorAll(`.pinout-pad.${edge} .pinout-label`)].map((el) => el.textContent));
 
   async function wiringOnXiao(user: ReturnType<typeof userEvent.setup>) {
     await openWizard(user);
