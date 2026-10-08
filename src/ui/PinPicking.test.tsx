@@ -5,8 +5,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { newHardwareConfig } from '../core/hardware/config.ts';
 import { testShiftPad } from '../core/hardware/testFixtures.ts';
 import { HardwareWizard } from './components/HardwareWizard.tsx';
+import { setPreferences } from './state/preferences.ts';
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  setPreferences({ pinFillInOrder: false });
+});
 
 /** The text of a select's chosen option (the project doesn't use jest-dom). */
 const shown = (label: string) => (screen.getByLabelText(label) as HTMLSelectElement).selectedOptions[0]?.textContent ?? '';
@@ -25,8 +29,19 @@ async function openWiring() {
 }
 
 describe('picking pins: field first', () => {
-  it('selects a field from its card, fills it from the pinout and moves on to the next field', async () => {
+  it('selects a field from its card and fills it from the pinout, then stops by default', async () => {
     const user = await openWiring();
+    expect((screen.getByRole('switch', { name: 'Move to the next field after each pin' }) as HTMLInputElement).checked).toBe(false);
+    await user.click(card('Row 0'));
+    expect(isArmed('Row 0')).toBe(true);
+    await user.click(pad('D9'));
+    expect(shown('Row 0')).toBe('D9');
+    expect(document.querySelector('.pin-card.armed')).toBeNull();
+  });
+
+  it('moves on to the next field after each pin when that’s switched on', async () => {
+    const user = await openWiring();
+    await user.click(screen.getByRole('switch', { name: 'Move to the next field after each pin' }));
     await user.click(card('Row 0'));
     expect(isArmed('Row 0')).toBe(true);
     await user.click(pad('D9'));

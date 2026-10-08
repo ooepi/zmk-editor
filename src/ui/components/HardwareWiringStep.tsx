@@ -35,6 +35,8 @@ import {
 } from '../../core/hardware/wiring.ts';
 import { HardwareIssueList } from './HardwareIssueList.tsx';
 import { Icon } from './Icon.tsx';
+import { Switch } from './ui/Switch.tsx';
+import { setPreferences, usePreferences } from '../state/preferences.ts';
 import { ControllerPinout } from './ControllerPinout.tsx';
 import { ShiftRegisterPinout } from './ShiftRegisterPinout.tsx';
 
@@ -101,6 +103,7 @@ interface Props {
 export function HardwareWiringStep({ hw, issues, onChange, onAddEncoder, onRemoveEncoder }: Props) {
   const [active, setActive] = useState<Slot | null>(null);
   const [picked, setPicked] = useState<Picked | null>(null);
+  const { pinFillInOrder } = usePreferences();
   useEffect(() => {
     // Clicking empty space or pressing Esc stops picking.
     const stop = () => {
@@ -129,7 +132,7 @@ export function HardwareWiringStep({ hw, issues, onChange, onAddEncoder, onRemov
   const put = (slot: Slot, pin: LinePin, advance: boolean) => {
     const next = setPin(hw, slot.side, slot.list, slot.index, pin);
     onChange(next);
-    setActive(advance ? nextSlot(next, slot) : null);
+    setActive(advance && pinFillInOrder ? nextSlot(next, slot) : null);
     setPicked(null);
   };
   const accepts = (slot: Slot) => picked !== null && fits(slot, picked.side, picked.pin);
@@ -178,6 +181,10 @@ export function HardwareWiringStep({ hw, issues, onChange, onAddEncoder, onRemov
             ? 'Each key connects its pin to ground; no diodes are needed. Pick the pin each key is soldered to.'
             : 'Pick the controller pin each row and column wire is soldered to.'}
         </p>
+        <label className="field checkbox">
+          <Switch checked={pinFillInOrder} onChange={(on) => setPreferences({ pinFillInOrder: on })} />
+          <span>Move to the next field after each pin</span>
+        </label>
         {hw.split && (
           <label className="field checkbox">
             <input
