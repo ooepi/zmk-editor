@@ -13,6 +13,7 @@ Approved in chat on 2026-10-08:
 - **Only the 74HC595**, chained 1–4 deep, which is what ZMK's `zmk,gpio-595` driver supports.
 - **Outputs work like pins** (approach A): each driven line's picker offers shift register outputs next to D-pins, and turning shift registers on fills them in order. Rejected: a fixed block of the first N columns (can't describe a PCB with outputs in another order), and a general I/O-expander system (more abstraction than the 595 needs).
 - **LEDs and power switching are out of scope.**
+- **Shared or separate bus with a nice!view** (decided while planning, 2026-10-08): data and clock start out shared with the nice!view (one bus, like v2). A checkbox puts the shift registers on their own pins instead (like v1).
 
 ## Facts from ZMK v0.3
 
@@ -47,24 +48,28 @@ export interface ShiftRegisters {
   count: number;
   /** RCLK, the SPI chip select. */
   latch: Pin;
-  /** SER (MOSI) and SRCLK (SCK) moved off their defaults; ignored with a nice!view, which shares its bus. */
+  /** SER (MOSI) and SRCLK (SCK) moved off their defaults; ignored while the bus is shared with a nice!view. */
   data?: Pin;
   clock?: Pin;
+  /** With a nice!view: true puts the shift registers on their own data and clock pins instead of sharing its bus. */
+  ownBus?: boolean;
 }
 
 export interface KeyboardHardware { … shiftRegisters?: ShiftRegisters; }
 ```
 
 - **Default data and clock** are the interconnect's SPI pins, the nice!view defaults: Pro Micro D2/D3, XIAO D10/D8. A field is stored only when moved, the same rule display pins use.
-- **With a nice!view,** data and clock are the display's data and clock pins (one bus, one source of truth).
+- **With a nice!view,** data and clock are the display's data and clock pins (one bus, one source of truth), unless `ownBus` is set. Then they're the shift registers' own pins, with the same defaults as without a display; if those collide with the display's pins, validation says so.
+- **The bus is shared** exactly when the keyboard has a nice!view and `ownBus` isn't set.
 - **New helpers** (`shiftRegisters.ts`):
-  - `shiftPins(hw)` gives the effective `{ latch, data, clock }` and whether data and clock are shared with the nice!view.
+  - `shiftPins(hw)` gives the effective `{ latch, data, clock, shared }`, where `shared` says whether data and clock come from the nice!view.
   - `outputLabel(n)` gives "Output 9 (U2 QB)". U1 is the register wired to the controller.
   - `setShiftRegisterCount(hw, count | 0)` turns them on, changes the count or turns them off:
     - **On:** driven line `i` gets output `i` for every `i` below the line count and the output count. Other lines keep their pins.
     - **Fewer:** lines on outputs that no longer exist become `null`.
     - **Off:** every output becomes `null` and `shiftRegisters` is removed.
-  - `setShiftPin(hw, 'latch' | 'data' | 'clock', pin)`.
+  - `setShiftPin(hw, 'latch' | 'data' | 'clock', pin)` (data and clock are ignored while the bus is shared).
+  - `setShiftOwnBus(hw, on)` sets or clears `ownBus`.
 - **`setPin`** accepts a `LinePin` for `rows` and `cols`.
 - **Making the keyboard split** (basics step) turns shift registers off first.
 - **Existing helpers** that take pins from matrix lines treat outputs as "not a controller pin": `pinUses`, the pinout, validation's pin list, and the basics pin count.
@@ -73,7 +78,7 @@ export interface KeyboardHardware { … shiftRegisters?: ShiftRegisters; }
 
 `definition.ts`:
 - **Lines:** `"cols": [{ "sr": 0 }, …, { "sr": 15 }, 20, 21]`. Parsing accepts a number, `null` or `{ "sr": <integer ≥ 0> }`.
-- **The block:** `"shiftRegisters": { "count": 2, "latch": 0 }`, plus `"data"` and `"clock"` when moved, in that order. It goes after `displayPins` and before `encoderSpots`.
+- **The block:** `"shiftRegisters": { "count": 2, "latch": 0 }`, plus `"data"` and `"clock"` when moved and `"ownBus": true` when set, in that order. It goes after `displayPins` and before `encoderSpots`.
 - **Version 3** is written only when `shiftRegisters` is present or any line holds an output. Otherwise the file is written exactly as today (version 1, or 2 with display pins), so existing keyboards' files don't change. Version 3 files can only be read by this version of the editor or later; older editors report "update the editor".
 
 ## Wizard
@@ -90,7 +95,7 @@ export interface KeyboardHardware { … shiftRegisters?: ShiftRegisters; }
 - **A "Shift registers" fieldset** (one-piece, matrix only) with:
   - the count select (same choices as basics);
   - **Latch**, **Data** and **Clock** pickers, which arm the pinout like other pin fields;
-  - with a nice!view, Data and Clock show as text, "Shared with the nice!view (D2)", instead of pickers;
+  - with a nice!view, a checkbox **"Shift registers on their own pins"** (off by default). Off: Data and Clock show as text, "Shared with the nice!view (D2)", instead of pickers. On: their own pickers;
   - one muted sentence: which three 595 pins they are (RCLK, SER, SRCLK), that U1 is the 595 wired to the controller, and that the chain continues from its QH′ to the next one's SER.
 - **Each driven line's picker** gets an `<optgroup label="Shift register outputs">` listing every output with `outputLabel`, and other uses of each output in brackets, like pins. The input lines' pickers never list outputs.
 - **The pinout** gives the latch, data and clock pads a "shift register" colour (a new class next to the existing pad-use classes) with their use in the tooltip. Lines on outputs aren't on the pinout.
@@ -104,14 +109,14 @@ All in `validateHardware`, area `wiring`, level `error`:
 - **An output on an input line:** "Row 2 uses a shift register output, but shift registers can only drive columns on this matrix (col2row). Use a pin, or switch the diode direction." Mirrored for `row2col`.
 - **An output beyond the chain:** "Column 3 uses output 20, but 2 shift registers have 16 outputs (0–15)."
 - **An output used twice:** "Output 4 is used for both Column 4 and Column 9."
-- **A latch, data or clock pin** that's missing, not on the controller, or used twice: they join the existing labelled pin list as "Shift register latch/data/clock". Shared with a nice!view, data and clock aren't added again (no false conflict).
+- **A latch, data or clock pin** that's missing, not on the controller, or used twice: they join the existing labelled pin list as "Shift register latch/data/clock". While the bus is shared, data and clock aren't added again (no false conflict). On their own bus they are, so a clash with the display's pins is reported.
 - **The count** is outside 1–4.
 
 ## Generated shield
 
 `generate.ts`, one-piece only (`rootFile` with pins):
 - **kscan:** an output line is `<&shifter N GPIO_ACTIVE_HIGH>`; pins are unchanged, so the two mix.
-- **Without a nice!view:** a new section after the root block:
+- **On their own bus** (no nice!view, or `ownBus`): a new section after the root block:
   ```
   &pinctrl { shift_register_spi_default … shift_register_spi_sleep … }   // SCK = clock, MOSI = data
   &spi2 {
@@ -123,11 +128,11 @@ All in `validateHardware`, area `wiring`, level `error`:
           spi-max-frequency = <1000000>; reg = <0>; #gpio-cells = <2>; ngpios = <8 × count>; };
   };
   ```
-  SPI2 leaves the I2C units alone, so an OLED keeps working, and 1 MHz is safe on any pin.
-- **With a nice!view:** `niceViewBus` writes the shared bus:
+  SPI2 leaves the I2C units alone, so an OLED keeps working, and 1 MHz is safe on any pin. A nice!view next to it keeps its own bus, through the adapter or its own SPI bus as today.
+- **Sharing the nice!view's bus:** `niceViewBus` writes the shared bus:
   - `cs-gpios = <nice!view CS GPIO_ACTIVE_HIGH>, <latch GPIO_ACTIVE_LOW>`;
   - the `shifter: 595@1` child, with `reg = <1>`;
-  - it is always used when shift registers exist: `usesNiceViewAdapter` returns false then, and `applyHardware` already drops `nice_view_adapter` from the build when that answer changes.
+  - it is always used while the bus is shared: `usesNiceViewAdapter` returns false then, and `applyHardware` already drops `nice_view_adapter` from the build when that answer changes.
 - **`Kconfig.defconfig`** gets `config SPI\n    default y` inside the shield's `if` block when shift registers are present.
 - **Unchanged:** keyboards without shift registers generate byte-identical files.
 
@@ -149,20 +154,20 @@ All in `validateHardware`, area `wiring`, level `error`:
   - Bad `{ sr }` entries and a bad `shiftRegisters` block give errors.
 - **`shiftRegisters.test.ts`:**
   - `setShiftRegisterCount`: on, fewer, more, off; and row2col fills rows.
-  - `shiftPins` defaults, moved pins, and sharing with a nice!view.
+  - `shiftPins` defaults, moved pins, sharing with a nice!view, and `ownBus`.
   - `outputLabel` numbering.
-- **`validate.test.ts`:** each error above, and no conflict for shared data and clock.
+- **`validate.test.ts`:** each error above, no conflict for shared data and clock, and a reported clash on an own bus that reuses the display's pins.
 - **`generate.test.ts`:**
-  - Snapshots for shift registers alone, with a nice!view, and with an OLED.
+  - Snapshots for shift registers alone, sharing a nice!view's bus, next to a nice!view on their own bus, and with an OLED.
   - The `Kconfig.defconfig` SPI line.
   - Unchanged output without shift registers.
 - **`golden.test.ts`, Subsata reference:**
   - Both Subsata boards described as `KeyboardHardware` (matrix and bus only).
-  - The generated kscan pins and bus match the hand-written v1 and v2 shields: rows, `&shifter 0–15` plus the two direct columns, `ngpios = <16>`, latch and chip selects.
+  - The generated kscan pins and buses match the hand-written v1 and v2 shields: rows, `&shifter 0–15` plus the two direct columns, `ngpios = <16>`, latch and chip selects; v1's nice!view on its own bus (D14/D16/D10) and its shift registers on theirs (D19/D20/D21).
 - **UI tests (testing-library):**
   - The count in the wiring step fills the columns.
   - A driven line's picker lists outputs; an input line's doesn't.
-  - Data and Clock read "Shared with the nice!view" when there's one.
+  - Data and Clock read "Shared with the nice!view" when there's one, and become pickers when "Shift registers on their own pins" is ticked.
   - The basics pin count accepts 6 × 18 with 2 shift registers.
 - **Firmware build check:** three new fixtures in `test/generated/`, built by `.github/workflows/firmware.yml` with ZMK's toolchain:
   - `editor_shift` (shift registers alone),
