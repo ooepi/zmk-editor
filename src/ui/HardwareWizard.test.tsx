@@ -79,7 +79,7 @@ describe('HardwareWizard shift registers', () => {
     const shift = screen.getByRole('group', { name: 'Shift registers' });
     expect(within(shift).getByText('Shared with the nice!view (D2)')).toBeTruthy();
     await user.click(within(shift).getByLabelText('Shift registers on their own pins'));
-    expect(shown(within(shift).getByLabelText('Shift register data'))).toMatch(/^D2/);
+    expect(shown(within(shift).getByLabelText('Data (SER)'))).toMatch(/^D2/);
   });
 
   it('summarises the shift registers on the review step', async () => {

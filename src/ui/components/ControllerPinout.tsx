@@ -1,4 +1,4 @@
-import { interconnectOf, type HeaderPad } from '../../core/hardware/interconnects.ts';
+import { interconnectOf, pinLabel, type HeaderPad } from '../../core/hardware/interconnects.ts';
 import { shiftPins } from '../../core/hardware/shiftRegisters.ts';
 import type { KeyboardHardware, Side } from '../../core/hardware/types.ts';
 import { pinUses } from '../../core/hardware/wiring.ts';
@@ -11,6 +11,8 @@ interface Props {
   side?: Side;
   /** The field a pin click will fill in, e.g. "Input 1"; none picked when undefined. */
   label?: string;
+  /** A pin picked first, waiting for a field. */
+  picked?: number;
   onPick: (pin: number) => void;
 }
 
@@ -20,7 +22,7 @@ interface Props {
  * Clicking one fills the selected field. From below the pin columns swap
  * sides (USB stays at the top), matching wiring plans drawn from underneath.
  */
-export function ControllerPinout({ hw, side, label, onPick }: Props) {
+export function ControllerPinout({ hw, side, label, picked, onPick }: Props) {
   const { pinoutViews } = usePreferences();
   const viewKey = side ?? 'one';
   const view = pinoutViews[viewKey] ?? 'top';
@@ -33,13 +35,27 @@ export function ControllerPinout({ hw, side, label, onPick }: Props) {
       const pin = pad.pin;
       if (pin === null) return { label: pad.label, kind: 'reserved' };
       const use = uses.get(pin)?.join(', ');
-      return { label: pad.label, inner: pad.mcu?.[hw.controller], use, kind: 'pin', tone: padClass(uses.get(pin), sharedBus), onClick: () => onPick(pin) };
+      return {
+        label: pad.label,
+        inner: pad.mcu?.[hw.controller],
+        use,
+        kind: 'pin',
+        tone: padClass(uses.get(pin), sharedBus),
+        pressed: pin === picked,
+        onClick: () => onPick(pin),
+      };
     });
   return (
     <figure className="pinout" aria-label={`${ic.name} pinout${side ? ` (${side} half)` : ''}`}>
       <figcaption className="muted small">
         Pins seen from {view === 'top' ? 'above' : 'below'}, USB at the top{side ? ` (${side} half)` : ''}.{' '}
-        {label ? `Picking a pin for ${label}.` : 'Click a pin field, then a pin.'}
+        <span>
+          {label
+            ? `Picking a pin for ${label}.`
+            : picked !== undefined
+              ? `${pinLabel(picked)} picked: click a field to put it there.`
+              : 'Click a pin field, then a pin, or a pin, then its field.'}
+        </span>
       </figcaption>
       <div className="pinout-view" role="group" aria-label="Seen from">
         <span className="muted small">Seen from</span>

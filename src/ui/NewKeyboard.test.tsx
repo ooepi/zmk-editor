@@ -184,7 +184,7 @@ describe('Design your own keyboard', () => {
     await openWizard(user);
     await user.click(screen.getByRole('button', { name: 'Next' }));
 
-    expect(screen.getByText(/Click a pin field, then a pin\./)).toBeTruthy();
+    expect(screen.getByText(/Click a pin field, then a pin, or a pin, then its field\./)).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'D4' }));
     expect(screen.getByLabelText('Left row 0')).toHaveProperty('value', '');
 

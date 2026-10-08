@@ -15,6 +15,8 @@ export interface ChipPad {
   tone?: string;
   /** The button's accessible name; defaults to the label and use. */
   name?: string;
+  /** Picked first, waiting for a field to put it in. */
+  pressed?: boolean;
   onClick?: () => void;
 }
 
@@ -76,7 +78,7 @@ const used = (pad: ChipPad) => pad.kind !== 'reserved' && pad.use !== undefined;
 const hole = (pad: ChipPad) => `chip-hole ${pad.kind}${pad.tone ? ` ${pad.tone}` : ''}${used(pad) ? ' used' : ''}`;
 
 function Pad({ pad, side }: { pad: ChipPad; side: 'left' | 'right' }) {
-  const className = `pinout-pad ${side} ${pad.kind}${pad.tone ? ` ${pad.tone}` : ''}${used(pad) ? ' used' : ''}`;
+  const className = `pinout-pad ${side} ${pad.kind}${pad.tone ? ` ${pad.tone}` : ''}${used(pad) ? ' used' : ''}${pad.pressed ? ' armed' : ''}`;
   const content = [
     <span key="label" className="pinout-label">
       {pad.label}
@@ -97,7 +99,14 @@ function Pad({ pad, side }: { pad: ChipPad; side: 'left' | 'right' }) {
     );
   }
   return (
-    <button type="button" className={className} aria-label={pad.name ?? (pad.use ? `${pad.label}: ${pad.use}` : pad.label)} title={pad.use} onClick={pad.onClick}>
+    <button
+      type="button"
+      className={className}
+      aria-label={pad.name ?? (pad.use ? `${pad.label}: ${pad.use}` : pad.label)}
+      aria-pressed={pad.pressed ?? false}
+      title={pad.use}
+      onClick={pad.onClick}
+    >
       {ordered}
     </button>
   );

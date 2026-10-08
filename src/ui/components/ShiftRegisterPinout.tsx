@@ -8,6 +8,8 @@ interface Props {
   hw: KeyboardHardware;
   /** The field a click will fill in, e.g. "Column 9"; none picked when undefined. */
   label?: string;
+  /** An output picked first, waiting for a field. */
+  picked?: number;
   onPick: (output: number) => void;
 }
 
@@ -19,7 +21,7 @@ const Q = ['QA', 'QB', 'QC', 'QD', 'QE', 'QF', 'QG', 'QH'];
  * (U1 is wired to the controller). Clicking an output fills the selected field;
  * the other pins show what they're wired to.
  */
-export function ShiftRegisterPinout({ hw, label, onPick }: Props) {
+export function ShiftRegisterPinout({ hw, label, picked, onPick }: Props) {
   const pins = shiftPins(hw);
   if (!pins || !hw.shiftRegisters) return null;
   const count = hw.shiftRegisters.count;
@@ -35,6 +37,7 @@ export function ShiftRegisterPinout({ hw, label, onPick }: Props) {
       kind: 'pin',
       tone: padClass(uses.get(n)),
       name: `${letter}, output ${n}${use ? `: ${use}` : ''}`,
+      pressed: n === picked,
       onClick: () => onPick(n),
     };
   };
@@ -45,7 +48,13 @@ export function ShiftRegisterPinout({ hw, label, onPick }: Props) {
     <figure className="pinout" aria-label="Shift register pinout">
       <figcaption className="muted small">
         74HC595s seen from above, notch at the top; U1 is wired to the controller.{' '}
-        {label ? `Picking an output for ${label}.` : `Click a ${lines} field, then an output.`}
+        <span>
+          {label
+            ? `Picking an output for ${label}.`
+            : picked !== undefined
+              ? `Output ${picked} picked: click a ${lines} field to put it there.`
+              : `Click a ${lines} field, then an output, or an output, then its field.`}
+        </span>
       </figcaption>
       <div className="chip-stack">
         {Array.from({ length: count }, (_, r) => {

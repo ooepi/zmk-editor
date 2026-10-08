@@ -428,8 +428,77 @@
 
 .pin-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
   gap: 8px;
+}
+
+.pin-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* A pin field as a card: click it to pick its pin on the pinout. */
+.pin-card {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 8px 10px 10px;
+  border: 1px solid var(--keycap-edge);
+  border-radius: 10px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.pin-card:hover {
+  border-color: color-mix(in srgb, var(--accent-line) 55%, var(--keycap-edge));
+}
+
+.pin-card label {
+  cursor: pointer;
+}
+
+.pin-card.armed {
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 1px var(--accent-line);
+}
+
+/* A pin was picked first: the fields that can take it. */
+.pin-card.receptive {
+  border-style: dashed;
+  border-color: var(--accent-line);
+}
+
+.pin-card.shared,
+.pin-card.shared:hover {
+  border-style: dashed;
+  border-color: var(--keycap-edge);
+  cursor: default;
+}
+
+.pin-card.shared p {
+  margin: 6px 0 0;
+}
+
+.pin-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pin-card-head .field-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pin-card-hint {
+  flex: none;
+  font-size: 0.75em;
+  color: var(--text-muted);
 }
 
 /* Displays: each half's display and, under it, its pins. */
@@ -457,14 +526,14 @@
 
 .encoder-pins {
   display: grid;
-  grid-template-columns: repeat(2, minmax(104px, 1fr)) auto;
+  grid-template-columns: repeat(2, minmax(124px, 1fr)) auto;
   gap: 8px;
   align-items: end;
   margin-bottom: 8px;
 }
 
-.pin-grid select.active-pin,
-.encoder-pins select.active-pin {
+/* A pin picked first, waiting for its field. */
+.pinout-pad.armed {
   outline: 2px solid var(--accent-line);
   outline-offset: 1px;
 }
