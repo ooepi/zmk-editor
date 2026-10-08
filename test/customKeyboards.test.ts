@@ -5,6 +5,7 @@ import { newHardwareConfig } from '../src/core/hardware/config.ts';
 import { addLayer } from '../src/core/keymap/edit.ts';
 import { setSensorBinding } from '../src/core/keymap/sensorEdit.ts';
 import { DEFAULT_BASICS, gridHardware } from '../src/core/hardware/grid.ts';
+import { setShiftRegisterCount } from '../src/core/hardware/shiftRegisters.ts';
 import type { KeyboardHardware } from '../src/core/hardware/types.ts';
 import { validateHardware } from '../src/core/hardware/validate.ts';
 
@@ -56,6 +57,29 @@ const duo: KeyboardHardware = {
   displays: { left: 'oled_128x32' },
 };
 
+/** 3 × 12, COL2ROW, one 74HC595 on its own bus (data D2, clock D3, latch D21), columns 8–11 on pins. */
+const shift: KeyboardHardware = (() => {
+  const hw = setShiftRegisterCount(gridHardware({ ...DEFAULT_BASICS, name: 'editor_shift', displayName: 'Editor Shift', split: false, rows: 3, cols: 12 }), 1);
+  const cols = (hw.wiring.kind === 'matrix' ? hw.wiring.cols : []).map((p, i) => (i >= 8 ? [7, 8, 9, 10][i - 8] ?? null : p));
+  return { ...hw, wiring: { kind: 'matrix', diodeDirection: 'col2row', rows: [4, 5, 6], cols }, shiftRegisters: { count: 1, latch: 21 } };
+})();
+
+/** 2 × 16, two 595s sharing the nice!view's bus (CS D1, data D2, clock D3), latch D0. */
+const shiftView: KeyboardHardware = {
+  ...setShiftRegisterCount(gridHardware({ ...DEFAULT_BASICS, name: 'editor_shift_view', displayName: 'Shift View', split: false, rows: 2, cols: 16 }), 2),
+  shiftRegisters: { count: 2, latch: 0 },
+  displays: { left: 'nice_view' },
+};
+shiftView.wiring = { kind: 'matrix', diodeDirection: 'col2row', rows: [4, 5], cols: Array.from({ length: 16 }, (_, i) => ({ sr: i })) };
+
+/** A XIAO: 2 × 10, one 595 on its own bus (data D10, clock D8, latch D9) next to a 128×32 OLED on D4/D5. */
+const shiftOled: KeyboardHardware = {
+  ...gridHardware({ ...DEFAULT_BASICS, name: 'editor_shift_oled', displayName: 'Shift OLED', controller: 'seeeduino_xiao_ble', split: false, rows: 2, cols: 10 }),
+  wiring: { kind: 'matrix', diodeDirection: 'col2row', rows: [0, 1], cols: [...Array.from({ length: 8 }, (_, i) => ({ sr: i })), 2, 3] },
+  shiftRegisters: { count: 1, latch: 9 },
+  displays: { left: 'oled_128x32' },
+};
+
 /**
  * The split also gets a Nav layer without encoder bindings (they fall through)
  * and an Fn layer binding only the first encoder: real ZMK must accept both,
@@ -68,7 +92,7 @@ function withLayers(config: ReturnType<typeof newHardwareConfig>): ReturnType<ty
 }
 
 // Built with ZMK in CI (.github/workflows/firmware.yml). Update with `npx vitest run -u`.
-describe.each([split, numpad, duo])('designed keyboard $name', (hw) => {
+describe.each([split, numpad, duo, shift, shiftView, shiftOled])('designed keyboard $name', (hw) => {
   const config = withLayers(newHardwareConfig(hw, 'v0.3'));
 
   it('is valid and round-trips', () => {
