@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { HARDWARE_CONTROLLERS } from '../../core/hardware/controllers.ts';
 import { shieldDir } from '../../core/hardware/definition.ts';
 import { generateShield } from '../../core/hardware/generate.ts';
+import { shiftSummary } from '../../core/hardware/shiftRegisters.ts';
 import type { KeyboardHardware } from '../../core/hardware/types.ts';
 import { hasErrors, type HardwareIssue } from '../../core/hardware/validate.ts';
 import { HardwareIssueList } from './HardwareIssueList.tsx';
@@ -18,6 +19,7 @@ export function HardwareReviewStep({ hw, issues }: { hw: KeyboardHardware; issue
           {hw.displayName}: {hw.keys.length} keys{hw.split ? ' on two halves' : ''}, for a {controller}.
         </p>
       )}
+      {!hasErrors(issues) && shiftSummary(hw) && <p>{shiftSummary(hw)}</p>}
       <HardwareIssueList issues={issues} />
       <h3>Files the editor writes</h3>
       <p className="muted small">

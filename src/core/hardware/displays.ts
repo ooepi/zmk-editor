@@ -1,4 +1,5 @@
 import { interconnectOf, type Interconnect } from './interconnects.ts';
+import { sharesNiceViewBus } from './shiftRegisters.ts';
 import type { DisplayKind, DisplayPinOverrides, DisplaySignal, KeyboardHardware, Pin, Side } from './types.ts';
 
 /** The displays the wizard can generate. */
@@ -89,6 +90,8 @@ export function clearDisplayPins(hw: KeyboardHardware, side: Side | undefined): 
 
 /** Whether a half's nice!view goes through ZMK's adapter: a Pro Micro, on the adapter's own pins. */
 export function usesNiceViewAdapter(hw: KeyboardHardware, side?: Side): boolean {
+  // A bus shared with shift registers needs two chip selects, which the adapter's bus can't carry.
+  if (sharesNiceViewBus(hw)) return false;
   const ic = interconnectOf(hw.controller);
   if (halfDisplay(hw, side) !== 'nice_view' || !ic.niceViewAdapter) return false;
   const pins = halfDisplayPins(hw, side);

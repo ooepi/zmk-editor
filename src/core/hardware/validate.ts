@@ -6,6 +6,15 @@ import { interconnectOf, PRO_MICRO, type Interconnect } from './interconnects.ts
 import type { HardwareBasics } from './grid.ts';
 import type { KeyboardHardware, Pin } from './types.ts';
 import { halfDisplay, halfDisplayPins } from './displays.ts';
+import {
+  drivenList,
+  isShiftOutput,
+  MAX_SHIFT_REGISTERS,
+  OUTPUTS_PER_REGISTER,
+  outputCount,
+  SHIFT_USES,
+  shiftPins,
+} from './shiftRegisters.ts';
 import { directPins, halfEncoders, halfSize, halves, matrixPins } from './wiring.ts';
 
 /** Ids ZMK reserves itself, in addition to catalog keyboards and every module shield id. */
@@ -60,8 +69,13 @@ export function validateBasics(b: HardwareBasics): HardwareIssue[] {
   if (!Number.isInteger(b.cols) || b.cols < 1) error('Use at least 1 column.');
   if (issues.length > 0) return issues;
   const perHalf = b.split ? ' per half' : '';
-  if (b.wiring === 'matrix' && b.rows + b.cols > ic.pins.length) {
-    error(`A ${b.rows} × ${b.cols} matrix needs ${b.rows + b.cols} pins${perHalf}, ${pinCount(ic, true)}`);
+  const shift = b.wiring === 'matrix' && !b.split ? b.shiftRegisters : 0;
+  if (b.wiring === 'matrix') {
+    const driven = b.diodeDirection === 'col2row' ? b.cols : b.rows;
+    const inputs = b.diodeDirection === 'col2row' ? b.rows : b.cols;
+    const needed = shift > 0 ? inputs + Math.max(0, driven - shift * OUTPUTS_PER_REGISTER) + 3 : b.rows + b.cols;
+    const what = shift > 0 ? ` with ${shift} shift register${shift > 1 ? 's' : ''}` : '';
+    if (needed > ic.pins.length) error(`A ${b.rows} × ${b.cols} matrix${what} needs ${needed} pins${perHalf}, ${pinCount(ic, true)}`);
   }
   if (b.wiring === 'direct' && b.rows * b.cols > ic.pins.length) {
     error(`Direct wiring for ${b.rows * b.cols} keys needs ${b.rows * b.cols} pins${perHalf}, ${pinCount(ic, true)}`);
@@ -96,14 +110,20 @@ export function validateHardware(hw: KeyboardHardware): HardwareIssue[] {
         ...(hw.wiring.kind === 'direct'
           ? directPins(hw.wiring, side).map((pin, i) => ({ label: `Input ${i}`, pin }))
           : [
-              ...matrixPins(hw.wiring, side).rows.map((pin, i) => ({ label: `Row ${i}`, pin })),
-              ...matrixPins(hw.wiring, side).cols.map((pin, i) => ({ label: `Column ${i}`, pin })),
+              ...matrixPins(hw.wiring, side).rows.flatMap((pin, i) => (isShiftOutput(pin) ? [] : [{ label: `Row ${i}`, pin }])),
+              ...matrixPins(hw.wiring, side).cols.flatMap((pin, i) => (isShiftOutput(pin) ? [] : [{ label: `Column ${i}`, pin }])),
             ]),
         ...halfEncoders(hw, side).flatMap((e, i) => [
           { label: `Encoder ${i} A`, pin: e.a },
           { label: `Encoder ${i} B`, pin: e.b },
         ]),
         ...halfDisplayPins(hw, side).map(({ pin, use }) => ({ label: use, pin })),
+        ...((): { label: string; pin: Pin }[] => {
+          const shift = side === undefined ? shiftPins(hw) : undefined;
+          if (!shift) return [];
+          const own = shift.shared ? [] : [{ label: SHIFT_USES.data, pin: shift.data }, { label: SHIFT_USES.clock, pin: shift.clock }];
+          return [{ label: SHIFT_USES.latch, pin: shift.latch }, ...own];
+        })(),
       ];
       if (labelled.length > ic.pins.length) {
         add('error', 'wiring', `The wiring${where} needs ${labelled.length} pins, ${pinCount(ic, false)}`);
@@ -152,5 +172,42 @@ export function validateHardware(hw: KeyboardHardware): HardwareIssue[] {
       if (key.side !== 'left' && key.side !== 'right') add('error', 'keys', `Key ${index} isn’t on a half.`, [index]);
     });
   }
+  for (const message of shiftRegisterIssues(hw)) add('error', 'wiring', message);
   return issues;
+}
+
+/** Shift register problems: where they can be used, the count, and each output line. */
+function shiftRegisterIssues(hw: KeyboardHardware): string[] {
+  const messages: string[] = [];
+  const sr = hw.shiftRegisters;
+  const lines = hw.wiring.kind === 'matrix' ? ([['rows', hw.wiring.rows], ['cols', hw.wiring.cols]] as const) : [];
+  const anyOutput = lines.some(([, pins]) => pins.some(isShiftOutput));
+  if (!sr && !anyOutput) return messages;
+  if (hw.split || hw.wiring.kind !== 'matrix') return ['Shift registers only work on one-piece keyboards with a matrix.'];
+  if (sr && (!Number.isInteger(sr.count) || sr.count < 1 || sr.count > MAX_SHIFT_REGISTERS)) messages.push('Use 1 to 4 shift registers.');
+  // Their own bus is SPI2, which on a XIAO is already the nice!view's (xiao_spi).
+  if (sr?.ownBus && halfDisplay(hw, undefined) === 'nice_view' && interconnectOf(hw.controller).spi === 'xiao_spi') {
+    messages.push('On a Seeed XIAO, shift registers can’t have their own pins next to a nice!view; untick “Shift registers on their own pins” to share its bus.');
+  }
+  const driven = drivenList(hw);
+  const outputs = outputCount(hw);
+  const seen = new Map<number, string>();
+  for (const [list, pins] of lines) {
+    pins.forEach((pin, i) => {
+      if (!isShiftOutput(pin)) return;
+      const name = `${list === 'rows' ? 'Row' : 'Column'} ${i}`;
+      if (list !== driven) {
+        const can = driven === 'cols' ? 'columns' : 'rows';
+        messages.push(`${name} uses a shift register output, but shift registers can only drive ${can} on this matrix (${hw.wiring.kind === 'matrix' ? hw.wiring.diodeDirection : ''}). Use a pin, or switch the diode direction.`);
+      } else if (!sr) {
+        messages.push(`${name} uses output ${pin.sr}, but there are no shift registers.`);
+      } else if (pin.sr >= outputs) {
+        messages.push(`${name} uses output ${pin.sr}, but ${sr.count} shift register${sr.count > 1 ? 's have' : ' has'} ${outputs} outputs (0–${outputs - 1}).`);
+      }
+      const other = seen.get(pin.sr);
+      if (other !== undefined) messages.push(`Output ${pin.sr} is used for both ${other} and ${name}.`);
+      else seen.set(pin.sr, name);
+    });
+  }
+  return messages;
 }

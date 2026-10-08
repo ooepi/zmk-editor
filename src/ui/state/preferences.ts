@@ -9,6 +9,8 @@ export interface Preferences {
   layouts: Record<string, string>;
   /** How each controller pinout is drawn (key: 'left', 'right' or 'one'); wiring plans are often drawn from below. */
   pinoutViews: Record<string, 'top' | 'bottom'>;
+  /** In the wiring step, picking a pin for a field selects the next field in its list. */
+  pinFillInOrder: boolean;
   /** Palette items placed most recently, newest first. */
   recent: PaletteItem[];
   /** The key palette folded down to its status line, so the keyboard gets the room. */
@@ -28,6 +30,7 @@ const DEFAULTS: Preferences = {
   unicodeLanguages: [],
   layouts: {},
   pinoutViews: {},
+  pinFillInOrder: false,
   recent: [],
   paletteCollapsed: false,
   paletteHeight: null,
@@ -58,6 +61,7 @@ function load(): Preferences {
       paletteCollapsed: stored.paletteCollapsed === true,
       paletteHeight: typeof stored.paletteHeight === 'number' && Number.isFinite(stored.paletteHeight) ? stored.paletteHeight : null,
       canvasGrid: stored.canvasGrid === true,
+      pinFillInOrder: stored.pinFillInOrder === true,
       welcomed: stored.welcomed === true,
       welcomePending: stored.welcomePending === true,
     };

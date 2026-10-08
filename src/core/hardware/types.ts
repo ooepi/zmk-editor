@@ -15,18 +15,40 @@ export interface HardwareKey extends PhysicalKey {
   side?: Side;
 }
 
+/** A shift register output: output N is pin Q(A + N mod 8) of register N / 8 (the first is the one wired to the controller). */
+export interface ShiftOutput {
+  sr: number;
+}
+
+/** A matrix line's wire: a controller pin, no pin yet, or a shift register output. */
+export type LinePin = Pin | ShiftOutput;
+
 export interface MatrixPins {
-  rows: Pin[];
-  cols: Pin[];
+  rows: LinePin[];
+  cols: LinePin[];
 }
 
 export interface MatrixWiring {
   kind: 'matrix';
   diodeDirection: DiodeDirection;
-  rows: Pin[];
-  cols: Pin[];
+  rows: LinePin[];
+  cols: LinePin[];
   /** The right half's own pins; without it the right half mirrors the left. */
   right?: MatrixPins;
+}
+
+/** 74HC595s chained on an SPI bus, driving matrix lines; one-piece keyboards only. */
+export interface ShiftRegisters {
+  /** 1 to 4; 8 outputs each. */
+  count: number;
+  /** RCLK, the SPI chip select. */
+  latch: Pin;
+  /** SER (MOSI) moved off its default; ignored while the bus is shared with a nice!view. */
+  data?: Pin;
+  /** SRCLK (SCK) moved off its default; ignored while the bus is shared with a nice!view. */
+  clock?: Pin;
+  /** With a nice!view: true puts the shift registers on their own data and clock pins instead of sharing its bus. */
+  ownBus?: boolean;
 }
 
 export interface DirectWiring {
@@ -75,6 +97,8 @@ export interface KeyboardHardware {
   displayPins?: { left?: DisplayPinOverrides; right?: DisplayPinOverrides };
   /** Where each encoder's knob is drawn, in `sensorOrder`; null for the default spot under its half. */
   encoderSpots?: (EncoderSpot | null)[];
+  /** 74HC595 shift registers driving matrix lines; one-piece matrix keyboards only. */
+  shiftRegisters?: ShiftRegisters;
 }
 
 /** The keys' positions as a physical layout. */

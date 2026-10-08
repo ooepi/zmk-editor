@@ -3,6 +3,7 @@ import type { ZmkConfig } from '../../core/config.ts';
 import { applyHardware, newHardwareConfig } from '../../core/hardware/config.ts';
 import { addEncoder, carryEncoderOrigins, removeEncoder, sensorOrder } from '../../core/hardware/encoders.ts';
 import { basicsOf, DEFAULT_BASICS, gridHardware, type HardwareBasics } from '../../core/hardware/grid.ts';
+import { isShiftOutput, setShiftRegisterCount } from '../../core/hardware/shiftRegisters.ts';
 import type { KeyboardHardware } from '../../core/hardware/types.ts';
 import { hasErrors, validateBasics, validateHardware } from '../../core/hardware/validate.ts';
 import { halfEncoders, resizeMatrix } from '../../core/hardware/wiring.ts';
@@ -31,11 +32,14 @@ function anyPin(hw: KeyboardHardware): boolean {
   const pins = w.kind === 'direct' ? [...w.pins, ...(w.right ?? [])] : [...w.rows, ...w.cols, ...(w.right ? [...w.right.rows, ...w.right.cols] : [])];
   const encoderPins = [...halfEncoders(hw, 'left'), ...halfEncoders(hw, 'right')].flatMap((e) => [e.a, e.b]);
   if (encoderPins.some((p) => p !== null)) return true;
-  return pins.some((p) => p !== null);
+  return pins.some((p) => p !== null && !isShiftOutput(p));
 }
 
+/** The shift register count the basics ask for: only one-piece matrix keyboards have them. */
+const shiftCount = (b: HardwareBasics) => (b.wiring === 'matrix' && !b.split ? b.shiftRegisters : 0);
+
 function freshDraft(basics: HardwareBasics): HardwareDraft {
-  const hw = gridHardware(basics);
+  const hw = setShiftRegisterCount(gridHardware(basics), shiftCount(basics));
   return { hw, origins: hw.keys.map(() => undefined), encoderOrigins: [] };
 }
 
@@ -80,9 +84,16 @@ export function HardwareWizard({ config, dispatch, mode, onDone, onCancel }: Pro
         next = { ...next, wiring: { ...next.wiring, diodeDirection: basics.diodeDirection } };
         if (existing) next = resizeMatrix(next, basics.rows, basics.cols);
       }
+      if ((next.shiftRegisters?.count ?? 0) !== shiftCount(basics)) next = setShiftRegisterCount(next, shiftCount(basics));
       setDraft({ ...draft, hw: next });
     }
     setStep(1);
+  };
+
+  // Going back to Basics shows the draft's current count: the Wiring step can change it.
+  const goTo = (i: number) => {
+    if (i === 0) setBasics((b) => ({ ...b, shiftRegisters: draft.hw.shiftRegisters?.count ?? 0 }));
+    setStep(i);
   };
 
   const finish = () => {
@@ -109,7 +120,7 @@ export function HardwareWizard({ config, dispatch, mode, onDone, onCancel }: Pro
           {STEPS.map((name, i) => (
             <li key={name} className={i === step ? 'active' : i < step ? 'done' : undefined} aria-current={i === step ? 'step' : undefined}>
               {i < step ? (
-                <button type="button" className="wizard-step-button" aria-label={`${i + 1}. ${name}`} onClick={() => setStep(i)}>
+                <button type="button" className="wizard-step-button" aria-label={`${i + 1}. ${name}`} onClick={() => goTo(i)}>
                   <span className="wizard-dot" aria-hidden="true">
                     <Icon name="check" size={14} strokeWidth={3} />
                   </span>
@@ -149,7 +160,7 @@ export function HardwareWizard({ config, dispatch, mode, onDone, onCancel }: Pro
         {step === 3 && <HardwareReviewStep hw={draft.hw} issues={issues} />}
       </section>
       <div className="wizard-footer">
-        <button type="button" className="button" onClick={step === 0 ? onCancel : () => setStep(step - 1)}>
+        <button type="button" className="button" onClick={step === 0 ? onCancel : () => goTo(step - 1)}>
           {step === 0 ? 'Cancel' : 'Back'}
         </button>
         <span className="muted small">

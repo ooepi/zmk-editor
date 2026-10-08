@@ -415,7 +415,7 @@
   grid-template-columns: auto minmax(0, 1fr);
 }
 
-.wiring-half.right .pinout {
+.wiring-half.right .wiring-pinouts {
   order: -1;
 }
 
@@ -428,8 +428,77 @@
 
 .pin-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
   gap: 8px;
+}
+
+.pin-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* A pin field as a card: click it to pick its pin on the pinout. */
+.pin-card {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 8px 10px 10px;
+  border: 1px solid var(--keycap-edge);
+  border-radius: 10px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.pin-card:hover {
+  border-color: color-mix(in srgb, var(--accent-line) 55%, var(--keycap-edge));
+}
+
+.pin-card label {
+  cursor: pointer;
+}
+
+.pin-card.armed {
+  border-color: var(--accent-line);
+  box-shadow: 0 0 0 1px var(--accent-line);
+}
+
+/* A pin was picked first: the fields that can take it. */
+.pin-card.receptive {
+  border-style: dashed;
+  border-color: var(--accent-line);
+}
+
+.pin-card.shared,
+.pin-card.shared:hover {
+  border-style: dashed;
+  border-color: var(--keycap-edge);
+  cursor: default;
+}
+
+.pin-card.shared p {
+  margin: 6px 0 0;
+}
+
+.pin-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pin-card-head .field-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pin-card-hint {
+  flex: none;
+  font-size: 0.75em;
+  color: var(--text-muted);
 }
 
 /* Displays: each half's display and, under it, its pins. */
@@ -457,14 +526,14 @@
 
 .encoder-pins {
   display: grid;
-  grid-template-columns: repeat(2, minmax(104px, 1fr)) auto;
+  grid-template-columns: repeat(2, minmax(124px, 1fr)) auto;
   gap: 8px;
   align-items: end;
   margin-bottom: 8px;
 }
 
-.pin-grid select.active-pin,
-.encoder-pins select.active-pin {
+/* A pin picked first, waiting for its field. */
+.pinout-pad.armed {
   outline: 2px solid var(--accent-line);
   outline-offset: 1px;
 }
@@ -485,41 +554,190 @@
   margin-bottom: 8px;
 }
 
-.pinout-board {
-  display: flex;
-  gap: 8px;
-  padding: 12px;
-  border: 1px solid var(--keycap-edge);
-  border-radius: 10px;
-  background: var(--surface);
-}
-
-.pinout-column {
+.wiring-pinouts {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  width: 138px;
-  list-style: none;
-  margin: 0;
-  padding: 0;
+  gap: 20px;
 }
 
-.pinout-usb {
-  align-self: start;
-  padding: 4px 10px;
-  border: 1px solid var(--keycap-edge);
+.chip-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* A chip drawn between its pins: pin buttons outside, the chip's own pin names on it. */
+.chip-pinout {
+  --chip-row: 28px;
+  display: grid;
+  grid-template-columns: minmax(0, 156px) auto minmax(0, 156px);
+  grid-auto-rows: var(--chip-row);
+  row-gap: 4px;
+  align-items: center;
+  padding: 16px 0 24px;
+}
+
+.chip-body {
+  position: relative;
+  grid-column: 2;
+  align-self: stretch;
+  margin: -14px 0 -22px;
+  border: 1.5px solid color-mix(in srgb, var(--text) 35%, transparent);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.chip-pinout.ic .chip-body {
   border-radius: 6px;
+}
+
+.chip-usb {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 10px;
+  border: 1px solid var(--keycap-edge);
+  border-radius: 5px;
+  background: var(--surface);
   color: var(--text-muted);
+  font-size: 0.7em;
+  letter-spacing: 0.08em;
+}
+
+.chip-dot {
+  position: absolute;
+  top: 7px;
+  left: 9px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--text) 45%, transparent);
+}
+
+.chip-title {
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.7em;
+  white-space: nowrap;
+}
+
+.chip-pins {
+  position: relative;
+  grid-column: 2;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 8px;
+}
+
+.chip-pinout.ic .chip-pins {
+  padding: 0;
+  gap: 36px;
+}
+
+.chip-pin {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 52px;
+  color: var(--text-muted);
+  font-size: 0.75em;
+  font-variant-numeric: tabular-nums;
+}
+
+.chip-pin:last-child {
+  justify-content: flex-end;
+}
+
+.chip-pinout.ic .chip-pin {
+  min-width: 28px;
+}
+
+/* A free pin is an empty ring; a used one is filled in its use's colour; a reserved one is a muted dot. */
+.chip-hole {
+  flex: none;
+  box-sizing: border-box;
+  width: 12px;
+  height: 12px;
+  border: 2px solid color-mix(in srgb, var(--text) 40%, transparent);
+  border-radius: 50%;
+}
+
+.chip-pinout.ic .chip-hole {
+  width: 14px;
+  height: 9px;
+  border-radius: 2px;
+}
+
+.chip-pinout.ic .chip-pin:first-child .chip-hole {
+  margin-left: -8px;
+}
+
+.chip-pinout.ic .chip-pin:last-child .chip-hole {
+  margin-right: -8px;
+}
+
+.chip-hole.reserved {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--text) 18%, transparent);
+}
+
+.chip-hole.used {
+  border-color: var(--accent-line);
+  background: var(--accent-line);
+}
+
+.chip-hole.used.use-row {
+  border-color: var(--wire-row);
+  background: var(--wire-row);
+}
+
+.chip-hole.used.use-col {
+  border-color: var(--wire-col);
+  background: var(--wire-col);
+}
+
+.chip-hole.used.use-encoder,
+.chip-hole.used.use-shift {
+  border-color: var(--kind-encoder);
+  background: var(--kind-encoder);
+}
+
+.chip-hole.used.use-display {
+  border-color: var(--kind-macro);
+  background: var(--kind-macro);
+}
+
+.chip-hole.used.use-clash {
+  border-color: var(--danger);
+  background: var(--danger);
+}
+
+.chip-cell {
+  min-width: 0;
+}
+
+.chip-cell.left {
+  grid-column: 1;
+}
+
+.chip-cell.right {
+  grid-column: 3;
 }
 
 .pinout-pad {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   align-items: baseline;
   box-sizing: border-box;
   width: 100%;
   overflow: hidden;
-  padding: 2px 8px;
+  padding: 3px 8px;
   border: 1px solid var(--keycap-edge);
   border-radius: 6px;
   background: var(--keycap);
@@ -529,9 +747,37 @@
   cursor: pointer;
 }
 
-.pinout-pad.power {
+/* The label sits next to the chip and the use on the outer side, so the two sides mirror. */
+.pinout-pad.left {
+  justify-content: flex-end;
+  border-top-right-radius: 2px;
+  border-bottom-right-radius: 2px;
+}
+
+.pinout-pad.right {
+  border-top-left-radius: 2px;
+  border-bottom-left-radius: 2px;
+}
+
+.pinout-label {
+  flex: none;
+  font-weight: 600;
+}
+
+.pinout-pad.signal,
+.pinout-pad.reserved {
   cursor: default;
+}
+
+.pinout-pad.reserved {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--keycap-edge) 70%, transparent);
+  background: transparent;
   color: var(--text-muted);
+}
+
+.pinout-pad.reserved .pinout-label {
+  font-weight: 400;
 }
 
 .pinout-pad.used {
@@ -539,7 +785,7 @@
   background: var(--accent-soft);
 }
 
-/* Pads coloured by what they're for: rows (and direct inputs), columns, encoders, displays, or a pin used twice. */
+/* Pads coloured by what they're for: rows (and direct inputs), columns, encoders, displays, shift registers, or a pin used twice. */
 .pinout-pad.used.use-row {
   border-color: var(--wire-row);
   background: var(--wire-row-soft);
@@ -558,12 +804,16 @@
   border-color: var(--kind-macro);
 }
 
+.pinout-pad.used.use-shift {
+  border-color: var(--kind-encoder);
+  border-style: dashed;
+}
+
 .pinout-pad.used.use-clash {
   border-color: var(--danger);
   background: color-mix(in srgb, var(--danger) 14%, transparent);
 }
 
-.pinout-sub,
 .pinout-use {
   font-size: 0.8em;
   color: var(--text-muted);
@@ -598,7 +848,7 @@
     grid-template-columns: 1fr;
   }
 
-  .wiring-half.right .pinout {
+  .wiring-half.right .wiring-pinouts {
     order: 0;
   }
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { basicsOf, DEFAULT_BASICS, gridHardware, hardwareName } from './grid.ts';
+import { testShiftPad } from './testFixtures.ts';
 import { matrixPins } from './wiring.ts';
 
 describe('gridHardware', () => {
@@ -46,5 +47,12 @@ describe('gridHardware', () => {
     const hw = gridHardware({ ...DEFAULT_BASICS, wiring: 'direct', split: false, rows: 3, cols: 6 });
     const staggered = { ...hw, keys: hw.keys.map((k, i) => (i === 0 ? { ...k, y: k.y + 25 } : k)) };
     expect(basicsOf(staggered)).toEqual({ ...DEFAULT_BASICS, wiring: 'direct', split: false, rows: 1, cols: 18 });
+  });
+});
+
+describe('basicsOf with shift registers', () => {
+  it('reports the shift register count of an existing keyboard', () => {
+    expect(basicsOf(testShiftPad).shiftRegisters).toBe(1);
+    expect(DEFAULT_BASICS.shiftRegisters).toBe(0);
   });
 });

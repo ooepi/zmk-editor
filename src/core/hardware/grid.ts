@@ -11,6 +11,8 @@ export interface HardwareBasics {
   cols: number;
   wiring: 'matrix' | 'direct';
   diodeDirection: DiodeDirection;
+  /** 74HC595s driving the matrix (0 for none); one-piece matrix keyboards only. */
+  shiftRegisters: number;
 }
 
 export const DEFAULT_BASICS: HardwareBasics = {
@@ -22,6 +24,7 @@ export const DEFAULT_BASICS: HardwareBasics = {
   cols: 6,
   wiring: 'matrix',
   diodeDirection: 'col2row',
+  shiftRegisters: 0,
 };
 
 /** A shield id from a display name: "My Split 2!" → "my_split_2". */
@@ -75,5 +78,6 @@ export function basicsOf(hw: KeyboardHardware): HardwareBasics {
     cols: size.cols,
     wiring: hw.wiring.kind,
     diodeDirection: hw.wiring.kind === 'matrix' ? hw.wiring.diodeDirection : 'col2row',
+    shiftRegisters: hw.shiftRegisters?.count ?? 0,
   };
 }
