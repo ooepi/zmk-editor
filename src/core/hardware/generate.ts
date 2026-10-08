@@ -6,7 +6,7 @@ import { definitionPath, parseHardware, serializeHardware, shieldDir } from './d
 import { halfDisplay, halfDisplayPins, usesNiceViewAdapter, type DisplayPin } from './displays.ts';
 import { interconnectOf, nrfPin } from './interconnects.ts';
 import { sensorLabel, sensorOrder } from './encoders.ts';
-import { isShiftOutput } from './shiftRegisters.ts';
+import { isShiftOutput, outputCount, sharesNiceViewBus, shiftPins } from './shiftRegisters.ts';
 import { hardwareLayout, type DisplayKind, type DisplaySignal, type KeyboardHardware, type LinePin, type Pin, type Side } from './types.ts';
 import { directPins, halfSize, matrixPins } from './wiring.ts';
 
@@ -87,20 +87,68 @@ const signalPin = (pins: DisplayPin[], signal: DisplaySignal): Pin => pins.find(
 function niceViewBus(hw: KeyboardHardware, pins: DisplayPin[]): string {
   const ic = interconnectOf(hw.controller);
   const cs = signalPin(pins, 'cs');
+  // Shift registers sharing the bus are its second device, selected by their latch (active low).
+  const shared = sharesNiceViewBus(hw);
+  const latch = hw.shiftRegisters?.latch ?? null;
+  const csGpios = shared
+    ? `    cs-gpios = <&${ic.gpio} ${cs ?? '?'} GPIO_ACTIVE_HIGH>, <&${ic.gpio} ${latch ?? '?'} GPIO_ACTIVE_LOW>;`
+    : `    cs-gpios = <&${ic.gpio} ${cs ?? '?'} GPIO_ACTIVE_HIGH>;`;
   return [
     pinctrlNodes('nice_view_spi', [psel('SPIM_SCK', hw.controller, signalPin(pins, 'clock')), psel('SPIM_MOSI', hw.controller, signalPin(pins, 'data'))]),
     '',
     `nice_view_spi: &${ic.spi} {`,
+    ...(shared ? ['    status = "okay";'] : []),
     '    compatible = "nordic,nrf-spim";',
     '    pinctrl-0 = <&nice_view_spi_default>;',
     '    pinctrl-1 = <&nice_view_spi_sleep>;',
     '    pinctrl-names = "default", "sleep";',
-    `    cs-gpios = <&${ic.gpio} ${cs ?? '?'} GPIO_ACTIVE_HIGH>;`,
+    csGpios,
+    ...(shared ? ['', ...shifterNode(1, outputCount(hw))] : []),
     '};',
     '',
     // As the adapter does: on some Pro Micro boards the SPI bus is SPI0, which shares its hardware with I2C0.
     `&${ic.i2c} {`,
     '    status = "disabled";',
+    '};',
+  ].join('\n');
+}
+
+/** The 74HC595 chain as an SPI device (ZMK's `zmk,gpio-595`). */
+function shifterNode(reg: number, outputs: number): string[] {
+  return [
+    `    shifter: 595@${reg} {`,
+    '        compatible = "zmk,gpio-595";',
+    '        status = "okay";',
+    '        gpio-controller;',
+    '        spi-max-frequency = <1000000>;',
+    `        reg = <${reg}>;`,
+    '        #gpio-cells = <2>;',
+    `        ngpios = <${outputs}>;`,
+    '    };',
+  ];
+}
+
+/**
+ * Shift registers on their own bus: SPI2, which shares hardware with no I2C
+ * unit (so an OLED keeps working) and that no supported board uses otherwise.
+ * The latch (RCLK) is the chip select; the 595 sends nothing back, so there's no MISO.
+ */
+function shiftRegisterBus(hw: KeyboardHardware): string | undefined {
+  const pins = shiftPins(hw);
+  if (!pins || pins.shared) return undefined;
+  const { gpio } = interconnectOf(hw.controller);
+  return [
+    pinctrlNodes('shift_register_spi', [psel('SPIM_SCK', hw.controller, pins.clock), psel('SPIM_MOSI', hw.controller, pins.data)]),
+    '',
+    '&spi2 {',
+    '    status = "okay";',
+    '    compatible = "nordic,nrf-spim";',
+    '    pinctrl-0 = <&shift_register_spi_default>;',
+    '    pinctrl-1 = <&shift_register_spi_sleep>;',
+    '    pinctrl-names = "default", "sleep";',
+    `    cs-gpios = <&${gpio} ${pins.latch ?? '?'} GPIO_ACTIVE_LOW>;`,
+    '',
+    ...shifterNode(0, outputCount(hw)),
     '};',
   ].join('\n');
 }
@@ -195,7 +243,8 @@ function kconfigDefconfig(hw: KeyboardHardware): string {
   const trigger = sensorOrder(hw).length > 0 ? `\n${EC11_TRIGGER}` : '';
   const oled = oledShields(hw);
   const display = oled.length > 0 ? `\nif ${oled.map((s) => s.symbol).join(' || ')}\n\n${DISPLAY_KCONFIG}\nendif\n` : '';
-  if (!hw.split || !first || !second) return `# ${note(hw)}\n\nif ${first?.symbol ?? ''}\n\n${name}${trigger}\nendif\n${display}`;
+  const spi = hw.shiftRegisters ? '\nconfig SPI\n    default y\n' : '';
+  if (!hw.split || !first || !second) return `# ${note(hw)}\n\nif ${first?.symbol ?? ''}\n\n${name}${trigger}${spi}\nendif\n${display}`;
   return `# ${note(hw)}
 
 if ${first.symbol}
@@ -278,10 +327,11 @@ function transformNode(hw: KeyboardHardware): string {
   ].join('\n');
 }
 
-/** A one-piece keyboard's display nodes, appended after the root block of its overlay. */
+/** A one-piece keyboard's display nodes and shift register bus, appended after the root block of its overlay. */
 function displaySection(hw: KeyboardHardware, withPins: boolean): string {
-  const nodes = withPins ? displayNodes(hw) : undefined;
-  return nodes ? `\n${nodes}\n` : '';
+  if (!withPins) return '';
+  const parts = [displayNodes(hw), shiftRegisterBus(hw)].filter((p): p is string => p !== undefined);
+  return parts.map((p) => `\n${p}\n`).join('');
 }
 
 function rootFile(hw: KeyboardHardware, withPins: boolean): string {
