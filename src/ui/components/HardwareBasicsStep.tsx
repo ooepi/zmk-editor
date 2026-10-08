@@ -110,6 +110,22 @@ export function HardwareBasicsStep({ basics, editing, issues, onChange }: Props)
           </p>
         </div>
       )}
+      {basics.wiring === 'matrix' && !basics.split && (
+        <div className="field">
+          <label className="field-label" htmlFor="hw-shift">Shift registers (74HC595)</label>
+          <select id="hw-shift" className="input" aria-describedby="hw-shift-help" value={basics.shiftRegisters} onChange={(e) => set({ shiftRegisters: Number(e.target.value) })}>
+            <option value={0}>None</option>
+            {[1, 2, 3, 4].map((n) => (
+              <option key={n} value={n}>
+                {n} ({n * 8} outputs)
+              </option>
+            ))}
+          </select>
+          <p id="hw-shift-help" className="muted small">
+            For more {basics.diodeDirection === 'col2row' ? 'columns' : 'rows'} than the controller has pins: a chain of 74HC595 chips drives up to 32 of them from three pins.
+          </p>
+        </div>
+      )}
       <HardwareIssueList issues={issues} />
     </div>
   );
