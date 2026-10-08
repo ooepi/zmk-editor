@@ -1,18 +1,9 @@
 import { interconnectOf, type HeaderPad } from '../../core/hardware/interconnects.ts';
+import { shiftPins } from '../../core/hardware/shiftRegisters.ts';
 import type { KeyboardHardware, Side } from '../../core/hardware/types.ts';
 import { pinUses } from '../../core/hardware/wiring.ts';
 import { setPreferences, usePreferences } from '../state/preferences.ts';
-
-/** A pad's colour class from its uses: row (or direct input), column, encoder, display, free, or a clash. */
-function padClass(uses: string[] | undefined): string {
-  const [first = '', second] = uses ?? [];
-  if (second !== undefined) return 'use-clash';
-  if (first.startsWith('Row') || first.startsWith('Input')) return 'use-row';
-  if (first.startsWith('Column')) return 'use-col';
-  if (first.startsWith('Encoder')) return 'use-encoder';
-  if (first.startsWith('Display')) return 'use-display';
-  return 'use-free';
-}
+import { padClass } from './padClass.ts';
 
 interface Props {
   hw: KeyboardHardware;
@@ -34,6 +25,7 @@ export function ControllerPinout({ hw, side, label, onPick }: Props) {
   const view = pinoutViews[viewKey] ?? 'top';
   const setView = (next: 'top' | 'bottom') => setPreferences({ pinoutViews: { ...pinoutViews, [viewKey]: next } });
   const uses = pinUses(hw, side);
+  const sharedBus = side === undefined && Boolean(shiftPins(hw)?.shared);
   const ic = interconnectOf(hw.controller);
   const column = (pads: HeaderPad[], edge: 'left' | 'right') => (
     <ul className={`pinout-column ${edge}`}>
@@ -49,7 +41,7 @@ export function ControllerPinout({ hw, side, label, onPick }: Props) {
         const use = uses.get(pin)?.join(', ');
         return (
           <li key={i}>
-            <button type="button" className={`pinout-pad ${padClass(uses.get(pin))}${use ? ' used' : ''}`} aria-label={use ? `${pad.label}: ${use}` : pad.label} onClick={() => onPick(pin)}>
+            <button type="button" className={`pinout-pad ${padClass(uses.get(pin), sharedBus)}${use ? ' used' : ''}`} aria-label={use ? `${pad.label}: ${use}` : pad.label} onClick={() => onPick(pin)}>
               <span className="pinout-label">{pad.label}</span>
               {pad.mcu?.[hw.controller] && <span className="pinout-sub">{pad.mcu[hw.controller]}</span>}
               {use && <span className="pinout-use">{use}</span>}

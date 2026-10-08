@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { interconnectOf, pinLabel } from '../../core/hardware/interconnects.ts';
 import {
   clearDisplayPins,
@@ -9,7 +9,17 @@ import {
   halfDisplayPins,
   setDisplay,
 } from '../../core/hardware/displays.ts';
-import { controllerPin } from '../../core/hardware/shiftRegisters.ts';
+import {
+  drivenList,
+  isShiftOutput,
+  MAX_SHIFT_REGISTERS,
+  outputCount,
+  outputLabel,
+  outputUses,
+  setShiftOwnBus,
+  setShiftRegisterCount,
+  shiftPins,
+} from '../../core/hardware/shiftRegisters.ts';
 import type { DisplayKind, KeyboardHardware, LinePin, Pin, Side } from '../../core/hardware/types.ts';
 import type { HardwareIssue } from '../../core/hardware/validate.ts';
 import {
@@ -212,7 +222,7 @@ function PinTables({ hw, side, active, onChange, onActivate, onAddEncoder, onRem
           { list: 'cols', title: 'Columns', item: 'Column', pins: matrixPins(hw.wiring, side).cols },
         ];
   const uses = pinUses(hw, side);
-  const field = (list: PinList, index: number, name: string, pin: Pin) => (
+  const field = (list: PinList, index: number, name: string, pin: LinePin) => (
     <PinSelect
       hw={hw}
       side={side}
@@ -236,7 +246,7 @@ function PinTables({ hw, side, active, onChange, onActivate, onAddEncoder, onRem
           <div className="pin-grid">
             {pins.map((pin, index) => (
               <div key={index} className="field">
-                {field(list, index, `${item} ${index}`, controllerPin(pin))}
+                {field(list, index, `${item} ${index}`, pin)}
                 {list === 'pins' && !directInputUsed(hw, side, index) && (
                   <button type="button" className="link-button" onClick={() => onChange(removeDirectPin(hw, side, index))}>
                     Remove unused input
@@ -247,6 +257,7 @@ function PinTables({ hw, side, active, onChange, onActivate, onAddEncoder, onRem
           </div>
         </fieldset>
       ))}
+      {!hw.split && hw.wiring.kind === 'matrix' && <ShiftRegisterFields hw={hw} field={field} onChange={onChange} />}
       <fieldset className="fieldset">
         <legend>Encoders</legend>
         {encoders.length === 0 && <p className="muted small">No encoders. Most keyboards have none, one or two per half.</p>}
@@ -294,7 +305,7 @@ function PinSelect({
   name: string;
   /** The visible label, e.g. "Left row 0". */
   label: string;
-  pin: Pin;
+  pin: LinePin;
   uses: Map<number, string[]>;
   active: Slot | null;
   onChange: (hw: KeyboardHardware) => void;
@@ -303,19 +314,25 @@ function PinSelect({
   const id = `pin-${side ?? 'one'}-${list}-${index}`;
   const isActive = active !== null && active.side === side && active.list === list && active.index === index;
   const { pins } = interconnectOf(hw.controller);
+  // Driven matrix lines on a one-piece keyboard can also use the shift registers' outputs.
+  const driven = !hw.split && list === drivenList(hw);
+  const outputs = driven ? outputCount(hw) : 0;
+  const outUses = outputs > 0 || isShiftOutput(pin) ? outputUses(hw) : new Map<number, string[]>();
+  const value = isShiftOutput(pin) ? `sr:${pin.sr}` : (pin ?? '');
+  const parse = (v: string): LinePin => (v === '' ? null : v.startsWith('sr:') ? { sr: Number(v.slice(3)) } : Number(v));
   return (
     <>
       <label className="field-label" htmlFor={id}>{label}</label>
       <select
         id={id}
         className={`input${isActive ? ' active-pin' : ''}`}
-        value={pin ?? ''}
+        value={value}
         onPointerDown={() => onActivate({ side, list, index, label })}
-        onChange={(e) => onChange(setPin(hw, side, list, index, e.target.value === '' ? null : Number(e.target.value)))}
+        onChange={(e) => onChange(setPin(hw, side, list, index, parse(e.target.value)))}
       >
         <option value="">No pin</option>
-        {/* A pin this controller doesn't have (it changed) stays selected until it's changed; validation flags it. */}
-        {pin !== null && !pins.includes(pin) && <option value={pin}>{pinLabel(pin)} (not on this controller)</option>}
+        {pin !== null && !isShiftOutput(pin) && !pins.includes(pin) && <option value={pin}>{pinLabel(pin)} (not on this controller)</option>}
+        {isShiftOutput(pin) && pin.sr >= outputs && <option value={value}>{outputLabel(pin.sr)} (not available)</option>}
         {pins.map((p) => {
           const other = (uses.get(p) ?? []).filter((use) => use !== name);
           return (
@@ -325,7 +342,83 @@ function PinSelect({
             </option>
           );
         })}
+        {outputs > 0 && (
+          <optgroup label="Shift register outputs">
+            {Array.from({ length: outputs }, (_, n) => {
+              const other = (outUses.get(n) ?? []).filter((use) => use !== name);
+              return (
+                <option key={`sr${n}`} value={`sr:${n}`}>
+                  {outputLabel(n)}
+                  {other.length > 0 ? ` (${other.join(', ')})` : ''}
+                </option>
+              );
+            })}
+          </optgroup>
+        )}
       </select>
     </>
+  );
+}
+
+/** The 74HC595 chain: how many, and the latch, data and clock pins (shared with a nice!view unless on their own pins). */
+function ShiftRegisterFields({
+  hw,
+  field,
+  onChange,
+}: {
+  hw: KeyboardHardware;
+  field: (list: PinList, index: number, name: string, pin: Pin) => ReactNode;
+  onChange: (hw: KeyboardHardware) => void;
+}) {
+  const pins = shiftPins(hw);
+  const niceView = halfDisplay(hw, undefined) === 'nice_view';
+  return (
+    <fieldset className="fieldset" aria-label="Shift registers">
+      <legend>Shift registers</legend>
+      <div className="field">
+        <label className="field-label" htmlFor="shift-count">Number of shift registers</label>
+        <select id="shift-count" className="input" value={hw.shiftRegisters?.count ?? 0} onChange={(e) => onChange(setShiftRegisterCount(hw, Number(e.target.value)))}>
+          <option value={0}>None</option>
+          {Array.from({ length: MAX_SHIFT_REGISTERS }, (_, i) => i + 1).map((n) => (
+            <option key={n} value={n}>
+              {n} ({n * 8} outputs)
+            </option>
+          ))}
+        </select>
+      </div>
+      {pins && (
+        <>
+          <p className="muted small">
+            Latch is the 595’s RCLK pin, data its SER and clock its SRCLK. U1 is the 595 wired to the controller; each one’s QH′ goes to the next one’s SER.
+          </p>
+          {niceView && (
+            <label className="field checkbox">
+              <input type="checkbox" checked={Boolean(hw.shiftRegisters?.ownBus)} onChange={(e) => onChange(setShiftOwnBus(hw, e.target.checked))} />
+              <span>Shift registers on their own pins</span>
+            </label>
+          )}
+          <div className="pin-grid">
+            <div className="field">{field('shift.latch', 0, 'Shift register latch', pins.latch)}</div>
+            {pins.shared ? (
+              <>
+                <div className="field">
+                  <span className="field-label">Shift register data</span>
+                  <p className="muted small">Shared with the nice!view (D{pins.data})</p>
+                </div>
+                <div className="field">
+                  <span className="field-label">Shift register clock</span>
+                  <p className="muted small">Shared with the nice!view (D{pins.clock})</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="field">{field('shift.data', 0, 'Shift register data', pins.data)}</div>
+                <div className="field">{field('shift.clock', 0, 'Shift register clock', pins.clock)}</div>
+              </>
+            )}
+          </div>
+        </>
+      )}
+    </fieldset>
   );
 }

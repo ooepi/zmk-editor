@@ -539,7 +539,7 @@
   background: var(--accent-soft);
 }
 
-/* Pads coloured by what they're for: rows (and direct inputs), columns, encoders, displays, or a pin used twice. */
+/* Pads coloured by what they're for: rows (and direct inputs), columns, encoders, displays, shift registers, or a pin used twice. */
 .pinout-pad.used.use-row {
   border-color: var(--wire-row);
   background: var(--wire-row-soft);
@@ -556,6 +556,11 @@
 
 .pinout-pad.used.use-display {
   border-color: var(--kind-macro);
+}
+
+.pinout-pad.used.use-shift {
+  border-color: var(--kind-encoder);
+  border-style: dashed;
 }
 
 .pinout-pad.used.use-clash {
