@@ -42,7 +42,7 @@ export const KEYBOARD: HelpSection[] = [
             </li>
             <li>
               <Ui>Wiring</Ui>: which controller pin each row, column or key is soldered to (click a field, then a pin on the
-              diagram), plus encoders and displays (nice!view or OLED, on their standard pins or any you choose). On a split, the right half is a mirror of the left
+              diagram), plus encoders, displays (nice!view or OLED, on their standard pins or any you choose) and shift registers. On a split, the right half is a mirror of the left
               unless you say otherwise.
             </li>
             <li>
@@ -54,6 +54,14 @@ export const KEYBOARD: HelpSection[] = [
               <Ui>Review</Ui>: problems to fix, and the files the editor will write.
             </li>
           </ol>
+          <p>
+            <strong>Shift registers.</strong> Out of pins on a big one-piece board? A chain of 74HC595 chips (up to four)
+            drives up to 32 columns (rows on ROW2COL) from three pins: <strong>latch</strong> (the 595’s RCLK),{' '}
+            <strong>data</strong> (SER) and <strong>clock</strong> (SRCLK). Choose how many on the Basics or Wiring step; the
+            columns fill with <Ui>Output 0</Ui>, <Ui>Output 1</Ui>… and you can pick any output in a column’s list. Output 0
+            is QA of the first chip (U1, the one wired to the controller), output 8 is QA of the next. With a nice!view, data
+            and clock are shared with it unless you tick <Ui>Shift registers on their own pins</Ui>.
+          </p>
           <p>
             Later, <Ui>Edit hardware</Ui> on the Keyboard page reopens the wizard. Undo and opening files are paused while
             the wizard is open.
