@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { definitionPath, parseHardware, serializeHardware } from './definition.ts';
 import { DEFAULT_BASICS, gridHardware } from './grid.ts';
+import { setDisplay } from './displays.ts';
+import { setShiftOwnBus, setShiftPin } from './shiftRegisters.ts';
+import { testShiftPad } from './testFixtures.ts';
 import { setRightWiredDifferently } from './wiring.ts';
 
 const hw = { ...gridHardware({ ...DEFAULT_BASICS, name: 'test_split', displayName: 'Test Split', rows: 1, cols: 2 }), wiring: { kind: 'matrix' as const, diodeDirection: 'col2row' as const, rows: [4], cols: [6, 7] } };
@@ -20,7 +23,7 @@ describe('hardware definition file', () => {
 
   it('explains what is wrong with a bad file', () => {
     expect(() => parseHardware('nope')).toThrow();
-    expect(() => parseHardware('{"version": 3}')).toThrow('version 3 isn’t supported; update the editor');
+    expect(() => parseHardware('{"version": 4}')).toThrow('version 4 isn’t supported; update the editor');
     expect(() => parseHardware(serializeHardware(hw).replace('"matrix"', '"charlieplex"'))).toThrow('wiring.kind must be matrix or direct');
   });
 });
@@ -88,5 +91,36 @@ describe('a bad knob position in the definition', () => {
   it('is dropped rather than losing the whole keyboard', () => {
     const text = serializeHardware({ ...hw, encoders: [{ a: 2, b: 3 }], encoderSpots: [{ x: 150, y: 250 }] }).replace('"x": 150', '"x": "150"');
     expect(parseHardware(text).encoderSpots).toEqual([null]);
+  });
+});
+
+describe('hardware definition with shift registers', () => {
+  it('round-trips as version 3, with outputs written compactly', () => {
+    const text = serializeHardware(testShiftPad);
+    expect(text.startsWith('{\n  "version": 3,')).toBe(true);
+    expect(text).toContain('      { "sr": 0 },\n');
+    expect(text).toContain('"shiftRegisters": {\n    "count": 1,\n    "latch": 8\n  }');
+    expect(parseHardware(text)).toEqual(testShiftPad);
+    expect(serializeHardware(parseHardware(text))).toBe(text);
+  });
+
+  it('writes moved data and clock pins and ownBus, in that order', () => {
+    const hw = setShiftPin(setShiftPin(setShiftOwnBus(setDisplay(testShiftPad, undefined, 'nice_view'), true), 'clock', 20), 'data', 19);
+    const text = serializeHardware(hw);
+    expect(text).toContain('"shiftRegisters": {\n    "count": 1,\n    "latch": 8,\n    "data": 19,\n    "clock": 20,\n    "ownBus": true\n  }');
+    expect(parseHardware(text)).toEqual(hw);
+  });
+
+  it('leaves keyboards without shift registers unchanged', () => {
+    expect(serializeHardware(hw)).toBe(serializeHardware(parseHardware(serializeHardware(hw))));
+    expect(serializeHardware(hw)).not.toContain('shiftRegisters');
+    expect(serializeHardware(hw).startsWith('{\n  "version": 1,')).toBe(true);
+  });
+
+  it('explains a bad output or a bad block', () => {
+    const text = serializeHardware(testShiftPad);
+    expect(() => parseHardware(text.replace('{ "sr": 0 }', '{ "sr": -1 }'))).toThrow('wiring.cols must be a list of pins or shift register outputs');
+    expect(() => parseHardware(text.replace('"count": 1', '"count": "one"'))).toThrow('shiftRegisters.count must be a number');
+    expect(() => parseHardware(text.replace(/"shiftRegisters": \{[^}]*\}/, '"shiftRegisters": 5'))).toThrow('shiftRegisters must be an object');
   });
 });

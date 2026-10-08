@@ -1,9 +1,26 @@
 import { isRecord } from '../files/yaml-util.ts';
 import { DISPLAY_KINDS, DISPLAY_SIGNALS } from './displays.ts';
-import type { DirectWiring, DisplayKind, DisplayPinOverrides, DisplaySignal, Encoder, HardwareKey, KeyboardHardware, MatrixWiring, Pin, Wiring } from './types.ts';
+import { isShiftOutput } from './shiftRegisters.ts';
+import type {
+  DirectWiring,
+  DisplayKind,
+  DisplayPinOverrides,
+  DisplaySignal,
+  Encoder,
+  HardwareKey,
+  KeyboardHardware,
+  LinePin,
+  MatrixWiring,
+  Pin,
+  ShiftRegisters,
+  Wiring,
+} from './types.ts';
 
-/** Version 2 adds `displayPins`; files without them are still written as version 1, unchanged. */
-const VERSION = 2;
+/** Version 2 adds `displayPins`, version 3 shift registers; each file is written with the lowest version that fits. */
+const VERSION = 3;
+
+const hasShiftRegisters = (hw: KeyboardHardware) =>
+  hw.shiftRegisters !== undefined || (hw.wiring.kind === 'matrix' && [...hw.wiring.rows, ...hw.wiring.cols].some(isShiftOutput));
 
 export const shieldDir = (name: string) => `config/boards/shields/${name}`;
 export const definitionPath = (name: string) => `${shieldDir(name)}/${name}.editor.json`;
@@ -17,7 +34,7 @@ export function serializeHardware(hw: KeyboardHardware): string {
       : { kind: w.kind, pins: w.pins, ...(w.right ? { right: w.right } : {}) };
   const head = JSON.stringify(
     {
-      version: hw.displayPins ? VERSION : 1,
+      version: hasShiftRegisters(hw) ? 3 : hw.displayPins ? 2 : 1,
       name: hw.name,
       displayName: hw.displayName,
       controller: hw.controller,
@@ -30,6 +47,17 @@ export function serializeHardware(hw: KeyboardHardware): string {
         : {}),
       ...(hw.displays ? { displays: { ...(hw.displays.left ? { left: hw.displays.left } : {}), ...(hw.displays.right ? { right: hw.displays.right } : {}) } } : {}),
       ...(hw.displayPins ? { displayPins: serializeDisplayPins(hw.displayPins) } : {}),
+      ...(hw.shiftRegisters
+        ? {
+            shiftRegisters: {
+              count: hw.shiftRegisters.count,
+              latch: hw.shiftRegisters.latch,
+              ...(hw.shiftRegisters.data !== undefined ? { data: hw.shiftRegisters.data } : {}),
+              ...(hw.shiftRegisters.clock !== undefined ? { clock: hw.shiftRegisters.clock } : {}),
+              ...(hw.shiftRegisters.ownBus ? { ownBus: true } : {}),
+            },
+          }
+        : {}),
       ...(hw.encoderSpots?.some(Boolean) ? { encoderSpots: hw.encoderSpots.map((s) => (s ? { x: s.x, y: s.y } : null)) } : {}),
       keys: [],
     },
@@ -40,7 +68,8 @@ export function serializeHardware(hw: KeyboardHardware): string {
     JSON.stringify({ x, y, w: width, h, r, rx, ry, row, col, ...(side ? { side } : {}) }),
   );
   const list = keys.length > 0 ? `[\n${keys.map((k) => `    ${k}`).join(',\n')}\n  ]` : '[]';
-  return `${head.replace('"keys": []', `"keys": ${list}`)}\n`;
+  const compact = head.replace(/\{\n\s+"sr": (\d+)\n\s+\}/g, '{ "sr": $1 }');
+  return `${compact.replace('"keys": []', `"keys": ${list}`)}\n`;
 }
 
 /** Overrides with their signals in a fixed order. */
@@ -52,7 +81,7 @@ function serializeDisplayPins(pins: NonNullable<KeyboardHardware['displayPins']>
 export function parseHardware(text: string): KeyboardHardware {
   const data: unknown = JSON.parse(text);
   if (!isRecord(data)) throw new Error('it isn’t a JSON object');
-  if (data.version !== 1 && data.version !== VERSION) throw new Error(`version ${String(data.version)} isn’t supported; update the editor`);
+  if (data.version !== 1 && data.version !== 2 && data.version !== VERSION) throw new Error(`version ${String(data.version)} isn’t supported; update the editor`);
   const str = (value: unknown, what: string): string => {
     if (typeof value !== 'string') throw new Error(`${what} is missing`);
     return value;
@@ -65,16 +94,25 @@ export function parseHardware(text: string): KeyboardHardware {
     if (!Array.isArray(value)) throw new Error(`${what} must be a list of pins`);
     return value.map((p: unknown) => (p === null ? null : num(p, what)));
   };
+  const linePins = (value: unknown, what: string): LinePin[] => {
+    if (!Array.isArray(value)) throw new Error(`${what} must be a list of pins or shift register outputs`);
+    return value.map((p: unknown): LinePin => {
+      if (p === null) return null;
+      if (typeof p === 'number' && Number.isFinite(p)) return p;
+      if (isRecord(p) && typeof p.sr === 'number' && Number.isInteger(p.sr) && p.sr >= 0) return { sr: p.sr };
+      throw new Error(`${what} must be a list of pins or shift register outputs`);
+    });
+  };
 
   const w = data.wiring;
   if (!isRecord(w)) throw new Error('wiring is missing');
   let wiring: Wiring;
   if (w.kind === 'matrix') {
     if (w.diodeDirection !== 'col2row' && w.diodeDirection !== 'row2col') throw new Error('diodeDirection must be col2row or row2col');
-    const matrix: MatrixWiring = { kind: 'matrix', diodeDirection: w.diodeDirection, rows: pins(w.rows, 'wiring.rows'), cols: pins(w.cols, 'wiring.cols') };
+    const matrix: MatrixWiring = { kind: 'matrix', diodeDirection: w.diodeDirection, rows: linePins(w.rows, 'wiring.rows'), cols: linePins(w.cols, 'wiring.cols') };
     if (w.right !== undefined) {
       if (!isRecord(w.right)) throw new Error('wiring.right must be an object');
-      matrix.right = { rows: pins(w.right.rows, 'wiring.right.rows'), cols: pins(w.right.cols, 'wiring.right.cols') };
+      matrix.right = { rows: linePins(w.right.rows, 'wiring.right.rows'), cols: linePins(w.right.cols, 'wiring.right.cols') };
     }
     wiring = matrix;
   } else if (w.kind === 'direct') {
@@ -137,6 +175,16 @@ export function parseHardware(text: string): KeyboardHardware {
     }
     // Empty ones would only turn the file into version 2.
     if (displayPins.left || displayPins.right) hardware.displayPins = displayPins;
+  }
+  if (data.shiftRegisters !== undefined) {
+    const sr = data.shiftRegisters;
+    if (!isRecord(sr)) throw new Error('shiftRegisters must be an object');
+    const optionalPin = (value: unknown, what: string): Pin => (value === null ? null : num(value, what));
+    const shiftRegisters: ShiftRegisters = { count: num(sr.count, 'shiftRegisters.count'), latch: optionalPin(sr.latch, 'shiftRegisters.latch') };
+    if (sr.data !== undefined) shiftRegisters.data = optionalPin(sr.data, 'shiftRegisters.data');
+    if (sr.clock !== undefined) shiftRegisters.clock = optionalPin(sr.clock, 'shiftRegisters.clock');
+    if (sr.ownBus === true) shiftRegisters.ownBus = true;
+    hardware.shiftRegisters = shiftRegisters;
   }
   if (data.encoderSpots !== undefined) {
     if (!Array.isArray(data.encoderSpots)) throw new Error('encoderSpots must be a list');
