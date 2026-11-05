@@ -3,6 +3,7 @@ import { SCREEN_SHIELDS } from './screens.ts';
 import { readKconfigValue, writeKconfigValue, type KconfigModel } from '../files/kconfig.ts';
 import { hasDisplay } from '../hardware/displays.ts';
 import { sensorOrder } from '../hardware/encoders.ts';
+import { hasBacklight, hasUnderglow } from '../hardware/leds.ts';
 import type { Binding } from '../keymap/model.ts';
 
 export type SettingType =
@@ -314,6 +315,8 @@ export function conflictingSettings(config: ZmkConfig): UnsupportedSetting[] {
 export function lacksHardwareFor(config: ZmkConfig, name: string): boolean {
   if (!config.hardware || !HARDWARE_FEATURES.some((f) => f.name === name)) return false;
   if (name === 'EC11') return sensorOrder(config.hardware).length === 0;
+  if (name === 'ZMK_RGB_UNDERGLOW') return !hasUnderglow(config.hardware);
+  if (name === 'ZMK_BACKLIGHT') return !hasBacklight(config.hardware);
   return name !== 'ZMK_DISPLAY' || !(hasDisplayShield(config) || hasDisplay(config.hardware));
 }
 
