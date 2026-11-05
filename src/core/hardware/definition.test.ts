@@ -3,7 +3,7 @@ import { definitionPath, parseHardware, serializeHardware } from './definition.t
 import { DEFAULT_BASICS, gridHardware } from './grid.ts';
 import { setDisplay } from './displays.ts';
 import { setShiftOwnBus, setShiftPin } from './shiftRegisters.ts';
-import { testShiftPad } from './testFixtures.ts';
+import { testLedPad, testLedSplit, testShiftPad } from './testFixtures.ts';
 import { setRightWiredDifferently } from './wiring.ts';
 
 const hw = { ...gridHardware({ ...DEFAULT_BASICS, name: 'test_split', displayName: 'Test Split', rows: 1, cols: 2 }), wiring: { kind: 'matrix' as const, diodeDirection: 'col2row' as const, rows: [4], cols: [6, 7] } };
@@ -23,7 +23,7 @@ describe('hardware definition file', () => {
 
   it('explains what is wrong with a bad file', () => {
     expect(() => parseHardware('nope')).toThrow();
-    expect(() => parseHardware('{"version": 4}')).toThrow('version 4 isn’t supported; update the editor');
+    expect(() => parseHardware('{"version": 5}')).toThrow('version 5 isn’t supported; update the editor');
     expect(() => parseHardware(serializeHardware(hw).replace('"matrix"', '"charlieplex"'))).toThrow('wiring.kind must be matrix or direct');
   });
 });
@@ -122,5 +122,32 @@ describe('hardware definition with shift registers', () => {
     expect(() => parseHardware(text.replace('{ "sr": 0 }', '{ "sr": -1 }'))).toThrow('wiring.cols must be a list of pins or shift register outputs');
     expect(() => parseHardware(text.replace('"count": 1', '"count": "one"'))).toThrow('shiftRegisters.count must be a number');
     expect(() => parseHardware(text.replace(/"shiftRegisters": \{[^}]*\}/, '"shiftRegisters": 5'))).toThrow('shiftRegisters must be an object');
+  });
+});
+
+describe('hardware definition with LEDs', () => {
+  it('round-trips as version 4', () => {
+    const text = serializeHardware(testLedPad);
+    expect(text.startsWith('{\n  "version": 4,')).toBe(true);
+    expect(text).toContain('"leds": {\n    "underglow": {\n      "data": 10,\n      "count": 20\n    },\n    "power": 9\n  }');
+    expect(parseHardware(text)).toEqual(testLedPad);
+    expect(serializeHardware(parseHardware(text))).toBe(text);
+  });
+
+  it('round-trips the right half’s own LEDs', () => {
+    const hw = setRightWiredDifferently(testLedSplit, true);
+    expect(parseHardware(serializeHardware(hw))).toEqual(hw);
+    expect(serializeHardware(hw)).toContain('"rightLeds": {');
+  });
+
+  it('explains a bad LED block', () => {
+    const text = serializeHardware(testLedPad);
+    expect(() => parseHardware(text.replace('"count": 20', '"count": "x"'))).toThrow('leds.underglow.count must be a number');
+    expect(() => parseHardware(text.replace(/"leds": \{[\s\S]*?\n {2}\}/, '"leds": 5'))).toThrow('leds must be an object');
+  });
+
+  it('leaves keyboards without LEDs at their old version', () => {
+    expect(serializeHardware(hw).startsWith('{\n  "version": 1,')).toBe(true);
+    expect(serializeHardware(hw)).not.toContain('leds');
   });
 });
