@@ -1,9 +1,13 @@
 import { halfDisplayPins, setDisplayPin } from './displays.ts';
+import { ledPins, setLedPin, type LedSignal } from './leds.ts';
 import { controllerPin, SHIFT_USES, setShiftPin, shiftPins, type ShiftSignal } from './shiftRegisters.ts';
 import type { DirectWiring, DisplaySignal, Encoder, HardwareKey, KeyboardHardware, LinePin, MatrixPins, MatrixWiring, Pin, Side } from './types.ts';
 
-/** A list of pin fields; `display.cs` and the like are a half's display pins, `shift.latch` and the like the shift registers'. */
-export type PinList = 'rows' | 'cols' | 'pins' | 'encoderA' | 'encoderB' | `display.${DisplaySignal}` | `shift.${ShiftSignal}`;
+/**
+ * A list of pin fields; `display.cs` and the like are a half's display pins, `shift.latch` and the like
+ * the shift registers', `led.data` and the like a half's LEDs.
+ */
+export type PinList = 'rows' | 'cols' | 'pins' | 'encoderA' | 'encoderB' | `display.${DisplaySignal}` | `shift.${ShiftSignal}` | `led.${LedSignal}`;
 
 /** The halves to generate: both on a split, one unnamed half otherwise. */
 export function halves(hw: KeyboardHardware): (Side | undefined)[] {
@@ -64,6 +68,7 @@ export function setPin(hw: KeyboardHardware, side: Side | undefined, list: PinLi
   if (list === 'encoderA' || list === 'encoderB') return setEncoderPin(hw, side, index, list === 'encoderA' ? 'a' : 'b', plain);
   if (list.startsWith('display.')) return setDisplayPin(hw, side, list.slice('display.'.length) as DisplaySignal, plain);
   if (list.startsWith('shift.')) return setShiftPin(hw, list.slice('shift.'.length) as ShiftSignal, plain);
+  if (list.startsWith('led.')) return setLedPin(hw, side, list.slice('led.'.length) as LedSignal, plain);
   const wiring = hw.wiring;
   if (wiring.kind === 'direct') {
     const put = (pins: Pin[]) => pins.map((p, i) => (i === index ? plain : p));
@@ -91,6 +96,9 @@ export function setRightWiredDifferently(hw: KeyboardHardware, on: boolean): Key
   // An empty list is the same as none once the right half has its own pins; leave it out.
   if (own.length > 0) next.rightEncoders = own;
   else delete next.rightEncoders;
+  // The right half starts from the left's LEDs, and loses its own when it mirrors again.
+  if (on && hw.leds && !hw.rightLeds) next.rightLeds = structuredClone(hw.leds);
+  if (!on) delete next.rightLeds;
   return next;
 }
 
@@ -145,6 +153,7 @@ export function pinUses(hw: KeyboardHardware, side?: Side): Map<number, string[]
     add(e.b, `Encoder ${i} B`);
   });
   for (const { pin, use } of halfDisplayPins(hw, side)) add(pin, use);
+  for (const { pin, use } of ledPins(hw, side)) add(pin, use);
   const shift = side === undefined ? shiftPins(hw) : undefined;
   if (shift) {
     add(shift.latch, SHIFT_USES.latch);

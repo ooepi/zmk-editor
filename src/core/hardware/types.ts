@@ -99,6 +99,20 @@ export interface KeyboardHardware {
   encoderSpots?: (EncoderSpot | null)[];
   /** 74HC595 shift registers driving matrix lines; one-piece matrix keyboards only. */
   shiftRegisters?: ShiftRegisters;
+  /** LEDs on the left half (or the only half). */
+  leds?: Leds;
+  /** The right half's own LEDs; without them a mirrored right half copies the left's. */
+  rightLeds?: Leds;
+}
+
+/** A half's LEDs. */
+export interface Leds {
+  /** Addressable RGB LEDs (WS2812, SK6812) in one chain: the pin the first LED's data input is wired to, and how many. */
+  underglow?: { data: Pin; count: number };
+  /** Single-colour LEDs dimmed together from one pin. */
+  backlight?: { pin: Pin };
+  /** Switches the LEDs' power (a load switch or MOSFET, active high). */
+  power?: Pin;
 }
 
 /** The keys' positions as a physical layout. */
