@@ -72,6 +72,33 @@ const shiftView: KeyboardHardware = {
 };
 shiftView.wiring = { kind: 'matrix', diodeDirection: 'col2row', rows: [4, 5], cols: Array.from({ length: 16 }, (_, i) => ({ sr: i })) };
 
+/** Like the Subsata v2: 3 × 12, one 595 sharing the nice!view's bus (latch D21), 20 LEDs on D4 with their power switch on D5. */
+const leds: KeyboardHardware = (() => {
+  const hw = setShiftRegisterCount(gridHardware({ ...DEFAULT_BASICS, name: 'editor_leds', displayName: 'LED Pad', split: false, rows: 3, cols: 12 }), 1);
+  const cols = (hw.wiring.kind === 'matrix' ? hw.wiring.cols : []).map((p, i) => (i >= 8 ? [9, 10, 14, 15][i - 8] ?? null : p));
+  return {
+    ...hw,
+    wiring: { kind: 'matrix', diodeDirection: 'col2row', rows: [6, 7, 8], cols },
+    shiftRegisters: { count: 1, latch: 21 },
+    displays: { left: 'nice_view' },
+    leds: { underglow: { data: 4, count: 20 }, power: 5 },
+  };
+})();
+
+/** A 3 × 6 split with 6 RGB LEDs, a backlight and a power switch per half; the right half mirrors the left. */
+const ledsSplit: KeyboardHardware = {
+  ...gridHardware({ ...DEFAULT_BASICS, name: 'editor_leds_split', displayName: 'LED Split', rows: 3, cols: 6 }),
+  wiring: { kind: 'matrix', diodeDirection: 'col2row', rows: [4, 5, 6], cols: [21, 20, 19, 18, 15, 14] },
+  leds: { underglow: { data: 9, count: 6 }, backlight: { pin: 10 }, power: 8 },
+};
+
+/** A XIAO with 8 RGB LEDs on D10 and their power switch on D9; the XIAO has no external power of its own. */
+const ledsXiao: KeyboardHardware = {
+  ...gridHardware({ ...DEFAULT_BASICS, name: 'editor_leds_xiao', displayName: 'LED XIAO', controller: 'seeeduino_xiao_ble', split: false, rows: 2, cols: 3 }),
+  wiring: { kind: 'matrix', diodeDirection: 'col2row', rows: [0, 1], cols: [2, 3, 4] },
+  leds: { underglow: { data: 10, count: 8 }, power: 9 },
+};
+
 /** A XIAO: 2 × 10, one 595 on its own bus (data D10, clock D8, latch D9) next to a 128×32 OLED on D4/D5. */
 const shiftOled: KeyboardHardware = {
   ...gridHardware({ ...DEFAULT_BASICS, name: 'editor_shift_oled', displayName: 'Shift OLED', controller: 'seeeduino_xiao_ble', split: false, rows: 2, cols: 10 }),
@@ -92,7 +119,7 @@ function withLayers(config: ReturnType<typeof newHardwareConfig>): ReturnType<ty
 }
 
 // Built with ZMK in CI (.github/workflows/firmware.yml). Update with `npx vitest run -u`.
-describe.each([split, numpad, duo, shift, shiftView, shiftOled])('designed keyboard $name', (hw) => {
+describe.each([split, numpad, duo, shift, shiftView, shiftOled, leds, ledsSplit, ledsXiao])('designed keyboard $name', (hw) => {
   const config = withLayers(newHardwareConfig(hw, 'v0.3'));
 
   it('is valid and round-trips', () => {
