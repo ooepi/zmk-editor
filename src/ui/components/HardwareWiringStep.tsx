@@ -35,6 +35,7 @@ import {
 } from '../../core/hardware/wiring.ts';
 import { HardwareIssueList } from './HardwareIssueList.tsx';
 import { Icon } from './Icon.tsx';
+import { LedFields } from './LedFields.tsx';
 import { Switch } from './ui/Switch.tsx';
 import { setPreferences, usePreferences } from '../state/preferences.ts';
 import { ControllerPinout } from './ControllerPinout.tsx';
@@ -388,6 +389,7 @@ function PinTables({ hw, side, picking, onChange, onAddEncoder, onRemoveEncoder 
           </button>
         </div>
       </fieldset>
+      <LedFields hw={hw} side={side} field={field} onChange={onChange} />
     </>
   );
 }
