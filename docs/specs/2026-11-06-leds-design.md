@@ -45,10 +45,11 @@ The trigger is the Gristone Subsata v2: 20 SK6812MINI-E LEDs on D4, with a load 
 
   `Kconfig.defconfig` sets `SPI` and, inside `if ZMK_RGB_UNDERGLOW`, `WS2812_STRIP default y`.
 - **SPI3** is on every supported controller (all are nRF52840), shares hardware with no I2C unit, and isn't used by the shift registers (`&spi2`), the nice!view adapter (`&spi0`), `pro_micro_spi` (`&spi1`/`&spi0`) or `xiao_spi` (`&spi2`). So underglow always goes on `&spi3`.
-- **Backlight:** a `pwm-leds` node driven by `&pwm0` channel 0 (`NRF_PSEL(PWM_OUT0, port, pin)` in pinctrl default and sleep states), with `chosen { zmk,backlight = &backlight; }`, as in ZMK's backlight docs. `pwm0` isn't used by any supported board. The builder confirms which Kconfig symbols the shield must default on (`PWM`, `LED_PWM`) by building the fixtures.
+- **Backlight:** a `pwm-leds` node driven by `&pwm1` channel 0 (`NRF_PSEL(PWM_OUT0, port, pin)` in pinctrl default and sleep states), with `chosen { zmk,backlight = &backlight; }`, as in ZMK's backlight docs. `pwm1` because the XIAO's board file already uses `pwm0` for its onboard LED (found while planning); no supported board uses `pwm1`. The builder confirms which Kconfig symbols the shield must default on (`PWM`, `LED_PWM`) by building the fixtures.
 - **Power pin:** ZMK has one external power device, the `zmk,ext-power-generic` node at `/EXT_POWER`. ZMK only uses the first instance, so a second one can't be added. The v2 shield therefore retargets it:
   - `&{/EXT_POWER} { control-gpios = <&pro_micro 5 GPIO_ACTIVE_HIGH>; };`
   - It then holds the board's own switchable 3.3 V pin on with a `gpio-hog` (P0.13 on the nice!nano), because that pin powers the shift registers and the nice!view.
+  - The 3.3 V control pin and its active level differ per board (ZMK v0.3 board files, checked while planning): nice!nano P0.13 active low; nice!nano v2 P0.13 high; nRFMicro 1.1 and 1.1 flipped P1.09 high; nRFMicro 1.3 P1.09 low; Puchi-BLE P1.09 low; BlueMicro840 P0.12 high; Mikoto P0.13 high; the XIAO has no `EXT_POWER` node. The hog copies the board's flags, so it always means "on".
 
   `ZMK_RGB_UNDERGLOW_EXT_POWER` (default y in ZMK) then cuts the LEDs' power with them.
 
@@ -99,9 +100,9 @@ This follows the encoders' pattern (`encoders` / `rightEncoders`). Ticking "The 
 - **One-piece:** the nodes go in the root overlay after the display and shift register sections.
 - **Split:** each half's overlay gets its own half's LEDs (the left's when mirrored), the same way display nodes are written per half today.
 - **Underglow:** `&pinctrl` states `led_spi_default` / `led_spi_sleep` (MOSI only) and an `&spi3` block with the `led_strip: ws2812@0` child as above, plus the `chosen` entry.
-- **Backlight:** `&pinctrl` states for `pwm0`, an `&pwm0` block, a `backlight: pwmleds { compatible = "pwm-leds"; pwm_led_0 { pwms = <&pwm0 0 PWM_MSEC(10) PWM_POLARITY_NORMAL>; }; }` node, and the `chosen` entry.
+- **Backlight:** `&pinctrl` states for `pwm1`, an `&pwm1` block, a `backlight: pwmleds { compatible = "pwm-leds"; pwm_led_0 { pwms = <&pwm1 0 PWM_MSEC(10) PWM_POLARITY_NORMAL>; }; }` node, and the `chosen` entry.
 - **Power pin:** retarget `&{/EXT_POWER}`'s `control-gpios` to the pin.
-  - **Board has its own switchable 3.3 V pin:** add the `gpio-hog` that keeps it on. The builder looks up, for every controller in `HARDWARE_CONTROLLERS`, whether the ZMK v0.3 board has an `EXT_POWER` node and which GPIO it uses, and records that in the controller or interconnect data.
+  - **Board has its own switchable 3.3 V pin:** add the `gpio-hog` that keeps it on, using the table above.
   - **Board has no `EXT_POWER` node** (e.g. the XIAO): create one (`compatible = "zmk,ext-power-generic"`, `control-gpios = <…>`). Enable `ZMK_EXT_POWER` if needed.
 - **Underglow without a power pin on a keyboard with shift registers:** `Kconfig.defconfig` sets `ZMK_RGB_UNDERGLOW_EXT_POWER default n`. Otherwise turning the LEDs off would switch off the board's 3.3 V pin, which powers the shift registers, and the keys would stop working. Without shift registers, ZMK's default stays (the LEDs are often powered from that pin).
 - **`Kconfig.defconfig`:**
@@ -147,5 +148,4 @@ This follows the encoders' pattern (`encoders` / `rightEncoders`). Ticking "The 
 - Exact component structure and CSS of the LEDs fieldset, within the editor's existing style (pin cards, switches).
 - Kconfig details for backlight, settled by the CI builds.
 - Whether ZMK v0.3 syncs the backlight state to the right half of a split, as it does for underglow. If it doesn't, the help text says so.
-- The per-board 3.3 V control pin table, from the ZMK v0.3 board files.
 - Names of helpers and test files.
