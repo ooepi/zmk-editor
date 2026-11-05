@@ -6,6 +6,7 @@ import { definitionPath, parseHardware, serializeHardware, shieldDir } from './d
 import { halfDisplay, halfDisplayPins, usesNiceViewAdapter, type DisplayPin } from './displays.ts';
 import { interconnectOf, nrfPin } from './interconnects.ts';
 import { sensorLabel, sensorOrder } from './encoders.ts';
+import { BOARD_POWER, halfLeds, hasBacklight, hasUnderglow } from './leds.ts';
 import { isShiftOutput, outputCount, sharesNiceViewBus, shiftPins } from './shiftRegisters.ts';
 import { hardwareLayout, type DisplayKind, type DisplaySignal, type KeyboardHardware, type LinePin, type Pin, type Side } from './types.ts';
 import { directPins, halfSize, matrixPins } from './wiring.ts';
@@ -153,6 +154,125 @@ function shiftRegisterBus(hw: KeyboardHardware): string | undefined {
   ].join('\n');
 }
 
+/** WS2812/SK6812 LEDs on SPI3, which every supported controller has and nothing else here uses (only MOSI is wired). */
+function underglowNodes(hw: KeyboardHardware, data: Pin, count: number): string {
+  return [
+    '/ {',
+    '    chosen {',
+    '        zmk,underglow = &led_strip;',
+    '    };',
+    '};',
+    '',
+    pinctrlNodes('led_spi', [psel('SPIM_MOSI', hw.controller, data)]),
+    '',
+    '&spi3 {',
+    '    status = "okay";',
+    '    compatible = "nordic,nrf-spim";',
+    '    pinctrl-0 = <&led_spi_default>;',
+    '    pinctrl-1 = <&led_spi_sleep>;',
+    '    pinctrl-names = "default", "sleep";',
+    '',
+    '    led_strip: ws2812@0 {',
+    '        compatible = "worldsemi,ws2812-spi";',
+    '        reg = <0>;',
+    '        spi-max-frequency = <4000000>;',
+    `        chain-length = <${count}>;`,
+    '        spi-one-frame = <0x70>;',
+    '        spi-zero-frame = <0x40>;',
+    '        color-mapping = <LED_COLOR_ID_GREEN LED_COLOR_ID_RED LED_COLOR_ID_BLUE>;',
+    '    };',
+    '};',
+  ].join('\n');
+}
+
+/** Single-colour LEDs on PWM1 (the XIAO's board file already uses PWM0 for its onboard LED). */
+function backlightNodes(hw: KeyboardHardware, pin: Pin): string {
+  return [
+    '/ {',
+    '    chosen {',
+    '        zmk,backlight = &backlight;',
+    '    };',
+    '',
+    '    backlight: backlight {',
+    '        compatible = "pwm-leds";',
+    '        pwm_led_0 {',
+    '            pwms = <&pwm1 0 PWM_MSEC(10) PWM_POLARITY_NORMAL>;',
+    '        };',
+    '    };',
+    '};',
+    '',
+    pinctrlNodes('backlight_pwm', [psel('PWM_OUT0', hw.controller, pin)]),
+    '',
+    '&pwm1 {',
+    '    status = "okay";',
+    '    pinctrl-0 = <&backlight_pwm_default>;',
+    '    pinctrl-1 = <&backlight_pwm_sleep>;',
+    '    pinctrl-names = "default", "sleep";',
+    '};',
+  ].join('\n');
+}
+
+/**
+ * The LEDs' power switch: ZMK's external power (one per keyboard half) drives it
+ * instead of the board's own switchable 3.3V pin, which is then held on so the shift
+ * registers and a display keep their power. A board without one (the XIAO) gets it.
+ */
+function ledPowerNodes(hw: KeyboardHardware, pin: Pin): string {
+  const control = `<&${interconnectOf(hw.controller).gpio} ${pin ?? '?'} GPIO_ACTIVE_HIGH>`;
+  const board = BOARD_POWER[hw.controller];
+  if (!board) {
+    return [
+      "/* ZMK's external power switches the LEDs' power. */",
+      '/ {',
+      '    EXT_POWER {',
+      '        compatible = "zmk,ext-power-generic";',
+      `        control-gpios = ${control};`,
+      '    };',
+      '};',
+    ].join('\n');
+  }
+  return [
+    "/* ZMK's external power switches the LEDs' power; the board's own 3.3V pin stays on. */",
+    '&{/EXT_POWER} {',
+    `    control-gpios = ${control};`,
+    '};',
+    '',
+    `&${board.gpio} {`,
+    '    vcc_always_on {',
+    '        gpio-hog;',
+    `        gpios = <${board.pin} ${board.flags}>;`,
+    '        output-high;',
+    '    };',
+    '};',
+  ].join('\n');
+}
+
+/** A half's LED nodes: underglow, backlight, then the power switch; none without LEDs. */
+function ledNodes(hw: KeyboardHardware, side?: Side): string | undefined {
+  const leds = halfLeds(hw, side);
+  if (!leds) return undefined;
+  const parts = [
+    ...(leds.underglow ? [underglowNodes(hw, leds.underglow.data, leds.underglow.count)] : []),
+    ...(leds.backlight ? [backlightNodes(hw, leds.backlight.pin)] : []),
+    ...(leds.power !== undefined ? [ledPowerNodes(hw, leds.power)] : []),
+  ];
+  return parts.length > 0 ? parts.join('\n\n') : undefined;
+}
+
+/**
+ * `Kconfig.defconfig` lines for the LEDs' drivers. Without its own power switch, underglow
+ * would switch off the board's 3.3V pin with the LEDs, which powers the shift registers.
+ */
+function ledKconfig(hw: KeyboardHardware): string {
+  const underglow = hasUnderglow(hw)
+    ? `\nif ZMK_RGB_UNDERGLOW\n\nconfig WS2812_STRIP\n    default y\n${
+        hw.shiftRegisters && halfLeds(hw)?.power === undefined ? '\nconfig ZMK_RGB_UNDERGLOW_EXT_POWER\n    default n\n' : ''
+      }\nendif\n`
+    : '';
+  const backlight = hasBacklight(hw) ? '\nif ZMK_BACKLIGHT\n\nconfig PWM\n    default y\n\nconfig LED_PWM\n    default y\n\nendif\n' : '';
+  return `${underglow}${backlight}`;
+}
+
 /** A half's display nodes: an OLED (its bus moved to the chosen pins), or a nice!view's own SPI bus; none otherwise. */
 function displayNodes(hw: KeyboardHardware, side?: Side): string | undefined {
   const kind = halfDisplay(hw, side);
@@ -243,8 +363,9 @@ function kconfigDefconfig(hw: KeyboardHardware): string {
   const trigger = sensorOrder(hw).length > 0 ? `\n${EC11_TRIGGER}` : '';
   const oled = oledShields(hw);
   const display = oled.length > 0 ? `\nif ${oled.map((s) => s.symbol).join(' || ')}\n\n${DISPLAY_KCONFIG}\nendif\n` : '';
-  const spi = hw.shiftRegisters ? '\nconfig SPI\n    default y\n' : '';
-  if (!hw.split || !first || !second) return `# ${note(hw)}\n\nif ${first?.symbol ?? ''}\n\n${name}${trigger}${spi}\nendif\n${display}`;
+  const spi = hw.shiftRegisters || hasUnderglow(hw) ? '\nconfig SPI\n    default y\n' : '';
+  const leds = ledKconfig(hw);
+  if (!hw.split || !first || !second) return `# ${note(hw)}\n\nif ${first?.symbol ?? ''}\n\n${name}${trigger}${spi}${leds}\nendif\n${display}`;
   return `# ${note(hw)}
 
 if ${first.symbol}
@@ -259,7 +380,7 @@ if ${first.symbol} || ${second.symbol}
 
 config ZMK_SPLIT
     default y
-${trigger}
+${trigger}${spi}${leds}
 endif
 ${display}`;
 }
@@ -330,7 +451,7 @@ function transformNode(hw: KeyboardHardware): string {
 /** A one-piece keyboard's display nodes and shift register bus, appended after the root block of its overlay. */
 function displaySection(hw: KeyboardHardware, withPins: boolean): string {
   if (!withPins) return '';
-  const parts = [displayNodes(hw), shiftRegisterBus(hw)].filter((p): p is string => p !== undefined);
+  const parts = [displayNodes(hw), shiftRegisterBus(hw), ledNodes(hw)].filter((p): p is string => p !== undefined);
   return parts.map((p) => `\n${p}\n`).join('');
 }
 
@@ -339,7 +460,7 @@ function rootFile(hw: KeyboardHardware, withPins: boolean): string {
 
 #include <dt-bindings/zmk/matrix_transform.h>
 #include <physical_layouts.dtsi>
-
+${hasUnderglow(hw) ? '#include <dt-bindings/led/led.h>\n' : ''}${hasBacklight(hw) ? '#include <dt-bindings/pwm/pwm.h>\n' : ''}
 / {
     chosen {
         zmk,kscan = &kscan0;
@@ -364,6 +485,8 @@ function halfOverlay(hw: KeyboardHardware, side: Side): string {
   parts.push(`&kscan0 {\n${kscanPins(hw, side, '    ')}\n};`);
   const display = displayNodes(hw, side);
   if (display) parts.push(display);
+  const leds = ledNodes(hw, side);
+  if (leds) parts.push(leds);
   return `${parts.join('\n\n')}\n`;
 }
 

@@ -3,7 +3,7 @@ import { hardwareBuildTargets } from './config.ts';
 import { setDisplay, setDisplayPin } from './displays.ts';
 import { generateShield, staleShieldFiles } from './generate.ts';
 import { setShiftOwnBus, setShiftPin } from './shiftRegisters.ts';
-import { testPad, testShiftPad, testSplit } from './testFixtures.ts';
+import { testLedPad, testLedSplit, testPad, testShiftPad, testSplit } from './testFixtures.ts';
 import type { KeyboardHardware } from './types.ts';
 
 const dir = (name: string) => `config/boards/shields/${name}`;
@@ -590,5 +590,99 @@ config SPI
 
 endif
 `);
+  });
+});
+
+describe('generateShield: LEDs', () => {
+  const overlay = (hw: KeyboardHardware) => generateShield(hw)[`${dir(hw.name)}/${hw.name}.overlay`] ?? '';
+  const defconfig = (hw: KeyboardHardware) => generateShield(hw)[`${dir(hw.name)}/Kconfig.defconfig`] ?? '';
+
+  it('drives underglow from SPI3', () => {
+    const text = overlay(testLedPad);
+    expect(text).toContain(`&spi3 {
+    status = "okay";
+    compatible = "nordic,nrf-spim";
+    pinctrl-0 = <&led_spi_default>;
+    pinctrl-1 = <&led_spi_sleep>;
+    pinctrl-names = "default", "sleep";
+
+    led_strip: ws2812@0 {
+        compatible = "worldsemi,ws2812-spi";
+        reg = <0>;
+        spi-max-frequency = <4000000>;
+        chain-length = <20>;
+        spi-one-frame = <0x70>;
+        spi-zero-frame = <0x40>;
+        color-mapping = <LED_COLOR_ID_GREEN LED_COLOR_ID_RED LED_COLOR_ID_BLUE>;
+    };
+};`);
+    expect(text).toContain('        zmk,underglow = &led_strip;');
+    expect(text).toContain('<NRF_PSEL(SPIM_MOSI, 0, 9)>');
+    expect(text).toContain('#include <dt-bindings/led/led.h>');
+  });
+
+  it('points ZMK’s external power at the LED switch and keeps the 3.3V pin on', () => {
+    expect(overlay(testLedPad)).toContain(`&{/EXT_POWER} {
+    control-gpios = <&pro_micro 9 GPIO_ACTIVE_HIGH>;
+};
+
+&gpio0 {
+    vcc_always_on {
+        gpio-hog;
+        gpios = <13 GPIO_ACTIVE_HIGH>;
+        output-high;
+    };
+};`);
+  });
+
+  it('keeps an active-low 3.3V pin on too', () => {
+    const text = overlay({ ...testLedPad, controller: 'nice_nano' });
+    expect(text).toContain('        gpios = <13 GPIO_ACTIVE_LOW>;\n        output-high;');
+  });
+
+  it('creates external power on a XIAO, which has none', () => {
+    const text = overlay({ ...testLedPad, controller: 'seeeduino_xiao_ble' });
+    expect(text).not.toContain('&{/EXT_POWER}');
+    expect(text).toContain(`/ {
+    EXT_POWER {
+        compatible = "zmk,ext-power-generic";
+        control-gpios = <&xiao_d 9 GPIO_ACTIVE_HIGH>;
+    };
+};`);
+    expect(text).not.toContain('gpio-hog');
+  });
+
+  it('drives a backlight from PWM1 on both halves of a split', () => {
+    const files = generateShield(testLedSplit);
+    for (const side of ['left', 'right']) {
+      const text = files[`${dir('test_split')}/test_split_${side}.overlay`] ?? '';
+      expect(text).toContain('pwms = <&pwm1 0 PWM_MSEC(10) PWM_POLARITY_NORMAL>;');
+      expect(text).toContain('        zmk,backlight = &backlight;');
+      expect(text).toContain('&pwm1 {');
+      expect(text).toContain('<NRF_PSEL(PWM_OUT0, ');
+      expect(text).toContain('chain-length = <6>;');
+    }
+    const dtsi = files[`${dir('test_split')}/test_split.dtsi`] ?? '';
+    expect(dtsi).toContain('#include <dt-bindings/led/led.h>');
+    expect(dtsi).toContain('#include <dt-bindings/pwm/pwm.h>');
+  });
+
+  it('turns on what the LEDs need in Kconfig.defconfig', () => {
+    expect(defconfig(testLedPad)).toContain('config SPI\n    default y\n');
+    expect(defconfig(testLedPad)).toContain('if ZMK_RGB_UNDERGLOW\n\nconfig WS2812_STRIP\n    default y\n\nendif\n');
+    expect(defconfig(testLedPad)).not.toContain('ZMK_RGB_UNDERGLOW_EXT_POWER');
+    expect(defconfig(testLedSplit)).toContain('if ZMK_BACKLIGHT\n\nconfig PWM\n    default y\n\nconfig LED_PWM\n    default y\n\nendif\n');
+  });
+
+  it('never cuts the shift registers’ power when the LEDs have no switch of their own', () => {
+    const hw: KeyboardHardware = { ...testShiftPad, leds: { underglow: { data: 9, count: 4 } } };
+    expect(defconfig(hw)).toContain('if ZMK_RGB_UNDERGLOW\n\nconfig WS2812_STRIP\n    default y\n\nconfig ZMK_RGB_UNDERGLOW_EXT_POWER\n    default n\n\nendif\n');
+  });
+
+  it('writes nothing for keyboards without LEDs', () => {
+    const text = Object.values(generateShield(testPad)).join('\n');
+    expect(text).not.toContain('spi3');
+    expect(text).not.toContain('pwm1');
+    expect(text).not.toContain('EXT_POWER');
   });
 });
