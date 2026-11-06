@@ -63,6 +63,12 @@ export const KEYBOARD: HelpSection[] = [
             and clock are shared with it unless you tick <Ui>Shift registers on their own pins</Ui>.
           </p>
           <p>
+            <strong>LEDs.</strong> RGB underglow is any chain of addressable LEDs (WS2812, SK6812), wherever they sit on the
+            board; backlight is single-colour LEDs dimmed together from one pin. A power pin (a load switch or MOSFET) lets ZMK
+            cut the LEDs’ power when they’re off. The LED keys (<code>&amp;rgb_ug</code>, <code>&amp;bl</code>,{' '}
+            <code>&amp;ext_power</code>) are in the palette.
+          </p>
+          <p>
             Later, <Ui>Edit hardware</Ui> on the Keyboard page reopens the wizard. Undo and opening files are paused while
             the wizard is open.
           </p>

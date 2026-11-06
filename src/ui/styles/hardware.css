@@ -470,6 +470,12 @@
   border-color: var(--accent-line);
 }
 
+.pin-card.plain,
+.pin-card.plain:hover {
+  border-color: var(--keycap-edge);
+  cursor: default;
+}
+
 .pin-card.shared,
 .pin-card.shared:hover {
   border-style: dashed;
@@ -708,6 +714,11 @@
   background: var(--kind-encoder);
 }
 
+.chip-hole.used.use-led {
+  border-color: var(--kind-modmorph);
+  background: var(--kind-modmorph);
+}
+
 .chip-hole.used.use-display {
   border-color: var(--kind-macro);
   background: var(--kind-macro);
@@ -802,6 +813,10 @@
 
 .pinout-pad.used.use-display {
   border-color: var(--kind-macro);
+}
+
+.pinout-pad.used.use-led {
+  border-color: var(--kind-modmorph);
 }
 
 .pinout-pad.used.use-shift {

@@ -5,7 +5,8 @@ import { applyHardware, hardwareBuildTargets, newHardwareConfig } from './config
 import { setDisplay, setDisplayPin } from './displays.ts';
 import { definitionPath, serializeHardware } from './definition.ts';
 import { handEditedShieldFiles } from './generate.ts';
-import { testSplit } from './testFixtures.ts';
+import { testLedPad, testLedSplit, testSplit } from './testFixtures.ts';
+import { readKconfigValue, writeKconfigValue } from '../files/kconfig.ts';
 
 const config = newHardwareConfig(testSplit, 'v0.3');
 
@@ -191,5 +192,30 @@ describe('configs with a designed keyboard', () => {
     const withView = setDisplay(testSplit, 'left', 'nice_view');
     const { config } = applyHardware(legacy, withView, testSplit.keys.map((_, i) => i));
     expect(config.build.include.map((t) => t.shield)[0]).toBe('test_split_left rgbled_adapter nice_view_adapter nice_view');
+  });
+});
+
+describe('LED settings follow the hardware', () => {
+  const { leds: _leds, ...noLeds } = testLedPad;
+
+  it('switches them on in a new config', () => {
+    const split = newHardwareConfig(testLedSplit, 'v0.3').kconfig;
+    expect(readKconfigValue(split, 'CONFIG_ZMK_RGB_UNDERGLOW')).toBe('y');
+    expect(readKconfigValue(split, 'CONFIG_ZMK_BACKLIGHT')).toBe('y');
+    expect(readKconfigValue(newHardwareConfig(noLeds, 'v0.3').kconfig, 'CONFIG_ZMK_RGB_UNDERGLOW')).toBeUndefined();
+  });
+
+  it('switches underglow on when an edit adds it', () => {
+    const { config, notes } = applyHardware(newHardwareConfig(noLeds, 'v0.3'), testLedPad, testLedPad.keys.map((_, i) => i));
+    expect(readKconfigValue(config.kconfig, 'CONFIG_ZMK_RGB_UNDERGLOW')).toBe('y');
+    expect(notes).toContain('Turned on RGB underglow in Settings.');
+  });
+
+  it('leaves a setting the user turned off alone when the LEDs were already there', () => {
+    const before = newHardwareConfig(testLedPad, 'v0.3');
+    const off = { ...before, kconfig: writeKconfigValue(before.kconfig, 'CONFIG_ZMK_RGB_UNDERGLOW', 'n') };
+    const { config, notes } = applyHardware(off, testLedPad, testLedPad.keys.map((_, i) => i));
+    expect(readKconfigValue(config.kconfig, 'CONFIG_ZMK_RGB_UNDERGLOW')).toBe('n');
+    expect(notes).not.toContain('Turned on RGB underglow in Settings.');
   });
 });

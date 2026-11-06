@@ -96,3 +96,16 @@ describe('Subsata shields (hand-written, proven on hardware)', () => {
     expect(hardwareBuildTargets(subsataV2)[0]?.shield).toBe('subsata_v2 nice_view');
   });
 });
+
+describe('Subsata v2 LEDs (hand-written, ooepi/zmk-config-grstn-subsata branch subsata-v2)', () => {
+  it('v2 LEDs: 20 on D4, power switch on D5', () => {
+    const hw: KeyboardHardware = { ...subsataV2, leds: { underglow: { data: 4, count: 20 }, power: 5 } };
+    expect(validateHardware(hw).filter((i) => i.level === 'error')).toEqual([]);
+    const text = generateShield(hw)['config/boards/shields/subsata_v2/subsata_v2.overlay'] ?? '';
+    expect(text).toContain('<NRF_PSEL(SPIM_MOSI, 0, 22)>');
+    expect(text).toContain('chain-length = <20>;');
+    expect(text).toContain('control-gpios = <&pro_micro 5 GPIO_ACTIVE_HIGH>;');
+    expect(text).toContain('gpios = <13 GPIO_ACTIVE_HIGH>;');
+    expect(hardwareBuildTargets(hw)[0]?.shield).toBe('subsata_v2 nice_view');
+  });
+});

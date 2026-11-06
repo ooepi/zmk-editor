@@ -1,10 +1,11 @@
 import { NICE_VIEW_ADAPTER, SCREEN_SHIELDS, STOCK_SCREEN_SHIELD } from '../catalog/screens.ts';
 import type { ZmkConfig } from '../config.ts';
 import type { BuildTarget } from '../files/build.ts';
-import { parseKconfig } from '../files/kconfig.ts';
+import { parseKconfig, writeKconfigValue, type KconfigModel } from '../files/kconfig.ts';
 import { halfDisplay, usesNiceViewAdapter } from './displays.ts';
 import { sensorOrder } from './encoders.ts';
 import { interconnectOf } from './interconnects.ts';
+import { hasBacklight, hasUnderglow } from './leds.ts';
 import { remapKeyPositions, remapSensors } from './keys.ts';
 import { starterKeymap } from './starter.ts';
 import type { KeyboardHardware, Side } from './types.ts';
@@ -41,12 +42,31 @@ export function hardwareBuildTargets(hw: KeyboardHardware): BuildTarget[] {
   });
 }
 
+/**
+ * Switches on the LED settings for kinds of LEDs `hw` has and `before` didn't, so adding
+ * LEDs in the wizard lights them; a setting the user changed later is left alone.
+ */
+function withLedSettings(kconfig: KconfigModel, hw: KeyboardHardware, before?: KeyboardHardware): { kconfig: KconfigModel; notes: string[] } {
+  const kinds = [
+    { has: hasUnderglow, name: 'CONFIG_ZMK_RGB_UNDERGLOW', note: 'Turned on RGB underglow in Settings.' },
+    { has: hasBacklight, name: 'CONFIG_ZMK_BACKLIGHT', note: 'Turned on the backlight in Settings.' },
+  ];
+  let next = kconfig;
+  const notes: string[] = [];
+  for (const { has, name, note } of kinds) {
+    if (!has(hw) || (before && has(before))) continue;
+    next = writeKconfigValue(next, name, 'y');
+    notes.push(note);
+  }
+  return { kconfig: next, notes };
+}
+
 /** A fresh config for a keyboard designed in the editor. */
 export function newHardwareConfig(hw: KeyboardHardware, zmkVersion: string): ZmkConfig {
   return {
     keyboard: hw.name,
     keymap: starterKeymap(hw),
-    kconfig: parseKconfig(''),
+    kconfig: withLedSettings(parseKconfig(''), hw).kconfig,
     west: { zmkVersion, modules: [], selfPath: 'config' },
     build: { include: hardwareBuildTargets(hw) },
     hardware: hw,
@@ -96,8 +116,11 @@ export function applyHardware(
     }
     return { ...t, board: hw.controller, shield };
   });
-  const notes = droppedView
-    ? [...remapped.notes, 'Removed the nice!view from the build: on this controller it needs to be turned on under Displays, which sets up its pins.']
-    : remapped.notes;
-  return { config: { ...config, keymap: model, hardware: hw, build: { include } }, notes };
+  const leds = withLedSettings(config.kconfig, hw, config.hardware);
+  const notes = [
+    ...remapped.notes,
+    ...(droppedView ? ['Removed the nice!view from the build: on this controller it needs to be turned on under Displays, which sets up its pins.'] : []),
+    ...leds.notes,
+  ];
+  return { config: { ...config, keymap: model, kconfig: leds.kconfig, hardware: hw, build: { include } }, notes };
 }

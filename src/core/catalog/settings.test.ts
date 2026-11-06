@@ -5,10 +5,11 @@ import { importConfig } from '../config.ts';
 import { generateKconfig, parseKconfig } from '../files/kconfig.ts';
 import { newHardwareConfig } from '../hardware/config.ts';
 import { setDisplay } from '../hardware/displays.ts';
-import { testSplit } from '../hardware/testFixtures.ts';
+import { testLedPad, testLedSplit, testSplit } from '../hardware/testFixtures.ts';
 import {
   conflictingSettings,
   findSetting,
+  lacksHardwareFor,
   readSetting,
   SETTING_GROUPS,
   SETTINGS,
@@ -236,5 +237,15 @@ describe('settings that clash with the build', () => {
     const builtIn = { ...other, kconfig: parseKconfig(`${generateKconfig(other.kconfig)}CONFIG_ZMK_DISPLAY_STATUS_SCREEN_BUILT_IN=y
 `) };
     expect(conflictingSettings(builtIn)).toEqual([]);
+  });
+});
+
+describe('LED settings on a designed keyboard', () => {
+  it('unlocks underglow and backlight when the hardware has them', () => {
+    const pad = newHardwareConfig(testLedPad, 'v0.3');
+    expect(lacksHardwareFor(pad, 'ZMK_RGB_UNDERGLOW')).toBe(false);
+    expect(lacksHardwareFor(pad, 'ZMK_BACKLIGHT')).toBe(true);
+    expect(lacksHardwareFor(newHardwareConfig(testLedSplit, 'v0.3'), 'ZMK_BACKLIGHT')).toBe(false);
+    expect(lacksHardwareFor(newHardwareConfig(testSplit, 'v0.3'), 'ZMK_RGB_UNDERGLOW')).toBe(true);
   });
 });

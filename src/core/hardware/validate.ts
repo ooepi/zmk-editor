@@ -6,6 +6,7 @@ import { interconnectOf, PRO_MICRO, type Interconnect } from './interconnects.ts
 import type { HardwareBasics } from './grid.ts';
 import type { KeyboardHardware, Pin } from './types.ts';
 import { halfDisplay, halfDisplayPins } from './displays.ts';
+import { halfLeds, ledPins, MAX_LEDS } from './leds.ts';
 import {
   drivenList,
   isShiftOutput,
@@ -118,6 +119,7 @@ export function validateHardware(hw: KeyboardHardware): HardwareIssue[] {
           { label: `Encoder ${i} B`, pin: e.b },
         ]),
         ...halfDisplayPins(hw, side).map(({ pin, use }) => ({ label: use, pin })),
+        ...ledPins(hw, side).map(({ pin, use }) => ({ label: use, pin })),
         ...((): { label: string; pin: Pin }[] => {
           const shift = side === undefined ? shiftPins(hw) : undefined;
           if (!shift) return [];
@@ -125,6 +127,8 @@ export function validateHardware(hw: KeyboardHardware): HardwareIssue[] {
           return [{ label: SHIFT_USES.latch, pin: shift.latch }, ...own];
         })(),
       ];
+      const count = halfLeds(hw, side)?.underglow?.count;
+      if (count !== undefined && (!Number.isInteger(count) || count < 1 || count > MAX_LEDS)) add('error', 'wiring', `Use 1 to ${MAX_LEDS} LEDs${where}.`);
       if (labelled.length > ic.pins.length) {
         add('error', 'wiring', `The wiring${where} needs ${labelled.length} pins, ${pinCount(ic, false)}`);
       }

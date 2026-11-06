@@ -9,6 +9,7 @@ import type {
   Encoder,
   HardwareKey,
   KeyboardHardware,
+  Leds,
   LinePin,
   MatrixWiring,
   Pin,
@@ -16,8 +17,19 @@ import type {
   Wiring,
 } from './types.ts';
 
-/** Version 2 adds `displayPins`, version 3 shift registers; each file is written with the lowest version that fits. */
-const VERSION = 3;
+/** Version 2 adds `displayPins`, version 3 shift registers, version 4 LEDs; each file is written with the lowest version that fits. */
+const VERSION = 4;
+
+const hasLeds = (hw: KeyboardHardware) => hw.leds !== undefined || hw.rightLeds !== undefined;
+
+/** A half's LEDs with their fields in a fixed order. */
+function serializeLeds(leds: Leds) {
+  return {
+    ...(leds.underglow ? { underglow: { data: leds.underglow.data, count: leds.underglow.count } } : {}),
+    ...(leds.backlight ? { backlight: { pin: leds.backlight.pin } } : {}),
+    ...(leds.power !== undefined ? { power: leds.power } : {}),
+  };
+}
 
 const hasShiftRegisters = (hw: KeyboardHardware) =>
   hw.shiftRegisters !== undefined || (hw.wiring.kind === 'matrix' && [...hw.wiring.rows, ...hw.wiring.cols].some(isShiftOutput));
@@ -34,7 +46,7 @@ export function serializeHardware(hw: KeyboardHardware): string {
       : { kind: w.kind, pins: w.pins, ...(w.right ? { right: w.right } : {}) };
   const head = JSON.stringify(
     {
-      version: hasShiftRegisters(hw) ? 3 : hw.displayPins ? 2 : 1,
+      version: hasLeds(hw) ? 4 : hasShiftRegisters(hw) ? 3 : hw.displayPins ? 2 : 1,
       name: hw.name,
       displayName: hw.displayName,
       controller: hw.controller,
@@ -58,6 +70,8 @@ export function serializeHardware(hw: KeyboardHardware): string {
             },
           }
         : {}),
+      ...(hw.leds ? { leds: serializeLeds(hw.leds) } : {}),
+      ...(hw.rightLeds ? { rightLeds: serializeLeds(hw.rightLeds) } : {}),
       ...(hw.encoderSpots?.some(Boolean) ? { encoderSpots: hw.encoderSpots.map((s) => (s ? { x: s.x, y: s.y } : null)) } : {}),
       keys: [],
     },
@@ -81,7 +95,7 @@ function serializeDisplayPins(pins: NonNullable<KeyboardHardware['displayPins']>
 export function parseHardware(text: string): KeyboardHardware {
   const data: unknown = JSON.parse(text);
   if (!isRecord(data)) throw new Error('it isn’t a JSON object');
-  if (data.version !== 1 && data.version !== 2 && data.version !== VERSION) throw new Error(`version ${String(data.version)} isn’t supported; update the editor`);
+  if (data.version !== 1 && data.version !== 2 && data.version !== 3 && data.version !== VERSION) throw new Error(`version ${String(data.version)} isn’t supported; update the editor`);
   const str = (value: unknown, what: string): string => {
     if (typeof value !== 'string') throw new Error(`${what} is missing`);
     return value;
@@ -186,6 +200,23 @@ export function parseHardware(text: string): KeyboardHardware {
     if (sr.ownBus === true) shiftRegisters.ownBus = true;
     hardware.shiftRegisters = shiftRegisters;
   }
+  const leds = (value: unknown, what: string): Leds => {
+    if (!isRecord(value)) throw new Error(`${what} must be an object`);
+    const pin = (v: unknown, field: string): Pin => (v === null ? null : num(v, `${what}.${field}`));
+    const result: Leds = {};
+    if (value.underglow !== undefined) {
+      if (!isRecord(value.underglow)) throw new Error(`${what}.underglow must be an object`);
+      result.underglow = { data: pin(value.underglow.data, 'underglow.data'), count: num(value.underglow.count, `${what}.underglow.count`) };
+    }
+    if (value.backlight !== undefined) {
+      if (!isRecord(value.backlight)) throw new Error(`${what}.backlight must be an object`);
+      result.backlight = { pin: pin(value.backlight.pin, 'backlight.pin') };
+    }
+    if (value.power !== undefined) result.power = pin(value.power, 'power');
+    return result;
+  };
+  if (data.leds !== undefined) hardware.leds = leds(data.leds, 'leds');
+  if (data.rightLeds !== undefined) hardware.rightLeds = leds(data.rightLeds, 'rightLeds');
   if (data.encoderSpots !== undefined) {
     if (!Array.isArray(data.encoderSpots)) throw new Error('encoderSpots must be a list');
     // Only where knobs are drawn: a bad entry falls back to the default spot rather than failing the keyboard.

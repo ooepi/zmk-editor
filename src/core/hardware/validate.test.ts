@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_BASICS, gridHardware } from './grid.ts';
 import { setShiftOwnBus } from './shiftRegisters.ts';
-import { testShiftPad } from './testFixtures.ts';
+import { testLedPad, testLedSplit, testShiftPad } from './testFixtures.ts';
 import type { KeyboardHardware, MatrixWiring } from './types.ts';
 import { setDisplay, setDisplayPin } from './displays.ts';
 import { hasErrors, validateBasics, validateHardware } from './validate.ts';
-import { setPin } from './wiring.ts';
+import { setPin, setRightWiredDifferently } from './wiring.ts';
 
 const basics = { ...DEFAULT_BASICS, name: 'test_split', displayName: 'Test Split', rows: 2, cols: 3 };
 
@@ -249,5 +249,25 @@ describe('basics pin count with shift registers', () => {
     expect(validateBasics({ ...b, rows: 16, cols: 18, shiftRegisters: 1 }).map((i) => i.message)).toContain(
       'A 16 × 18 matrix with 1 shift register needs 29 pins, but a Pro Micro has 18.',
     );
+  });
+});
+
+describe('LED checks', () => {
+  const errors = (hw: KeyboardHardware) => validateHardware(hw).filter((i) => i.level === 'error').map((i) => i.message);
+
+  it('accepts a correct keyboard', () => {
+    expect(errors(testLedPad)).toEqual([]);
+    expect(errors(testLedSplit)).toEqual([]);
+  });
+
+  it('checks the LED pins like other pins', () => {
+    expect(errors({ ...testLedPad, leds: { underglow: { data: null, count: 20 } } })).toContain('LED data has no pin.');
+    expect(errors({ ...testLedPad, leds: { underglow: { data: 4, count: 20 } } })).toContain('D4 is used for both Row 0 and LED data.');
+  });
+
+  it('checks the number of LEDs', () => {
+    expect(errors({ ...testLedPad, leds: { underglow: { data: 10, count: 0 } } })).toContain('Use 1 to 256 LEDs.');
+    const right = setRightWiredDifferently(testLedSplit, true);
+    expect(errors({ ...right, rightLeds: { underglow: { data: 9, count: 300 } } })).toContain('Use 1 to 256 LEDs on the right half.');
   });
 });

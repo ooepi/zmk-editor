@@ -19,3 +19,16 @@ export const testShiftPad: KeyboardHardware = {
   wiring: { kind: 'matrix', diodeDirection: 'col2row', rows: [4, 5], cols: [...Array.from({ length: 8 }, (_, i) => ({ sr: i })), 6, 7] },
   shiftRegisters: { count: 1, latch: 8 },
 };
+
+/** A 2×3 one-piece matrix with 20 RGB LEDs on D10 and their power switch on D9. */
+export const testLedPad: KeyboardHardware = {
+  ...gridHardware({ ...DEFAULT_BASICS, name: 'test_leds', displayName: 'Test LEDs', split: false, rows: 2, cols: 3 }),
+  wiring: { kind: 'matrix', diodeDirection: 'col2row', rows: [4, 5], cols: [6, 7, 8] },
+  leds: { underglow: { data: 10, count: 20 }, power: 9 },
+};
+
+/** `testSplit` with 6 RGB LEDs on D9, a backlight on D10 and a power switch on D8; the right half mirrors it. */
+export const testLedSplit: KeyboardHardware = {
+  ...testSplit,
+  leds: { underglow: { data: 9, count: 6 }, backlight: { pin: 10 }, power: 8 },
+};

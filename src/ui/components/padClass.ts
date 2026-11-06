@@ -6,7 +6,7 @@ const sharedBusPin = (uses: string[]) =>
   uses[0]?.split(' ').pop() === uses[1]?.split(' ').pop();
 
 /**
- * A pad's colour class from its uses: row (or direct input), column, encoder, display, shift register, free, or a clash.
+ * A pad's colour class from its uses: row (or direct input), column, encoder, display, shift register, LED, free, or a clash.
  * `sharedBus`: the shift registers share the nice!view's bus, so its data and clock pins are theirs too.
  */
 export function padClass(uses: string[] | undefined, sharedBus = false): string {
@@ -19,5 +19,6 @@ export function padClass(uses: string[] | undefined, sharedBus = false): string 
   if (first.startsWith('Encoder')) return 'use-encoder';
   if (first.startsWith('Display')) return 'use-display';
   if (first.startsWith('Shift register')) return 'use-shift';
+  if (first.startsWith('LED') || first === 'Backlight') return 'use-led';
   return 'use-free';
 }
