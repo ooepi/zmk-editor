@@ -70,6 +70,27 @@ describe('editorReducer', () => {
     expect(state.past).toHaveLength(1);
   });
 
+  it('places a typed key, and moves to the next key when asked', () => {
+    let state = run(start(), { type: 'selectKey', index: 4 }, { type: 'typeKey', token: 'Q', advance: false });
+    expect(binding(state, 0, 4)).toBe('&kp Q');
+    expect(state.selection).toEqual([4]);
+    state = run(state, { type: 'typeKey', token: 'W', advance: true });
+    expect(binding(state, 0, 4)).toBe('&kp W');
+    expect(state.selection).toEqual([5]);
+    state = run(state, { type: 'undo' });
+    expect(binding(state, 0, 4)).toBe('&kp Q');
+  });
+
+  it('stays on the last key, and fills a multi-key selection without moving', () => {
+    const last = (start().config.keymap.layers[0]?.bindings.length ?? 0) - 1;
+    let state = run(start(), { type: 'selectKey', index: last }, { type: 'typeKey', token: 'Z', advance: true });
+    expect(binding(state, 0, last)).toBe('&kp Z');
+    expect(state.selection).toEqual([last]);
+    state = run(state, { type: 'selectKeys', indices: [0, 1], additive: false }, { type: 'typeKey', token: 'X', advance: true });
+    expect([binding(state, 0, 0), binding(state, 0, 1)]).toEqual(['&kp X', '&kp X']);
+    expect(state.selection).toEqual([0, 1]);
+  });
+
   it('copies keys to the same positions on another layer', () => {
     const originals = [0, 1].map((i) => binding(start(), 0, i));
     let state = run(start(), { type: 'selectKeys', indices: [0, 1], additive: false }, { type: 'copyKeys' });

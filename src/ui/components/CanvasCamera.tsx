@@ -25,6 +25,8 @@ interface CanvasCameraProps {
   enabled: boolean;
   /** A click on the empty canvas, not on a key (the Combos tab finishes a combo with it). */
   onEmptyClick?: (() => void) | undefined;
+  /** Floats on the bottom row, left of the zoom controls. */
+  footer?: ReactNode;
   children: ReactNode;
 }
 
@@ -33,7 +35,7 @@ interface CanvasCameraProps {
  * Space + drag) pans, and a small control zooms, fits and turns the dot grid on. The keyboard
  * inside keeps fitting the canvas; the camera scales and moves it from there.
  */
-export function CanvasCamera({ enabled, onEmptyClick, children }: CanvasCameraProps) {
+export function CanvasCamera({ enabled, onEmptyClick, footer, children }: CanvasCameraProps) {
   const [camera, setCamera] = useState<Camera>(HOME);
   const { canvasGrid } = usePreferences();
   const canvas = useRef<HTMLDivElement>(null);
@@ -161,15 +163,18 @@ export function CanvasCamera({ enabled, onEmptyClick, children }: CanvasCameraPr
         </button>
       )}
       {enabled && (
-        <div className="camera-controls" role="toolbar" aria-label="Zoom">
-          <IconButton icon="minus" label="Zoom out" disabled={camera.zoom <= MIN_ZOOM} onClick={() => zoomAtCenter(1 / STEP)} />
-          <span className="camera-zoom" aria-live="polite">
-            {Math.round(camera.zoom * 100)}%
-          </span>
-          <IconButton icon="plus" label="Zoom in" disabled={camera.zoom >= MAX_ZOOM} onClick={() => zoomAtCenter(STEP)} />
-          <span className="camera-divider" aria-hidden="true" />
-          <IconButton icon="focus" label="Fit keyboard" title="Fit the keyboard in view" onClick={() => setCamera(HOME)} />
-          <IconButton icon="grid" label="Dot grid" aria-pressed={canvasGrid} onClick={() => setPreferences({ canvasGrid: !canvasGrid })} />
+        <div className="camera-footer">
+          {footer}
+          <div className="camera-controls" role="toolbar" aria-label="Zoom">
+            <IconButton icon="minus" label="Zoom out" disabled={camera.zoom <= MIN_ZOOM} onClick={() => zoomAtCenter(1 / STEP)} />
+            <span className="camera-zoom" aria-live="polite">
+              {Math.round(camera.zoom * 100)}%
+            </span>
+            <IconButton icon="plus" label="Zoom in" disabled={camera.zoom >= MAX_ZOOM} onClick={() => zoomAtCenter(STEP)} />
+            <span className="camera-divider" aria-hidden="true" />
+            <IconButton icon="focus" label="Fit keyboard" title="Fit the keyboard in view" onClick={() => setCamera(HOME)} />
+            <IconButton icon="grid" label="Dot grid" aria-pressed={canvasGrid} onClick={() => setPreferences({ canvasGrid: !canvasGrid })} />
+          </div>
         </div>
       )}
     </div>

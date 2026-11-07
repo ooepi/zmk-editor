@@ -52,6 +52,8 @@ export type EditorAction =
   | { type: 'placeOnEncoder'; index: number; direction: EncoderDirection; item: PaletteItem }
   /** Puts a palette item on every selected key. */
   | { type: 'placeOnSelection'; item: PaletteItem }
+  /** A key typed on the computer's keyboard, put on every selected key; `advance` then selects the next key. */
+  | { type: 'typeKey'; token: string; advance: boolean }
   | { type: 'copyKeys' }
   | { type: 'cutKeys' }
   | { type: 'pasteKeys' }
@@ -174,6 +176,16 @@ function reduce(state: EditorState, action: EditorAction): EditorState {
     case 'placeOnSelection': {
       if (state.selection.length === 0) return state;
       return commit(state, editKeys(keymap, state.layer, state.selection, (b) => applyPaletteItem(b, action.item, keymap)));
+    }
+    case 'typeKey': {
+      if (state.selection.length === 0) return state;
+      const item: PaletteItem = { kind: 'keycode', token: action.token };
+      const edited = editKeys(keymap, state.layer, state.selection, (b) => applyPaletteItem(b, item, keymap));
+      const [only] = state.selection;
+      const count = keymap.layers[state.layer]?.bindings.length ?? 0;
+      // Steps through the keymap's order (left to right, row by row on nearly every keyboard); stays on the last key.
+      const moved = action.advance && state.selection.length === 1 && only !== undefined && only + 1 < count;
+      return commit(state, edited, moved ? select([only + 1]) : {});
     }
     case 'swapKeys': {
       if (action.from === action.to) return state;
