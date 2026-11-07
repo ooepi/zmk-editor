@@ -255,10 +255,25 @@
 }
 
 /* Zoom out, the zoom level (click to fit), zoom in, and the dot grid. */
-.camera-controls {
+/* The zoom controls, with anything else floating on the bottom row (the typing switches) to their left. */
+.camera-footer {
   position: absolute;
   right: var(--s-3);
   bottom: var(--s-3);
+  left: var(--s-3);
+  display: flex;
+  flex-wrap: wrap-reverse;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--s-2);
+  pointer-events: none;
+}
+
+.camera-footer > * {
+  pointer-events: auto;
+}
+
+.camera-controls {
   display: flex;
   align-items: center;
   gap: 2px;

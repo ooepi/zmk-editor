@@ -11,6 +11,10 @@ export interface Preferences {
   pinoutViews: Record<string, 'top' | 'bottom'>;
   /** In the wiring step, picking a pin for a field selects the next field in its list. */
   pinFillInOrder: boolean;
+  /** On the keymap, typing a key selects the next key afterwards. */
+  typeAdvance: boolean;
+  /** On the keymap, Esc, Backspace, Delete, Tab, Enter and Space are typed onto keys instead of doing their usual jobs. */
+  typeAllKeys: boolean;
   /** Palette items placed most recently, newest first. */
   recent: PaletteItem[];
   /** The key palette folded down to its status line, so the keyboard gets the room. */
@@ -31,6 +35,8 @@ const DEFAULTS: Preferences = {
   layouts: {},
   pinoutViews: {},
   pinFillInOrder: false,
+  typeAdvance: false,
+  typeAllKeys: false,
   recent: [],
   paletteCollapsed: false,
   paletteHeight: null,
@@ -62,6 +68,8 @@ function load(): Preferences {
       paletteHeight: typeof stored.paletteHeight === 'number' && Number.isFinite(stored.paletteHeight) ? stored.paletteHeight : null,
       canvasGrid: stored.canvasGrid === true,
       pinFillInOrder: stored.pinFillInOrder === true,
+      typeAdvance: stored.typeAdvance === true,
+      typeAllKeys: stored.typeAllKeys === true,
       welcomed: stored.welcomed === true,
       welcomePending: stored.welcomePending === true,
     };

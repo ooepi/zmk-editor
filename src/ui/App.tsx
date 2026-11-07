@@ -50,6 +50,8 @@ import { demoConfig } from './state/demo.ts';
 import { isLoginCallback } from './state/githubLogin.ts';
 import { setPreferences, usePreferences } from './state/preferences.ts';
 import { useTheme } from './useTheme.ts';
+import { useTypeKeys } from './state/useTypeKeys.ts';
+import { TypeKeysBar } from './components/TypeKeysBar.tsx';
 import { useStudioSession } from './state/studioSession.ts';
 import type { StudioDevice } from './studio/device.ts';
 import { fakeStudioRequested, openKeyboard, serialSupported } from './studio/support.ts';
@@ -184,6 +186,7 @@ function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => 
 
   const hasSelection = selection.length > 0;
   const hasClipboard = clipboard !== null;
+  useTypeKeys(view === 'keymap' && hasSelection, dispatch);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -485,7 +488,12 @@ function Editor({ welcome, studioOpen }: { welcome: boolean; studioOpen: (() => 
                   />
                 )}
                 {/* In the combos view a click beside the keyboard (not in a gap between keys) finishes the combo. */}
-                <CanvasCamera key={config.keyboard} enabled={view === 'keymap'} onEmptyClick={view === 'combos' ? finishCombo : undefined}>
+                <CanvasCamera
+                  key={config.keyboard}
+                  enabled={view === 'keymap'}
+                  onEmptyClick={view === 'combos' ? finishCombo : undefined}
+                  footer={view === 'keymap' && hasSelection ? <TypeKeysBar /> : undefined}
+                >
                   <KeyboardCanvas
                     keymap={keymap}
                     layout={layout}

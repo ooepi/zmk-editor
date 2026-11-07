@@ -70,6 +70,20 @@ export const KEYS: HelpSection[] = [
             <strong>behavior</strong> tile replaces the whole key.
           </p>
         </Sub>
+        <Sub id="typing-keys" title="Typing keys">
+          <p>
+            Select a key and press a key on your own keyboard to put that key there. It goes by where the key sits, not
+            the letter it types: ZMK sends positions and your computer's language setting turns them into letters, so Ö on
+            a Finnish or Swedish keyboard places <code>SEMI</code>, which types Ö on your computer. One key at a time:
+            a held Shift, Ctrl or Alt is ignored, and pressing one on its own places it. Ctrl shortcuts (undo, copy,
+            paste) keep working. Like a palette key, a typed key changes only the tap of a hold-tap.
+          </p>
+          <p>
+            The switches under the keyboard: <Ui>Move to next key</Ui> selects the next key after each one you type (left
+            to right, row by row), so you can type a whole row. <Ui>Type all keys</Ui> places Esc, Backspace, Delete,
+            Tab, Enter and Space too, instead of their usual jobs; click empty space to stop. Both start off.
+          </p>
+        </Sub>
         <Sub id="several-keys" title="Selecting several keys">
           <ul>
             <li>Ctrl+click (or Shift+click) keys to add or remove them.</li>

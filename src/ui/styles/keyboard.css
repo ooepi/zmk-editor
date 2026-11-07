@@ -7,6 +7,26 @@
   padding-left: var(--s-4);
 }
 
+/* The typing switches, floating under the keyboard (beside the zoom controls) while a key is selected. */
+.type-keys-bar {
+  display: flex;
+  gap: var(--s-4);
+  padding: 6px var(--s-3);
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-float);
+  white-space: nowrap;
+}
+
+.type-keys-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--fs-sm, 13px);
+  cursor: pointer;
+}
+
 /*
  * A click-through column that scrolls the rail when there are more layers than fit.
  * Its right padding is room for a hovered row's buttons (see .layer-row-actions);
